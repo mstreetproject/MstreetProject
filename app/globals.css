@@ -44,7 +44,12 @@ a {
 }
 
 /* Base Headings */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   color: var(--royal-navy);
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -58,12 +63,29 @@ h1, h2, h3, h4, h5, h6 {
   padding: 0 1rem;
 }
 
-.flex { display: flex; }
-.flex-col { flex-direction: column; }
-.items-center { align-items: center; }
-.justify-between { justify-content: space-between; }
-.gap-2 { gap: 0.5rem; }
-.gap-4 { gap: 1rem; }
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.gap-4 {
+  gap: 1rem;
+}
 
 /* Buttons */
 .btn {
@@ -91,4 +113,15 @@ h1, h2, h3, h4, h5, h6 {
 
 .btn-accent:hover {
   opacity: 0.9;
+}
+
+/* Hide Next.js Development Indicators (The "N" Badge) */
+nextjs-portal,
+[data-nextjs-toast],
+[data-nextjs-static-indicator],
+#__next-build-watcher,
+.nextjs-static-indicator-root {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }

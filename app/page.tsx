@@ -1,60 +1,55 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 
 export default function Home() {
-  const [count, setCount] = useState(0);
-
   return (
     <div style={styles.container}>
-      <div style={styles.card}>
-        <h1 style={styles.title}>MStreet Financial</h1>
-        <p style={styles.subtitle}>Your Next.js + React setup is working!</p>
+      <div style={styles.heroSection}>
+        <div style={styles.logoContainer}>
+          <img src="/secondary logo2.png" alt="MStreet Financial" style={styles.logo} />
+        </div>
 
-        <div style={styles.testSection}>
-          <h2 style={styles.sectionTitle}>React State Test</h2>
-          <p style={styles.counter}>Count: <span style={styles.countValue}>{count}</span></p>
-          <div style={styles.buttonGroup}>
-            <button
-              style={styles.button}
-              onClick={() => setCount(count - 1)}
-            >
-              − Decrease
-            </button>
-            <button
-              style={{ ...styles.button, ...styles.primaryButton }}
-              onClick={() => setCount(count + 1)}
-            >
-              + Increase
-            </button>
+        <h1 style={styles.title}>Welcome to MStreet Financial</h1>
+        <p style={styles.tagline}>
+          Secure Financial Asset & Credit Management Platform
+        </p>
+
+        <p style={styles.description}>
+          Empowering financial institutions with robust asset management,
+          comprehensive credit tracking, and role-based access control.
+        </p>
+
+        <div style={styles.buttonGroup}>
+          <Link href="/login" style={styles.primaryButton}>
+            Sign In
+          </Link>
+          <Link href="/signup" style={styles.secondaryButton}>
+            Create Account
+          </Link>
+        </div>
+
+        <div style={styles.features}>
+          <div style={styles.feature}>
+            <div style={styles.featureIcon}>🔒</div>
+            <h3 style={styles.featureTitle}>Secure Authentication</h3>
+            <p style={styles.featureText}>Enterprise-grade security with role-based access</p>
+          </div>
+          <div style={styles.feature}>
+            <div style={styles.featureIcon}>📊</div>
+            <h3 style={styles.featureTitle}>Real-Time Analytics</h3>
+            <p style={styles.featureText}>Track credits, loans, and financial operations</p>
+          </div>
+          <div style={styles.feature}>
+            <div style={styles.featureIcon}>⚡</div>
+            <h3 style={styles.featureTitle}>Fast & Reliable</h3>
+            <p style={styles.featureText}>Built on modern cloud infrastructure</p>
           </div>
         </div>
-
-        <div style={styles.infoBox}>
-          <p>✅ Next.js App Router is configured</p>
-          <p>✅ React is rendering components</p>
-          <p>✅ useState hook is functional</p>
-        </div>
-
-        <Link href="/about" style={styles.link}>
-          Go to About Page →
-        </Link>
-
-        <p style={styles.hint}>
-          Edit <code style={styles.code}>app/page.tsx</code> to customize this page
-        </p>
       </div>
     </div>
   );
 }
-
-// MStreet Financial Brand Tokens
-const brandColors = {
-  navy: "#070757",
-  skyline: "#02B3FF",
-  lime: "#B8DB0F",
-};
 
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
@@ -62,110 +57,106 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    background: `linear-gradient(135deg, ${brandColors.navy} 0%, #0a0a6b 50%, #101080 100%)`,
-    fontFamily: "'Clash Grotesk', system-ui, -apple-system, sans-serif",
+    background: "linear-gradient(135deg, #070757 0%, #0a0a6b 100%)",
+    fontFamily: "Inter, system-ui, sans-serif",
     padding: "20px",
   },
-  card: {
-    background: "rgba(255, 255, 255, 0.05)",
-    backdropFilter: "blur(10px)",
-    borderRadius: "20px",
-    padding: "40px",
+  heroSection: {
     textAlign: "center",
-    border: `1px solid ${brandColors.skyline}30`,
-    maxWidth: "500px",
+    maxWidth: "900px",
     width: "100%",
-    boxShadow: `0 0 40px ${brandColors.skyline}15`,
+  },
+  logoContainer: {
+    marginBottom: "32px",
+  },
+  logo: {
+    height: "80px",
+    width: "auto",
+    filter: "brightness(1.2)",
   },
   title: {
-    fontSize: "2.5rem",
-    margin: "0 0 10px 0",
-    color: "#fff",
-    background: `linear-gradient(135deg, ${brandColors.skyline}, ${brandColors.lime})`,
+    fontSize: "3rem",
+    fontWeight: "800",
+    margin: "0 0 16px 0",
+    background: "linear-gradient(135deg, #02B3FF, #B8DB0F)",
     WebkitBackgroundClip: "text",
     WebkitTextFillColor: "transparent",
-    backgroundClip: "text",
+    letterSpacing: "-0.02em",
+    lineHeight: "1.2",
   },
-  subtitle: {
+  tagline: {
+    fontSize: "1.5rem",
+    color: "#cbd5e1",
+    margin: "0 0 24px 0",
+    fontWeight: "500",
+  },
+  description: {
     fontSize: "1.1rem",
     color: "#94a3b8",
-    margin: "0 0 30px 0",
-  },
-  testSection: {
-    background: "rgba(255, 255, 255, 0.03)",
-    borderRadius: "12px",
-    padding: "24px",
-    marginBottom: "24px",
-    border: `1px solid ${brandColors.skyline}20`,
-  },
-  sectionTitle: {
-    fontSize: "1rem",
-    color: brandColors.skyline,
-    margin: "0 0 16px 0",
-    textTransform: "uppercase",
-    letterSpacing: "1px",
-  },
-  counter: {
-    fontSize: "1.5rem",
-    color: "#fff",
-    margin: "0 0 20px 0",
-  },
-  countValue: {
-    color: brandColors.lime,
-    fontWeight: "bold",
-    fontSize: "2rem",
+    lineHeight: "1.7",
+    margin: "0 0 48px 0",
+    maxWidth: "700px",
+    marginLeft: "auto",
+    marginRight: "auto",
   },
   buttonGroup: {
     display: "flex",
-    gap: "12px",
+    gap: "16px",
     justifyContent: "center",
-  },
-  button: {
-    padding: "12px 24px",
-    fontSize: "1rem",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-    background: "rgba(255, 255, 255, 0.1)",
-    color: "#fff",
-    transition: "all 0.2s ease",
+    marginBottom: "64px",
+    flexWrap: "wrap",
   },
   primaryButton: {
-    background: `linear-gradient(135deg, ${brandColors.skyline}, ${brandColors.lime})`,
-    color: brandColors.navy,
-    fontWeight: "600",
-  },
-  infoBox: {
-    textAlign: "left",
-    background: `${brandColors.lime}15`,
+    padding: "16px 40px",
+    fontSize: "1.1rem",
+    fontWeight: "700",
     borderRadius: "12px",
-    padding: "16px 20px",
-    marginBottom: "24px",
-    color: brandColors.lime,
-    fontSize: "0.95rem",
-    lineHeight: "1.8",
-    border: `1px solid ${brandColors.lime}30`,
-  },
-  link: {
-    display: "inline-block",
-    color: brandColors.skyline,
     textDecoration: "none",
-    fontSize: "1rem",
-    padding: "12px 24px",
-    background: `${brandColors.skyline}15`,
-    borderRadius: "8px",
-    marginBottom: "20px",
-    border: `1px solid ${brandColors.skyline}30`,
-    transition: "all 0.2s ease",
+    background: "linear-gradient(135deg, #02B3FF, #B8DB0F)",
+    color: "#070757",
+    transition: "transform 0.2s, box-shadow 0.2s",
+    display: "inline-block",
+    boxShadow: "0 4px 20px rgba(2, 179, 255, 0.3)",
   },
-  hint: {
-    color: "#64748b",
-    fontSize: "0.9rem",
+  secondaryButton: {
+    padding: "16px 40px",
+    fontSize: "1.1rem",
+    fontWeight: "700",
+    borderRadius: "12px",
+    textDecoration: "none",
+    background: "rgba(255, 255, 255, 0.05)",
+    color: "#fff",
+    border: "2px solid rgba(2, 179, 255, 0.3)",
+    transition: "all 0.2s",
+    display: "inline-block",
   },
-  code: {
-    background: "rgba(255, 255, 255, 0.1)",
-    padding: "4px 8px",
-    borderRadius: "4px",
-    fontFamily: "monospace",
+  features: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+    gap: "24px",
+    marginTop: "48px",
+  },
+  feature: {
+    background: "rgba(255, 255, 255, 0.03)",
+    backdropFilter: "blur(10px)",
+    borderRadius: "16px",
+    padding: "32px 24px",
+    border: "1px solid rgba(2, 179, 255, 0.15)",
+  },
+  featureIcon: {
+    fontSize: "2.5rem",
+    marginBottom: "16px",
+  },
+  featureTitle: {
+    fontSize: "1.2rem",
+    fontWeight: "700",
+    color: "#fff",
+    margin: "0 0 8px 0",
+  },
+  featureText: {
+    fontSize: "0.95rem",
+    color: "#94a3b8",
+    margin: 0,
+    lineHeight: "1.6",
   },
 };
