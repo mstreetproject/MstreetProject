@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
     const searchParams = useSearchParams();
     const token = searchParams.get("token");
 
@@ -200,5 +200,19 @@ const styles: { [key: string]: React.CSSProperties } = {
         textDecoration: "none",
         fontWeight: "600",
         fontSize: "0.875rem",
-    }
+    },
 };
+
+export default function ResetPasswordPage() {
+    return (
+        <Suspense fallback={
+            <div style={styles.container}>
+                <div style={styles.card}>
+                    <p style={{ color: '#fff' }}>Loading...</p>
+                </div>
+            </div>
+        }>
+            <ResetPasswordForm />
+        </Suspense>
+    );
+}
