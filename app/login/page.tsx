@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -20,7 +20,8 @@ export default function LoginPage() {
         setLoading(true);
         setStatus(null);
 
-        const { error } = await supabase.auth.signInWithPassword({
+        const supabase = createClient();
+        const { data, error } = await supabase.auth.signInWithPassword({
             email: formData.email,
             password: formData.password,
         });
@@ -30,8 +31,39 @@ export default function LoginPage() {
             setLoading(false);
         } else {
             setStatus({ type: "success", message: "Login successful! Redirecting..." });
-            // Redirect to dashboard or profile
-            router.push("/");
+
+            // Check if user is internal and redirect accordingly
+            if (data.user) {
+                const { data: userData } = await supabase
+                    .from('users')
+                    .select('is_internal, is_creditor, is_debtor')
+                    .eq('id', data.user.id)
+                    .single();
+
+                // Check for redirectTo parameter
+                const params = new URLSearchParams(window.location.search);
+                const redirectTo = params.get('redirectTo');
+
+                // Small delay to ensure session is set
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Refresh router to pick up new session
+                router.refresh();
+
+                if (redirectTo) {
+                    router.push(redirectTo);
+                } else if (userData?.is_internal) {
+                    router.push('/dashboard/internal');
+                } else if (userData?.is_creditor) {
+                    router.push('/dashboard/creditor');
+                } else if (userData?.is_debtor) {
+                    router.push('/dashboard/debtor');
+                } else {
+                    router.push('/profile');
+                }
+            } else {
+                router.push('/');
+            }
         }
     };
 

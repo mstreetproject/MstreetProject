@@ -1,27 +1,129 @@
+/* ============================================
+   THEME CSS VARIABLES
+   ============================================ */
+
+/* Brand Colors (always available) */
 :root {
-  /* Primary Colors */
   --royal-navy: #070757;
   --skyline-blue: #02B3FF;
   --neon-lime: #B8DB0F;
-
-  /* Secondary Colors */
   --charcoal-gray: #4A4A4A;
   --muted-coral: #F26A63;
   --cool-lilac: #B3A6FF;
-
-  /* Neutrals */
-  --white: #ffffff;
-  --off-white: #f8f9fa;
-  --black: #000000;
-
-  /* Semantic Colors */
-  --primary: var(--royal-navy);
-  --secondary: var(--skyline-blue);
-  --accent: var(--neon-lime);
-  --danger: var(--muted-coral);
-  --text: var(--charcoal-gray);
-  --background: var(--white);
 }
+
+/* Default/Fallback to Dark Theme */
+:root {
+  --bg-primary: #070757;
+  --bg-secondary: #0a0a6b;
+  --bg-tertiary: #0f0f8a;
+  --bg-card: rgba(255, 255, 255, 0.03);
+  --bg-card-hover: rgba(255, 255, 255, 0.06);
+  --bg-input: rgba(255, 255, 255, 0.05);
+  --bg-input-focus: rgba(255, 255, 255, 0.08);
+
+  --border-primary: rgba(2, 179, 255, 0.15);
+  --border-secondary: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(2, 179, 255, 0.3);
+
+  --text-primary: #ffffff;
+  --text-secondary: #E2E8F0;
+  --text-muted: #94A3B8;
+  --text-disabled: #64748B;
+
+  --accent-primary: #02B3FF;
+  --accent-secondary: #B8DB0F;
+  --accent-bg: rgba(2, 179, 255, 0.1);
+  --accent-bg-hover: rgba(2, 179, 255, 0.15);
+
+  --success: #10B981;
+  --success-bg: rgba(16, 185, 129, 0.15);
+  --warning: #F59E0B;
+  --warning-bg: rgba(245, 158, 11, 0.15);
+  --danger: #EF4444;
+  --danger-bg: rgba(239, 68, 68, 0.15);
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Dark Theme */
+html[data-theme="dark"] {
+  --bg-primary: #070757;
+  --bg-secondary: #0a0a6b;
+  --bg-tertiary: #0f0f8a;
+  --bg-card: rgba(255, 255, 255, 0.03);
+  --bg-card-hover: rgba(255, 255, 255, 0.06);
+  --bg-input: rgba(255, 255, 255, 0.05);
+  --bg-input-focus: rgba(255, 255, 255, 0.08);
+
+  --border-primary: rgba(2, 179, 255, 0.15);
+  --border-secondary: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(2, 179, 255, 0.3);
+
+  --text-primary: #ffffff;
+  --text-secondary: #E2E8F0;
+  --text-muted: #94A3B8;
+  --text-disabled: #64748B;
+
+  --accent-primary: #02B3FF;
+  --accent-secondary: #B8DB0F;
+  --accent-bg: rgba(2, 179, 255, 0.1);
+  --accent-bg-hover: rgba(2, 179, 255, 0.15);
+
+  --success: #10B981;
+  --success-bg: rgba(16, 185, 129, 0.15);
+  --warning: #F59E0B;
+  --warning-bg: rgba(245, 158, 11, 0.15);
+  --danger: #EF4444;
+  --danger-bg: rgba(239, 68, 68, 0.15);
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Light Theme - Higher contrast, easier on eyes */
+html[data-theme="light"] {
+  --bg-primary: #e4ebf3;
+  --bg-secondary: #edf2f7;
+  --bg-tertiary: #dde6ef;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f7fafc;
+  --bg-input: #e4ebf3;
+  --bg-input-focus: #dde6ef;
+
+  --border-primary: #b8c9d9;
+  --border-secondary: #c8d6e5;
+  --border-hover: #0369a1;
+
+  /* HIGH CONTRAST TEXT COLORS */
+  --text-primary: #0f172a;
+  --text-secondary: #1e293b;
+  --text-muted: #334155;
+  --text-disabled: #64748b;
+
+  --accent-primary: #0369a1;
+  --accent-secondary: #3d6b0c;
+  --accent-bg: rgba(3, 105, 161, 0.12);
+  --accent-bg-hover: rgba(3, 105, 161, 0.18);
+
+  --success: #047857;
+  --success-bg: rgba(4, 120, 87, 0.12);
+  --warning: #b45309;
+  --warning-bg: rgba(180, 83, 9, 0.12);
+  --danger: #b91c1c;
+  --danger-bg: rgba(185, 28, 28, 0.12);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
 
 * {
   box-sizing: border-box;
@@ -34,8 +136,9 @@ body {
   max-width: 100vw;
   overflow-x: hidden;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;
-  color: var(--text);
-  background: var(--background);
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 a {
@@ -43,19 +146,21 @@ a {
   text-decoration: none;
 }
 
-/* Base Headings */
 h1,
 h2,
 h3,
 h4,
 h5,
 h6 {
-  color: var(--royal-navy);
+  color: var(--text-primary);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
-/* Layout Utilities */
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
 .container {
   width: 100%;
   max-width: 1200px;
@@ -87,7 +192,10 @@ h6 {
   gap: 1rem;
 }
 
-/* Buttons */
+/* ============================================
+   BUTTONS
+   ============================================ */
+
 .btn {
   padding: 0.75rem 1.5rem;
   border-radius: 0.5rem;
@@ -98,24 +206,27 @@ h6 {
 }
 
 .btn-primary {
-  background: var(--royal-navy);
-  color: var(--white);
+  background: var(--accent-primary);
+  color: #ffffff;
 }
 
 .btn-primary:hover {
-  background: var(--skyline-blue);
+  opacity: 0.9;
 }
 
 .btn-accent {
-  background: var(--neon-lime);
-  color: var(--royal-navy);
+  background: var(--accent-secondary);
+  color: #ffffff;
 }
 
 .btn-accent:hover {
   opacity: 0.9;
 }
 
-/* Hide Next.js Development Indicators (The "N" Badge) */
+/* ============================================
+   HIDE NEXT.JS DEV INDICATORS
+   ============================================ */
+
 nextjs-portal,
 [data-nextjs-toast],
 [data-nextjs-static-indicator],

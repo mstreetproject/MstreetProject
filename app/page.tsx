@@ -10,15 +10,14 @@ export default function Home() {
           <img src="/secondary logo2.png" alt="MStreet Financial" style={styles.logo} />
         </div>
 
-        <h1 style={styles.title}>Welcome to MStreet Financial</h1>
+        <h1 style={styles.title}>Welcome to MStreet Finance</h1>
         <p style={styles.tagline}>
           Secure Financial Asset & Credit Management Platform
         </p>
 
         <p style={styles.description}>
-          Empowering financial institutions with robust asset management,
-          comprehensive credit tracking, and role-based access control.
-        </p>
+          Helping people and businesses grow by giving
+          them the financial tools they need to grow.</p>
 
         <div style={styles.buttonGroup}>
           <Link href="/login" style={styles.primaryButton}>
@@ -32,8 +31,8 @@ export default function Home() {
         <div style={styles.features}>
           <div style={styles.feature}>
             <div style={styles.featureIcon}>🔒</div>
-            <h3 style={styles.featureTitle}>Secure Authentication</h3>
-            <p style={styles.featureText}>Enterprise-grade security with role-based access</p>
+            <h3 style={styles.featureTitle}>Accessibility</h3>
+            <p style={styles.featureText}>Flexibility</p>
           </div>
           <div style={styles.feature}>
             <div style={styles.featureIcon}>📊</div>
