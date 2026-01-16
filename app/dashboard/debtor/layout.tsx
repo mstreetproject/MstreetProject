@@ -62,7 +62,7 @@ export default function DebtorDashboardLayoutPage({
             currentUser={{
                 full_name: user.full_name,
                 email: user.email,
-                profile_picture_url: user.profile_picture_url,
+                profile_picture_url: user.profile_picture_url ?? undefined,
             }}
         >
             {children}
