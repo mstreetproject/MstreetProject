@@ -60,49 +60,42 @@ export async function POST(request: Request) {
             user_metadata: { full_name }
         });
 
-        if (createError) throw createError;
+        if (createError) {
+            // Check for duplicate email error
+            if (createError.message?.includes('already been registered') ||
+                createError.message?.includes('already exists') ||
+                createError.code === 'email_exists') {
+                return NextResponse.json({
+                    error: `A user with email "${email}" already exists. Please use a different email or edit the existing user.`
+                }, { status: 409 });
+            }
+            throw createError;
+        }
         if (!authUser.user) throw new Error('Failed to create user');
 
         const userId = authUser.user.id;
 
-        // 3. Update Profile (public.users)
-        // calculated pause to ensure trigger has fired? 
-        // Actually, trigger fires synchronously usually. But to be safe, we can use upsert or update.
-        // We use supabaseAdmin to bypass RLS for this initial setup if needed, 
-        // though the Trigger usually sets the owner. But since we are Admin, we might need to update fields the trigger didn't set.
-
+        // 3. Create/Update Profile (public.users) - use upsert to ensure row exists
+        // The trigger may or may not have fired, so we use upsert to be safe
         const { error: profileError } = await supabaseAdmin
             .from('users')
-            .update({
+            .upsert({
+                id: userId,
                 full_name,
-                phone,
-                address,
-                is_internal,
-                is_creditor,
-                is_debtor,
-                // Ensure email is set/synced
-                email
-            })
-            .eq('id', userId);
+                email,
+                phone: phone || null,
+                address: address || null,
+                is_internal: is_internal || false,
+                is_creditor: is_creditor || false,
+                is_debtor: is_debtor || false,
+                email_activated: true // Admin-created users are auto-confirmed
+            }, { onConflict: 'id' });
 
         if (profileError) {
-            // If update fails (e.g. trigger didn't run yet?), try upsert?
-            // But trigger SHOULD run.
-            console.error('Profile update error:', profileError);
-            // Fallback: manually insert if not exists (upsert)
-            const { error: upsertError } = await supabaseAdmin
-                .from('users')
-                .upsert({
-                    id: userId,
-                    full_name,
-                    email,
-                    phone,
-                    address,
-                    is_internal,
-                    is_creditor,
-                    is_debtor
-                });
-            if (upsertError) throw upsertError;
+            console.error('Profile upsert error:', profileError);
+            // If profile creation fails, we should clean up the auth user
+            await supabaseAdmin.auth.admin.deleteUser(userId);
+            throw new Error(`Failed to create user profile: ${profileError.message}`);
         }
 
         // 4. Assign Role (if internal)

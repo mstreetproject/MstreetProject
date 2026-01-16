@@ -7,7 +7,7 @@ export default function WelcomePage() {
         <div style={styles.container}>
             <div style={styles.card}>
                 <div style={styles.logoContainer}>
-                    <img src="/secondary logo2.png" alt="MStreet Financial" style={styles.logo} />
+                    <img src="/mstreets-logo-transparent.png" alt="MStreet Financial" style={styles.logo} />
                 </div>
                 <div style={styles.iconContainer}>
                     <div style={styles.checkIcon}>✓</div>

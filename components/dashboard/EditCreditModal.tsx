@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useActivityLog } from '@/hooks/useActivityLog';
 import styles from './CreateExpenseModal.module.css'; // Reuse same modal styles
 
 interface Credit {
@@ -28,6 +29,7 @@ interface EditCreditModalProps {
 }
 
 export default function EditCreditModal({ isOpen, credit, onClose, onSuccess }: EditCreditModalProps) {
+    const { logActivity } = useActivityLog();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -87,6 +89,37 @@ export default function EditCreditModal({ isOpen, credit, onClose, onSuccess }: 
                 .eq('id', credit.id);
 
             if (updateError) throw updateError;
+
+            // Calculate changes
+            const changes: Record<string, { from: any, to: any }> = {};
+
+            // Check Principal
+            if (parseFloat(formData.principal) !== credit.principal) {
+                changes.principal = { from: credit.principal, to: parseFloat(formData.principal) };
+            }
+            // Check Rate
+            if (parseFloat(formData.interest_rate) !== credit.interest_rate) {
+                changes.interest_rate = { from: credit.interest_rate, to: parseFloat(formData.interest_rate) };
+            }
+            // Check Tenure
+            if (tenure !== credit.tenure_months) {
+                changes.tenure_months = { from: credit.tenure_months, to: tenure };
+            }
+            // Check Start Date
+            if (formData.start_date !== credit.start_date) {
+                changes.start_date = { from: credit.start_date, to: formData.start_date };
+            }
+            // Check Status
+            if (formData.status !== credit.status) {
+                changes.status = { from: credit.status, to: formData.status };
+            }
+
+            // Log activity only if there are changes
+            if (Object.keys(changes).length > 0) {
+                await logActivity('UPDATE_CREDIT', 'credit', credit.id, {
+                    field_changes: changes
+                });
+            }
 
             // Success
             onSuccess();

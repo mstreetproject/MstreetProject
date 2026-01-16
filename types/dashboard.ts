@@ -12,6 +12,7 @@ export interface User {
     email: string;
     phone: string | null;
     address: string | null;
+    profile_picture_url?: string | null;
     is_creditor: boolean;
     is_debtor: boolean;
     is_internal: boolean;
@@ -46,7 +47,9 @@ export interface Loan {
     tenure_months: number;
     start_date: string;
     end_date: string;
-    status: 'active' | 'repaid' | 'overdue' | 'defaulted';
+    status: 'active' | 'partial_repaid' | 'repaid' | 'overdue' | 'defaulted' | 'archived';
+    amount_repaid?: number;  // Track principal repaid so far
+    interest_repaid?: number; // Track interest repaid so far
     created_at: string;
     updated_at: string;
     debtor?: {
@@ -66,6 +69,8 @@ export interface DashboardStats {
         sum: number;
     };
     totalInterestEarned: number;
+    totalRevenueEarned: number; // Gross collections (Principal + Interest Repaid)
+    totalCreditCost: number;    // Total payouts to creditors
     totalOperatingExpenses: number;
     totalBadDebt: {
         count: number;

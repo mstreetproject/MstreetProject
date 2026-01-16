@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/dashboard/useUser';
+import { useActivityLog } from '@/hooks/useActivityLog';
 import { Loader2, User, DollarSign, Percent, Calendar, Clock } from 'lucide-react';
 import styles from './CreateCreditForm.module.css'; // Reuse same styles
 
@@ -18,6 +19,7 @@ interface CreateLoanFormProps {
 
 export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
     const { user } = useUser();
+    const { logActivity } = useActivityLog();
     const [debtors, setDebtors] = useState<Debtor[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingDebtors, setLoadingDebtors] = useState(true);
@@ -75,7 +77,7 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
             const tenure = parseInt(formData.tenure_months);
             const endDate = calculateEndDate(formData.start_date, tenure);
 
-            const { error: insertError } = await supabase
+            const { data: insertedData, error: insertError } = await supabase
                 .from('loans')
                 .insert({
                     debtor_id: formData.debtor_id,
@@ -85,9 +87,20 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
                     start_date: formData.start_date,
                     end_date: endDate,
                     status: 'active',
-                });
+                })
+                .select()
+                .single();
 
             if (insertError) throw insertError;
+
+            // Log the loan creation
+            const selectedDebtor = debtors.find(d => d.id === formData.debtor_id);
+            await logActivity('CREATE_LOAN', 'loan', insertedData?.id || '', {
+                debtor_name: selectedDebtor?.full_name,
+                principal: parseFloat(formData.principal),
+                interest_rate: parseFloat(formData.interest_rate),
+                tenure_months: tenure,
+            });
 
             setSuccess(true);
             setFormData({

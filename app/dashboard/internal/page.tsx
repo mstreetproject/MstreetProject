@@ -11,6 +11,7 @@ import { useDashboardStats } from '@/hooks/dashboard/useDashboardStats';
 import { useRecentCredits } from '@/hooks/dashboard/useRecentCredits';
 import { useRecentLoans } from '@/hooks/dashboard/useRecentLoans';
 import { useRecentUsers } from '@/hooks/dashboard/useRecentUsers';
+import { useRecentExpenses } from '@/hooks/dashboard/useRecentExpenses';
 import { useAuditLogs } from '@/hooks/dashboard/useAuditLogs';
 import { useCurrency } from '@/hooks/useCurrency';
 import { TIME_PERIODS, TimePeriod, DateRange } from '@/hooks/dashboard/useCreditorStats';
@@ -18,6 +19,7 @@ import {
     Users,
     DollarSign,
     TrendingUp,
+    TrendingDown,
     Wallet,
     Receipt,
     AlertCircle
@@ -106,6 +108,7 @@ export default function InternalDashboard() {
     const { credits, loading: creditsLoading } = useRecentCredits(5);
     const { loans, loading: loansLoading } = useRecentLoans(5);
     const { users, loading: usersLoading } = useRecentUsers(5);
+    const { expenses, loading: expensesLoading } = useRecentExpenses(5);
     const { logs, loading: logsLoading } = useAuditLogs(10);
     const { formatCurrency } = useCurrency();
 
@@ -128,26 +131,27 @@ export default function InternalDashboard() {
             <div className={styles.error}>
                 <h1>Access Denied</h1>
                 <p>You do not have permission to view this dashboard.</p>
-                <button
-                    onClick={async () => {
-                        const { createClient } = await import('@/lib/supabase/client');
-                        const supabase = createClient();
-                        await supabase.auth.signOut();
-                        window.location.href = '/login';
-                    }}
-                    style={{
-                        marginTop: '16px',
-                        padding: '10px 20px',
-                        background: 'var(--accent-primary)',
-                        color: '#070757',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontWeight: 'bold',
-                        cursor: 'pointer'
-                    }}
-                >
-                    Sign Out & Switch Account
-                </button>
+                <div style={{ marginTop: '20px' }}>
+                    <button
+                        onClick={async () => {
+                            const { createClient } = await import('@/lib/supabase/client');
+                            const supabase = createClient();
+                            await supabase.auth.signOut();
+                            window.location.href = '/login';
+                        }}
+                        style={{
+                            padding: '10px 20px',
+                            background: 'var(--accent-primary)',
+                            color: '#070757',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Sign Out & Switch Account
+                    </button>
+                </div>
             </div>
         );
     }
@@ -157,17 +161,17 @@ export default function InternalDashboard() {
         {
             key: 'creditor',
             label: 'Creditor',
-            render: (_, row) => row.creditor?.full_name || 'N/A'
+            render: (_, row) => (
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontWeight: 500 }}>{row.creditor?.full_name || 'N/A'}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{row.creditor?.email}</span>
+                </div>
+            )
         },
         {
             key: 'principal',
             label: 'Amount',
             render: (value) => formatCurrency(value)
-        },
-        {
-            key: 'interest_rate',
-            label: 'Rate',
-            render: (value) => `${value}%`
         },
         {
             key: 'status',
@@ -185,17 +189,17 @@ export default function InternalDashboard() {
         {
             key: 'debtor',
             label: 'Debtor',
-            render: (_, row) => row.debtor?.full_name || 'N/A'
+            render: (_, row) => (
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontWeight: 500 }}>{row.debtor?.full_name || 'N/A'}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{row.debtor?.email}</span>
+                </div>
+            )
         },
         {
             key: 'principal',
             label: 'Amount',
             render: (value) => formatCurrency(value)
-        },
-        {
-            key: 'interest_rate',
-            label: 'Rate',
-            render: (value) => `${value}%`
         },
         {
             key: 'status',
@@ -209,9 +213,26 @@ export default function InternalDashboard() {
         },
     ];
 
+    const expenseColumns: Column[] = [
+        {
+            key: 'expense_name',
+            label: 'Expense',
+            render: (value) => <span style={{ fontWeight: 500 }}>{value}</span>
+        },
+        {
+            key: 'amount',
+            label: 'Amount',
+            render: (value) => formatCurrency(value)
+        },
+        {
+            key: 'expense_month',
+            label: 'Month',
+            render: (value) => <span style={{ textTransform: 'capitalize', fontSize: '0.85rem' }}>{new Date(value).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
+        },
+    ];
+
     const userColumns: Column[] = [
         { key: 'full_name', label: 'Name' },
-        { key: 'email', label: 'Email' },
         {
             key: 'is_creditor',
             label: 'Type',
@@ -220,7 +241,7 @@ export default function InternalDashboard() {
                 if (row.is_creditor) types.push('Creditor');
                 if (row.is_debtor) types.push('Debtor');
                 if (row.is_internal) types.push('Internal');
-                return types.join(', ') || 'User';
+                return <span style={{ fontSize: '0.85rem' }}>{types.join(', ') || 'User'}</span>;
             }
         },
         {
@@ -237,11 +258,10 @@ export default function InternalDashboard() {
             render: (_, row) => row.user?.full_name || 'System'
         },
         { key: 'action', label: 'Action' },
-        { key: 'entity_type', label: 'Entity' },
         {
             key: 'created_at',
             label: 'Time',
-            render: (value) => new Date(value).toLocaleString()
+            render: (value) => <span style={{ fontSize: '0.85rem' }}>{new Date(value).toLocaleString()}</span>
         },
     ];
 
@@ -252,7 +272,7 @@ export default function InternalDashboard() {
                     <div className={styles.headerLeft}>
                         <h1 className={styles.pageTitle}>Internal Dashboard</h1>
                         <p className={styles.pageSubtitle}>
-                            Welcome back, {user?.full_name}
+                            Overview of company performance and activities
                         </p>
                     </div>
                     <div className={styles.headerRight}>
@@ -294,15 +314,27 @@ export default function InternalDashboard() {
                         icon={TrendingUp}
                         loading={statsLoading}
                     />
+
                     {user?.roles?.some(role => ['super_admin', 'finance_manager'].includes(role.name)) && (
                         <>
                             <StatsCard
-                                title="Interest Earned"
-                                value={stats ? formatCurrency(stats.totalInterestEarned) : '$0'}
+                                title="Revenue Earned"
+                                value={stats ? formatCurrency(stats.totalRevenueEarned || 0) : '$0'}
+                                change="Inflow"
                                 changeType="positive"
                                 icon={Wallet}
                                 loading={statsLoading}
                             />
+
+                            <StatsCard
+                                title="Credit Cost"
+                                value={stats ? formatCurrency(stats.totalCreditCost || 0) : '$0'}
+                                change="Outflow"
+                                changeType="negative"
+                                icon={TrendingDown} // Using TrendingDown for costs
+                                loading={statsLoading}
+                            />
+
                             <StatsCard
                                 title="Operating Expenses"
                                 value={stats ? formatCurrency(stats.totalOperatingExpenses) : '$0'}
@@ -310,20 +342,22 @@ export default function InternalDashboard() {
                                 icon={Receipt}
                                 loading={statsLoading}
                             />
-                            <StatsCard
-                                title="Bad Debt"
-                                value={stats ? formatCurrency(stats.totalBadDebt.sum) : '$0'}
-                                change={stats ? `${stats.totalBadDebt.count} loans` : undefined}
-                                changeType="negative"
-                                icon={AlertCircle}
-                                loading={statsLoading}
-                            />
                         </>
                     )}
                 </div>
 
-                {/* Recent Activity Grid */}
+                {/* Recent Activity Grid - Optimized Layout */}
                 <div className={styles.activityGrid}>
+                    <div className={styles.section}>
+                        <h2 className={styles.sectionTitle}>Recent Loans</h2>
+                        <DataTable
+                            columns={loanColumns}
+                            data={loans}
+                            loading={loansLoading}
+                            emptyMessage="No loans found"
+                        />
+                    </div>
+
                     <div className={styles.section}>
                         <h2 className={styles.sectionTitle}>Recent Credits</h2>
                         <DataTable
@@ -334,33 +368,36 @@ export default function InternalDashboard() {
                         />
                     </div>
 
-                    <div className={styles.section}>
-                        <h2 className={styles.sectionTitle}>Recent Loans</h2>
-                        <DataTable
-                            columns={loanColumns}
-                            data={loans}
-                            loading={loansLoading}
-                            emptyMessage="No loans found"
-                        />
-                    </div>
+                    {user?.roles?.some(role => ['super_admin', 'finance_manager'].includes(role.name)) && (
+                        <div className={styles.section}>
+                            <h2 className={styles.sectionTitle}>Recent Expenses</h2>
+                            <DataTable
+                                columns={expenseColumns}
+                                data={expenses}
+                                loading={expensesLoading}
+                                emptyMessage="No expenses found"
+                            />
+                        </div>
+                    )}
+
+                    {/* Users - Only for ops/admin */}
+                    {user?.roles?.some(role => ['super_admin', 'ops_officer'].includes(role.name)) && (
+                        <div className={styles.section}>
+                            <h2 className={styles.sectionTitle}>Recent Users</h2>
+                            <DataTable
+                                columns={userColumns}
+                                data={users}
+                                loading={usersLoading}
+                                emptyMessage="No users found"
+                            />
+                        </div>
+                    )}
                 </div>
 
-                {/* Users and Audit Logs */}
-                {user?.roles?.some(role => ['super_admin', 'ops_officer'].includes(role.name)) && (
-                    <div className={styles.section}>
-                        <h2 className={styles.sectionTitle}>Recent Users</h2>
-                        <DataTable
-                            columns={userColumns}
-                            data={users}
-                            loading={usersLoading}
-                            emptyMessage="No users found"
-                        />
-                    </div>
-                )}
-
+                {/* Audit Logs Section - Full Width */}
                 {user?.roles?.some(role => ['super_admin', 'risk_officer'].includes(role.name)) && (
-                    <div className={styles.section}>
-                        <h2 className={styles.sectionTitle}>Audit Logs</h2>
+                    <div className={styles.section} style={{ marginTop: '24px' }}>
+                        <h2 className={styles.sectionTitle}>Recent Audit Logs</h2>
                         <DataTable
                             columns={auditColumns}
                             data={logs}

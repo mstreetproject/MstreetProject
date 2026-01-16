@@ -145,27 +145,35 @@ export function useDebtorStats(initialPeriod: TimePeriod = 'month'): UseDebtorSt
         // Unique debtors in filtered data
         const uniqueDebtors = new Set(filteredLoans.map(l => l.debtor_id));
 
-        // Filter by status
-        const active = filteredLoans.filter(l => l.status === 'active');
+        // Filter by status (partial_repaid counts as active for tracking)
+        const active = filteredLoans.filter(l => l.status === 'active' || l.status === 'partial_repaid');
         const repaid = filteredLoans.filter(l => l.status === 'repaid');
         const overdue = filteredLoans.filter(l => l.status === 'overdue');
         const badDebt = filteredLoans.filter(l => l.status === 'defaulted');
 
-        // Calculate values
-        const activeValue = active.reduce((sum, l) => sum + Number(l.principal), 0);
+        // Calculate values - use outstanding balance (principal - amount_repaid) not full principal
+        const activeValue = active.reduce((sum, l) => {
+            const outstanding = Number(l.principal) - (Number(l.amount_repaid) || 0);
+            return sum + Math.max(0, outstanding);
+        }, 0);
         const repaidValue = repaid.reduce((sum, l) => sum + Number(l.principal), 0);
-        const overdueValue = overdue.reduce((sum, l) => sum + Number(l.principal), 0);
+        const overdueValue = overdue.reduce((sum, l) => {
+            const outstanding = Number(l.principal) - (Number(l.amount_repaid) || 0);
+            return sum + Math.max(0, outstanding);
+        }, 0);
         const badDebtValue = badDebt.reduce((sum, l) => sum + Number(l.principal), 0);
         const totalValue = activeValue + repaidValue + overdueValue + badDebtValue;
 
-        // Calculate interest accrued (for all active loans)
+        // Calculate interest accrued (for active loans, based on outstanding principal)
         const interestAccrued = active.reduce((sum, l) => {
+            const outstanding = Number(l.principal) - (Number(l.amount_repaid) || 0);
+            const interestAlreadyPaid = Number(l.interest_repaid) || 0;
             return sum + calculateInterestAccrued(
-                Number(l.principal),
+                outstanding, // Use outstanding balance for interest calculation
                 Number(l.interest_rate),
                 l.start_date,
                 null // Calculate up to today
-            );
+            ) - interestAlreadyPaid; // Subtract already paid interest
         }, 0);
 
         return {
@@ -179,7 +187,7 @@ export function useDebtorStats(initialPeriod: TimePeriod = 'month'): UseDebtorSt
             badDebtCount: badDebt.length,
             badDebtValue,
             totalValue,
-            interestAccrued,
+            interestAccrued: Math.max(0, interestAccrued), // Ensure non-negative
         };
     }, [filteredLoans]);
 

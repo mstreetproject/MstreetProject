@@ -94,7 +94,7 @@ export function useCreditorStats(initialPeriod: TimePeriod = 'month'): UseCredit
             if (creditorsError) throw creditorsError;
             setCreditors(creditorsData || []);
 
-            // Fetch all credits with creditor info
+            // Fetch all credits with creditor info (exclude archived)
             const { data, error: fetchError } = await supabase
                 .from('credits')
                 .select(`
@@ -105,6 +105,7 @@ export function useCreditorStats(initialPeriod: TimePeriod = 'month'): UseCredit
                         email
                     )
                 `)
+                .is('archived_at', null)  // Only active credits
                 .order('created_at', { ascending: false });
 
             if (fetchError) throw fetchError;

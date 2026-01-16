@@ -3,7 +3,7 @@
 import React from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useUser } from '@/hooks/dashboard/useUser';
-import { FileText, TrendingUp, DollarSign, AlertCircle } from 'lucide-react';
+import ProfitLossSection from '@/components/dashboard/ProfitLossSection';
 import styles from '../creditors/page.module.css';
 
 export default function ReportsPage() {
@@ -42,11 +42,9 @@ export default function ReportsPage() {
                     </p>
                 </div>
 
-                <div className={styles.section}>
-                    <h2 className={styles.sectionTitle}>Coming Soon</h2>
-                    <p style={{ color: '#94A3B8', fontSize: '1rem' }}>
-                        Financial reports and analytics features will be available here.
-                    </p>
+                {/* Profit & Loss Report */}
+                <div style={{ marginTop: '20px' }}>
+                    <ProfitLossSection />
                 </div>
             </div>
         </DashboardLayout>

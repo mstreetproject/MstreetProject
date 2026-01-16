@@ -12,9 +12,10 @@ import { useCreditorStats } from '@/hooks/dashboard/useCreditorStats';
 import { useUserCounts } from '@/hooks/dashboard/useUserCounts';
 import { useCurrency } from '@/hooks/useCurrency';
 import { createClient } from '@/lib/supabase/client';
-import { DollarSign, TrendingUp, Users, CheckCircle, Wallet, PiggyBank, UserPlus, Edit, Trash2 } from 'lucide-react';
-import CreateCreditorModal from '@/components/dashboard/CreateCreditorModal';
+import { DollarSign, TrendingUp, Users, CheckCircle, Wallet, PiggyBank, Edit, Trash2, Loader2, FileText } from 'lucide-react';
 import EditCreditModal from '@/components/dashboard/EditCreditModal';
+import RecordPayoutModal from '@/components/dashboard/RecordPayoutModal';
+import PayoutHistoryModal from '@/components/dashboard/PayoutHistoryModal';
 import styles from './page.module.css';
 
 // Format date
@@ -48,8 +49,11 @@ const StatusBadge = ({ status }: { status: string }) => {
     );
 };
 
+import { useActivityLog } from '@/hooks/useActivityLog';
+
 export default function CreditorsPage() {
     const { user, loading: userLoading } = useUser();
+    const { logActivity } = useActivityLog();
     const {
         stats,
         credits,
@@ -65,9 +69,13 @@ export default function CreditorsPage() {
     } = useCreditorStats('month');
     const { counts: userCounts } = useUserCounts();
     const { formatCurrency } = useCurrency();
-    const [showCreateModal, setShowCreateModal] = useState(false);
     const [editingCredit, setEditingCredit] = useState<any>(null);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [payoutCredit, setPayoutCredit] = useState<any>(null);
+    const [showPayoutModal, setShowPayoutModal] = useState(false);
+    const [historyCreditId, setHistoryCreditId] = useState<string | null>(null);
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
+    const [archivingId, setArchivingId] = useState<string | null>(null);
 
     // Handle Edit
     const handleEdit = (row: any) => {
@@ -75,24 +83,47 @@ export default function CreditorsPage() {
         setShowEditModal(true);
     };
 
-    // Handle Delete
-    const handleDelete = async (row: any) => {
-        if (!confirm(`Are you sure you want to delete this credit?\n\nCreditor: ${row.creditor?.full_name}\nAmount: ${formatCurrency(row.principal)}`)) {
-            return;
-        }
+    // Handle Payout
+    const handlePayout = (row: any) => {
+        setPayoutCredit(row);
+        setShowPayoutModal(true);
+    };
 
-        try {
-            const supabase = createClient();
-            const { error } = await supabase
-                .from('credits')
-                .delete()
-                .eq('id', row.id);
+    // Handle View History
+    const handleViewHistory = (row: any) => {
+        setHistoryCreditId(row.id);
+        setShowHistoryModal(true);
+    };
 
-            if (error) throw error;
-            alert('Credit deleted successfully');
-            refetch();
-        } catch (err: any) {
-            alert(`Error deleting credit: ${err.message}`);
+    // Handle Archive (soft delete)
+    const handleArchive = async (row: any) => {
+        const reason = prompt(`Archive this credit for ${row.creditor?.full_name}?\n\nEnter reason (optional):`);
+        if (reason !== null) {
+            setArchivingId(row.id);
+            try {
+                const supabase = createClient();
+                const { data: { user: authUser } } = await supabase.auth.getUser();
+
+                const { error } = await supabase
+                    .from('credits')
+                    .update({
+                        archived_at: new Date().toISOString(),
+                        archived_by: authUser?.id,
+                        archive_reason: reason || 'Archived by admin',
+                    })
+                    .eq('id', row.id);
+
+                if (error) throw error;
+
+                await logActivity('ARCHIVE_CREDIT', 'credit', row.id, { reason: reason || 'Archived by admin' });
+
+                alert('Credit archived! It can be restored from the Archive page.');
+                refetch();
+            } catch (err: any) {
+                alert(`Error archiving credit: ${err.message}`);
+            } finally {
+                setArchivingId(null);
+            }
         }
     };
 
@@ -187,16 +218,27 @@ export default function CreditorsPage() {
     // Row Actions
     const rowActions: RowAction[] = [
         {
+            label: '💰 Record Payout',
+            icon: <DollarSign size={16} />,
+            onClick: handlePayout,
+            hidden: (row) => row.status === 'withdrawn',
+        },
+        {
+            label: '📜 History',
+            icon: <FileText size={16} />,
+            onClick: handleViewHistory,
+        },
+        {
             label: 'Edit',
             icon: <Edit size={16} />,
             onClick: handleEdit,
         },
         {
-            label: 'Delete',
-            icon: <Trash2 size={16} />,
-            onClick: handleDelete,
+            label: archivingId ? 'Archiving...' : '📦 Archive',
+            icon: archivingId ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />,
+            onClick: handleArchive,
             variant: 'danger',
-        }
+        },
     ];
 
     return (
@@ -314,6 +356,29 @@ export default function CreditorsPage() {
                 }}
                 onSuccess={() => {
                     refetch();
+                }}
+            />
+
+            {/* Record Payout Modal */}
+            <RecordPayoutModal
+                isOpen={showPayoutModal}
+                credit={payoutCredit}
+                onClose={() => {
+                    setShowPayoutModal(false);
+                    setPayoutCredit(null);
+                }}
+                onSuccess={() => {
+                    refetch();
+                }}
+            />
+
+            {/* Payout History Modal */}
+            <PayoutHistoryModal
+                isOpen={showHistoryModal}
+                creditId={historyCreditId}
+                onClose={() => {
+                    setShowHistoryModal(false);
+                    setHistoryCreditId(null);
                 }}
             />
         </DashboardLayout >

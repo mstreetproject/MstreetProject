@@ -22,7 +22,7 @@ export default function SignUpPage() {
         // 1. Sign up user via Supabase Auth
         // Note: The trigger we added to the database will automatically 
         // create the row in our custom 'public.users' table.
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
             email: formData.email,
             password: formData.password,
             options: {
@@ -33,8 +33,19 @@ export default function SignUpPage() {
             },
         });
 
+        // Debug: Log the full response to understand what Supabase returns
+        console.log('Signup response:', { data, error });
+        console.log('User identities:', data?.user?.identities);
+
         if (error) {
             setStatus({ type: "error", message: error.message });
+        } else if (data.user && (!data.user.identities || data.user.identities.length === 0)) {
+            // User already exists - Supabase returns empty/undefined identities array for duplicate emails
+            // This is a security feature to prevent email enumeration
+            setStatus({
+                type: "error",
+                message: "An account with this email already exists. Please log in or use forgot password."
+            });
         } else {
             setStatus({
                 type: "success",

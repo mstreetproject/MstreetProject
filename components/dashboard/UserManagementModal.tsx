@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Loader2, User, Briefcase, DollarSign, TrendingUp } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useActivityLog } from '@/hooks/useActivityLog';
 import styles from './UserManagementModal.module.css';
 
 interface UserManagementModalProps {
@@ -32,6 +33,7 @@ const INTERNAL_ROLES = [
 ];
 
 export default function UserManagementModal({ isOpen, onClose, onSuccess, initialData }: UserManagementModalProps) {
+    const { logActivity } = useActivityLog();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -149,6 +151,17 @@ export default function UserManagementModal({ isOpen, onClose, onSuccess, initia
                     await supabase.from('user_roles').delete().eq('user_id', userId);
                 }
 
+                // Log the user update
+                await logActivity('UPDATE_USER', 'user', userId, {
+                    full_name: formData.full_name,
+                    is_internal: formData.is_internal,
+                    is_creditor: formData.is_creditor,
+                    is_debtor: formData.is_debtor,
+                    role: formData.is_internal ? formData.selectedRole : null,
+                });
+
+                alert(`User "${formData.full_name}" updated successfully!`);
+
             } else {
                 // Insert - SERVER SIDE (Admin API) to create Auth User
 
@@ -169,6 +182,20 @@ export default function UserManagementModal({ isOpen, onClose, onSuccess, initia
                     const errorData = await response.json();
                     throw new Error(errorData.error || 'Failed to create user');
                 }
+
+                const responseData = await response.json();
+
+                // Log the user creation
+                await logActivity('CREATE_USER', 'user', responseData.user?.id || '', {
+                    full_name: formData.full_name,
+                    email: formData.email,
+                    is_internal: formData.is_internal,
+                    is_creditor: formData.is_creditor,
+                    is_debtor: formData.is_debtor,
+                    role: formData.is_internal ? formData.selectedRole : null,
+                });
+
+                alert(`User "${formData.full_name}" created successfully!`);
             }
 
             onSuccess();

@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -14,7 +13,8 @@ import {
     LogOut,
     X,
     UserPlus,
-    Receipt
+    Receipt,
+    Settings
 } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
@@ -56,6 +56,18 @@ const menuItems = [
         roles: ['super_admin', 'finance_manager', 'ops_officer']
     },
     {
+        label: 'Loan Requests',
+        href: '/dashboard/internal/loan-requests',
+        icon: FileText,
+        roles: ['super_admin', 'finance_manager', 'ops_officer']
+    },
+    {
+        label: 'Payment Reviews',
+        href: '/dashboard/internal/payment-reviews',
+        icon: FileText,
+        roles: ['super_admin', 'finance_manager', 'ops_officer']
+    },
+    {
         label: 'Expenses',
         href: '/dashboard/internal/expenses',
         icon: Receipt,
@@ -78,6 +90,24 @@ const menuItems = [
         href: '/dashboard/internal/profile',
         icon: UserCircle,
         roles: ['super_admin', 'finance_manager', 'ops_officer', 'risk_officer']
+    },
+    {
+        label: 'Archive',
+        href: '/dashboard/internal/archive',
+        icon: Receipt,
+        roles: ['super_admin', 'finance_manager', 'ops_officer']
+    },
+    {
+        label: 'Settings',
+        href: '/dashboard/internal/settings',
+        icon: Settings,
+        roles: ['super_admin']
+    },
+    {
+        label: 'System Logs',
+        href: '/dashboard/admin/audit-logs',
+        icon: FileText,
+        roles: ['super_admin']
     },
 
 ];

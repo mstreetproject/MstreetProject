@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/dashboard/useUser';
+import { useActivityLog } from '@/hooks/useActivityLog';
 import { Loader2, User, DollarSign, Percent, Calendar, Clock } from 'lucide-react';
 import styles from './CreateCreditForm.module.css';
 
@@ -18,6 +19,7 @@ interface CreateCreditFormProps {
 
 export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
     const { user } = useUser();
+    const { logActivity } = useActivityLog();
     const [creditors, setCreditors] = useState<Creditor[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingCreditors, setLoadingCreditors] = useState(true);
@@ -75,7 +77,7 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
             const tenure = parseInt(formData.tenure_months);
             const endDate = calculateEndDate(formData.start_date, tenure);
 
-            const { error: insertError } = await supabase
+            const { data: insertedData, error: insertError } = await supabase
                 .from('credits')
                 .insert({
                     creditor_id: formData.creditor_id,
@@ -85,9 +87,20 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
                     start_date: formData.start_date,
                     end_date: endDate,
                     status: 'active',
-                });
+                })
+                .select()
+                .single();
 
             if (insertError) throw insertError;
+
+            // Log the credit creation
+            const selectedCreditor = creditors.find(c => c.id === formData.creditor_id);
+            await logActivity('CREATE_CREDIT', 'credit', insertedData?.id || '', {
+                creditor_name: selectedCreditor?.full_name,
+                principal: parseFloat(formData.principal),
+                interest_rate: parseFloat(formData.interest_rate),
+                tenure_months: tenure,
+            });
 
             setSuccess(true);
             setFormData({

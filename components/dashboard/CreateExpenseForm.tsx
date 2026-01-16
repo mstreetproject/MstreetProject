@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/dashboard/useUser';
+import { useActivityLog } from '@/hooks/useActivityLog';
 import { Loader2, Receipt, DollarSign, Calendar } from 'lucide-react';
 import styles from './CreateCreditForm.module.css'; // Reuse same styles
 
@@ -12,6 +13,7 @@ interface CreateExpenseFormProps {
 
 export default function CreateExpenseForm({ onSuccess }: CreateExpenseFormProps) {
     const { user } = useUser();
+    const { logActivity } = useActivityLog();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
@@ -35,16 +37,25 @@ export default function CreateExpenseForm({ onSuccess }: CreateExpenseFormProps)
 
             const supabase = createClient();
 
-            const { error: insertError } = await supabase
+            const { data: insertedData, error: insertError } = await supabase
                 .from('operating_expenses')
                 .insert({
                     expense_name: formData.expense_name,
                     amount: parseFloat(formData.amount),
                     expense_month: formData.expense_month,
                     created_by: user?.id,
-                });
+                })
+                .select()
+                .single();
 
             if (insertError) throw insertError;
+
+            // Log the expense creation
+            await logActivity('CREATE_EXPENSE', 'expense', insertedData?.id || '', {
+                expense_name: formData.expense_name,
+                amount: parseFloat(formData.amount),
+                expense_month: formData.expense_month,
+            });
 
             setSuccess(true);
             setFormData({

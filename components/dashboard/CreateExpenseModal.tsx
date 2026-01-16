@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/dashboard/useUser';
+import { useActivityLog } from '@/hooks/useActivityLog';
 import styles from './CreateExpenseModal.module.css';
 
 interface CreateExpenseModalProps {
@@ -14,6 +15,7 @@ interface CreateExpenseModalProps {
 
 export default function CreateExpenseModal({ isOpen, onClose, onSuccess }: CreateExpenseModalProps) {
     const { user } = useUser();
+    const { logActivity } = useActivityLog();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -37,16 +39,25 @@ export default function CreateExpenseModal({ isOpen, onClose, onSuccess }: Creat
 
             const supabase = createClient();
 
-            const { error: insertError } = await supabase
+            const { data: insertedData, error: insertError } = await supabase
                 .from('operating_expenses')
                 .insert({
                     expense_name: formData.expense_name,
                     amount: parseFloat(formData.amount),
                     expense_month: formData.expense_month,
                     created_by: user?.id,
-                });
+                })
+                .select()
+                .single();
 
             if (insertError) throw insertError;
+
+            // Log the activity
+            await logActivity('CREATE_EXPENSE', 'expense', insertedData?.id || '', {
+                expense_name: formData.expense_name,
+                amount: parseFloat(formData.amount),
+                expense_month: formData.expense_month,
+            });
 
             // Success
             onSuccess();

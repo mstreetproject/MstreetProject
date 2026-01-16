@@ -19,14 +19,26 @@ export function useDashboardStats(startDate?: Date | null, endDate?: Date | null
             // Prepare financial queries with date filters
             let interestQuery = supabase.from('monthly_financials').select('interest_revenue');
             let expensesQuery = supabase.from('operating_expenses').select('amount');
+            let payoutsQuery = supabase.from('creditor_payouts').select('total_amount');
+
+            // For revenue (collections), we sum repayment amounts from loans table
+            // Note: Ideally we'd query the 'loan_repayments' table for time-based filtering, 
+            // but for now we aggregate loan totals as requested or if time filter is minimal.
+            // If strict time filtering is needed for revenue, we should query 'loan_repayments'.
+            // Let's use 'loan_repayments' for accuracy with date filters.
+            let revenueQuery = supabase.from('loan_repayments').select('total_amount');
 
             if (startDate) {
                 interestQuery = interestQuery.gte('created_at', startDate.toISOString());
                 expensesQuery = expensesQuery.gte('expense_month', startDate.toISOString());
+                payoutsQuery = payoutsQuery.gte('created_at', startDate.toISOString());
+                revenueQuery = revenueQuery.gte('created_at', startDate.toISOString());
             }
             if (endDate) {
                 interestQuery = interestQuery.lte('created_at', endDate.toISOString());
                 expensesQuery = expensesQuery.lte('expense_month', endDate.toISOString());
+                payoutsQuery = payoutsQuery.lte('created_at', endDate.toISOString());
+                revenueQuery = revenueQuery.lte('created_at', endDate.toISOString());
             }
 
             // Fetch all stats in parallel
@@ -37,6 +49,8 @@ export function useDashboardStats(startDate?: Date | null, endDate?: Date | null
                 badDebtLoans,
                 interestRevenue,
                 operatingExpenses,
+                creditorPayouts,
+                loanRepayments
             ] = await Promise.all([
                 // Total users (Snapshot)
                 supabase
@@ -66,6 +80,12 @@ export function useDashboardStats(startDate?: Date | null, endDate?: Date | null
 
                 // Operating expenses (Filtered)
                 expensesQuery,
+
+                // Creditor Payouts (Filtered)
+                payoutsQuery,
+
+                // Loan Repayments (Revenue/Collections) (Filtered)
+                revenueQuery
             ]);
 
             // Calculate totals
@@ -99,6 +119,16 @@ export function useDashboardStats(startDate?: Date | null, endDate?: Date | null
                 0
             );
 
+            const totalCreditCost = (creditorPayouts.data || []).reduce(
+                (sum, payout) => sum + Number(payout.total_amount),
+                0
+            );
+
+            const totalRevenueEarned = (loanRepayments.data || []).reduce(
+                (sum, repayment) => sum + Number(repayment.total_amount),
+                0
+            );
+
             setStats({
                 totalUsers,
                 totalActiveCredits: {
@@ -109,14 +139,17 @@ export function useDashboardStats(startDate?: Date | null, endDate?: Date | null
                     count: activeLoansData.length,
                     sum: totalActiveLoansSum,
                 },
-                totalInterestEarned,
+                totalInterestEarned,      // Kept for backward compat, though potentially replaced in UI
+                totalRevenueEarned,       // New: Gross collections
                 totalOperatingExpenses: totalOperatingExpenseSum,
+                totalCreditCost,          // New: Total payouts
                 totalBadDebt: {
                     count: badDebtLoansData.length,
                     sum: totalBadDebtSum,
                 },
             });
         } catch (err) {
+            console.error('Error fetching dashboard stats:', err);
             setError(err instanceof Error ? err : new Error('Failed to fetch dashboard stats'));
         } finally {
             setLoading(false);

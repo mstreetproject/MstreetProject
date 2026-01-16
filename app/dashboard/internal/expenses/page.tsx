@@ -1,22 +1,27 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import StatsCard from '@/components/dashboard/StatsCard';
-import DataTable, { Column } from '@/components/dashboard/DataTable';
+import DataTable, { Column, RowAction } from '@/components/dashboard/DataTable';
 import TimePeriodFilter from '@/components/dashboard/TimePeriodFilter';
 import DateRangeFilter from '@/components/dashboard/DateRangeFilter';
 import CurrencySelector from '@/components/dashboard/CurrencySelector';
+import EditExpenseModal from '@/components/dashboard/EditExpenseModal';
 import { useUser } from '@/hooks/dashboard/useUser';
 import { useExpenseStats } from '@/hooks/dashboard/useExpenseStats';
 import { useCurrency } from '@/hooks/useCurrency';
+import { useActivityLog } from '@/hooks/useActivityLog';
+import { createClient } from '@/lib/supabase/client';
 import {
     Receipt,
     DollarSign,
     TrendingUp,
     TrendingDown,
     Calendar,
-    BarChart3
+    BarChart3,
+    Edit,
+    Trash2
 } from 'lucide-react';
 import styles from '../creditors/page.module.css';
 
@@ -43,11 +48,49 @@ export default function ExpensesPage() {
     } = useExpenseStats();
 
     const { formatCurrency } = useCurrency();
+    const { logActivity } = useActivityLog();
+    const [editingExpense, setEditingExpense] = useState<any>(null);
+    const [showEditModal, setShowEditModal] = useState(false);
 
     // Check permissions
     const hasAccess = user?.roles?.some(
         role => ['super_admin', 'finance_manager'].includes(role.name)
     );
+
+    // Handle Edit
+    const handleEdit = (row: any) => {
+        setEditingExpense(row);
+        setShowEditModal(true);
+    };
+
+    // Handle Delete
+    const handleDelete = async (row: any) => {
+        if (!confirm(`Are you sure you want to delete this expense?\n\nName: ${row.expense_name}\nAmount: ${formatCurrency(row.amount)}`)) {
+            return;
+        }
+
+        try {
+            const supabase = createClient();
+            const { error } = await supabase
+                .from('operating_expenses')
+                .delete()
+                .eq('id', row.id);
+
+            if (error) throw error;
+
+            // Log the deletion
+            await logActivity('DELETE_EXPENSE', 'expense', row.id, {
+                expense_name: row.expense_name,
+                amount: row.amount,
+                expense_month: row.expense_month,
+            });
+
+            alert('Expense deleted successfully');
+            refetch();
+        } catch (err: any) {
+            alert(`Error deleting expense: ${err.message}`);
+        }
+    };
 
     if (userLoading) {
         return (
@@ -94,6 +137,21 @@ export default function ExpensesPage() {
             label: 'Date',
             render: (value) => formatDate(value)
         },
+    ];
+
+    // Row Actions
+    const rowActions: RowAction[] = [
+        {
+            label: 'Edit',
+            icon: <Edit size={16} />,
+            onClick: handleEdit,
+        },
+        {
+            label: 'Delete',
+            icon: <Trash2 size={16} />,
+            onClick: handleDelete,
+            variant: 'danger',
+        }
     ];
 
     return (
@@ -164,9 +222,24 @@ export default function ExpensesPage() {
                         paginated
                         defaultPageSize={10}
                         emptyMessage="No expenses found for the selected period"
+                        actions={rowActions}
                     />
                 </div>
             </div>
+
+            {/* Edit Expense Modal */}
+            <EditExpenseModal
+                isOpen={showEditModal}
+                expense={editingExpense}
+                onClose={() => {
+                    setShowEditModal(false);
+                    setEditingExpense(null);
+                }}
+                onSuccess={() => {
+                    refetch();
+                }}
+            />
         </DashboardLayout>
     );
 }
+
