@@ -14,16 +14,16 @@ DECLARE
     bad_debt DECIMAL(15, 2);
     net_profit DECIMAL(15, 2);
 BEGIN
-    -- 1. Revenue: Interest Earned (from loan_repayments)
-    -- Sum of 'amount_interest' from repayments made within the period
-    SELECT COALESCE(SUM(amount_interest), 0)
+    -- 1. Revenue: Total Collections from Loans (Principal + Interest Repaid)
+    -- Sum of 'total_amount' (amount_principal + amount_interest) from repayments
+    SELECT COALESCE(SUM(amount_principal + amount_interest), 0)
     INTO total_revenue
     FROM loan_repayments
     WHERE created_at >= start_date AND created_at <= end_date;
 
-    -- 2. Finance Costs: Interest Paid to Creditors (from creditor_payouts)
-    -- Sum of 'interest_amount' from payouts made within the period
-    SELECT COALESCE(SUM(interest_amount), 0)
+    -- 2. Finance Costs: Total Payouts to Creditors (Principal + Interest Paid)
+    -- Sum of 'total_amount' from creditor_payouts
+    SELECT COALESCE(SUM(total_amount), 0)
     INTO finance_costs
     FROM creditor_payouts
     WHERE created_at >= start_date AND created_at <= end_date;
@@ -36,14 +36,12 @@ BEGIN
     FROM operating_expenses
     WHERE expense_month >= start_date::DATE AND expense_month <= end_date::DATE;
 
-    -- 4. Bad Debt: Principal Lost (from defaulted loans)
-    -- Sum of (principal - amount_repaid) for loans marked as 'defaulted' within the period
-    -- We use updated_at as a proxy for when the default occurred
-    SELECT COALESCE(SUM(principal - COALESCE(amount_repaid, 0)), 0)
+    -- 4. Bad Debt: From bad_debts table
+    -- Sum of 'amount' from bad debts declared within the period
+    SELECT COALESCE(SUM(amount), 0)
     INTO bad_debt
-    FROM loans
-    WHERE status = 'defaulted'
-    AND updated_at >= start_date AND updated_at <= end_date;
+    FROM bad_debts
+    WHERE declared_date >= start_date::DATE AND declared_date <= end_date::DATE;
 
     -- 5. Net Profit
     -- Revenue - Costs - Expenses - Bad Debt

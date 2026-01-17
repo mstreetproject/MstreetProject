@@ -14,7 +14,7 @@ import { useRecentUsers } from '@/hooks/dashboard/useRecentUsers';
 import { useRecentExpenses } from '@/hooks/dashboard/useRecentExpenses';
 import { useAuditLogs } from '@/hooks/dashboard/useAuditLogs';
 import { useCurrency } from '@/hooks/useCurrency';
-import { TIME_PERIODS, TimePeriod, DateRange } from '@/hooks/dashboard/useCreditorStats';
+import { useCreditorStats, TIME_PERIODS, TimePeriod, DateRange } from '@/hooks/dashboard/useCreditorStats';
 import {
     Users,
     DollarSign,
@@ -111,6 +111,12 @@ export default function InternalDashboard() {
     const { expenses, loading: expensesLoading } = useRecentExpenses(5);
     const { logs, loading: logsLoading } = useAuditLogs(10);
     const { formatCurrency } = useCurrency();
+
+    // Get creditor stats (for Credit Cost - same source as Creditors dashboard)
+    const { stats: creditorStats, loading: creditorStatsLoading } = useCreditorStats('all');
+
+    // Calculate total credit cost (active credits + accrued interest)
+    const totalCreditCost = (creditorStats?.activeValue || 0) + (creditorStats?.interestAccrued || 0);
 
     // Check if user has access
     const hasAccess = user?.is_internal || user?.roles?.some(
@@ -300,11 +306,11 @@ export default function InternalDashboard() {
                 <div className={styles.statsGrid}>
                     <StatsCard
                         title="Active Credits"
-                        value={stats ? stats.totalActiveCredits.count : 0}
-                        change={stats ? formatCurrency(stats.totalActiveCredits.sum) : '$0'}
+                        value={creditorStats?.activeCount || 0}
+                        change={formatCurrency(creditorStats?.activeValue || 0)}
                         changeType="neutral"
                         icon={DollarSign}
-                        loading={statsLoading}
+                        loading={statsLoading || creditorStatsLoading}
                     />
                     <StatsCard
                         title="Active Loans"
@@ -328,11 +334,11 @@ export default function InternalDashboard() {
 
                             <StatsCard
                                 title="Credit Cost"
-                                value={stats ? formatCurrency(stats.totalCreditCost || 0) : '$0'}
+                                value={formatCurrency(totalCreditCost)}
                                 change="Outflow"
                                 changeType="negative"
-                                icon={TrendingDown} // Using TrendingDown for costs
-                                loading={statsLoading}
+                                icon={TrendingDown}
+                                loading={statsLoading || creditorStatsLoading}
                             />
 
                             <StatsCard

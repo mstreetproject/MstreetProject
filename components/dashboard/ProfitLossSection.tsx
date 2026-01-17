@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import StatsCard from './StatsCard';
 import DateRangeFilter from './DateRangeFilter';
 import { useCurrency } from '@/hooks/useCurrency';
-import { TrendingUp, TrendingDown, DollarSign, Wallet, AlertOctagon } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Wallet, AlertOctagon, Download, Share2, Check } from 'lucide-react';
 import styles from './ProfitLossSection.module.css';
 
 interface PnLSummary {
@@ -19,6 +19,8 @@ interface PnLSummary {
 export default function ProfitLossSection() {
     const { formatCurrency } = useCurrency();
     const [loading, setLoading] = useState(true);
+    const [copied, setCopied] = useState(false);
+    const [shareLoading, setShareLoading] = useState(false);
     const [data, setData] = useState<PnLSummary>({
         total_revenue: 0,
         finance_costs: 0,
@@ -28,8 +30,8 @@ export default function ProfitLossSection() {
     });
 
     const [dateRange, setDateRange] = useState<{ startDate: Date | null; endDate: Date | null }>({
-        startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1), // Start of current month
-        endDate: new Date() // Today
+        startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+        endDate: new Date()
     });
 
     const fetchData = useCallback(async () => {
@@ -48,8 +50,6 @@ export default function ProfitLossSection() {
             if (error) throw error;
 
             if (pnlData) {
-                // Parse JSON if needed, though supabase client usually handles it
-                // RPC returns JSON type, so it might come as object
                 setData(pnlData as PnLSummary);
             }
         } catch (error) {
@@ -63,6 +63,42 @@ export default function ProfitLossSection() {
         fetchData();
     }, [fetchData]);
 
+    const handlePrint = () => {
+        window.print();
+    };
+
+    const handleShare = async () => {
+        setShareLoading(true);
+        try {
+            const supabase = createClient();
+            const token = crypto.randomUUID();
+            const expiresAt = new Date();
+            expiresAt.setDate(expiresAt.getDate() + 7);
+
+            const { data: { user } } = await supabase.auth.getUser();
+
+            await supabase.from('report_shares').insert({
+                id: crypto.randomUUID(),
+                report_type: 'profit_loss',
+                date_start: dateRange.startDate?.toISOString().split('T')[0],
+                date_end: dateRange.endDate?.toISOString().split('T')[0],
+                token,
+                expires_at: expiresAt.toISOString(),
+                created_by: user?.id
+            });
+
+            const shareUrl = `${window.location.origin}/reports/${token}`;
+            await navigator.clipboard.writeText(shareUrl);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 3000);
+        } catch (error) {
+            console.error('Error creating share link:', error);
+            alert('Failed to create share link');
+        } finally {
+            setShareLoading(false);
+        }
+    };
+
     const isProfitPositive = data.net_profit >= 0;
 
     return (
@@ -74,11 +110,24 @@ export default function ProfitLossSection() {
                         Overview of revenue, expenses, and net profit
                     </p>
                 </div>
-                <div className={styles.filters}>
+                <div className={styles.headerActions}>
                     <DateRangeFilter
                         value={dateRange}
                         onChange={setDateRange}
                     />
+                    <div className={styles.actionBtns}>
+                        <button className={styles.actionBtn} onClick={handlePrint} title="Print/Download PDF">
+                            <Download size={18} />
+                        </button>
+                        <button
+                            className={`${styles.actionBtn} ${styles.shareBtn}`}
+                            onClick={handleShare}
+                            disabled={shareLoading}
+                            title="Share Report"
+                        >
+                            {copied ? <Check size={18} /> : <Share2 size={18} />}
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -90,7 +139,7 @@ export default function ProfitLossSection() {
                     icon={TrendingUp}
                     loading={loading}
                     changeType="positive"
-                    change="Interest Earned"
+                    change="Loan Collections"
                 />
 
                 {/* Finance Costs */}
@@ -100,7 +149,7 @@ export default function ProfitLossSection() {
                     icon={Wallet}
                     loading={loading}
                     changeType="negative"
-                    change="Interest Paid"
+                    change="Creditor Payouts"
                 />
 
                 {/* Operating Expenses */}

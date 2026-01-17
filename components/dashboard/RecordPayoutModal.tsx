@@ -34,40 +34,24 @@ export default function RecordPayoutModal({ isOpen, credit, onClose, onSuccess }
     const { recordPayout, calculateInterest, loading } = useCreditorPayouts();
     const { formatCurrency } = useCurrency();
 
-    const [payoutType, setPayoutType] = useState<'interest_only' | 'partial_principal' | 'full_maturity' | 'early_withdrawal'>('full_maturity');
-    const [principalAmount, setPrincipalAmount] = useState('');
-    const [interestAmount, setInterestAmount] = useState('');
     const [notes, setNotes] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Calculate values when credit changes
+    // Reset state when modal opens/closes
     useEffect(() => {
-        if (credit) {
-            const remaining = credit.remaining_principal ?? credit.principal;
-            const interest = calculateInterest(
-                remaining,
-                credit.interest_rate,
-                credit.start_date,
-                (credit.interest_type as 'simple' | 'compound') || 'simple'
-            );
-
-            // Default based on payout type
-            if (payoutType === 'full_maturity' || payoutType === 'early_withdrawal') {
-                setPrincipalAmount(remaining.toFixed(2));
-                setInterestAmount(interest.toFixed(2));
-            } else if (payoutType === 'interest_only') {
-                setPrincipalAmount('0');
-                setInterestAmount(interest.toFixed(2));
-            } else {
-                setPrincipalAmount('');
-                setInterestAmount('');
-            }
+        if (!isOpen) {
+            setNotes('');
+            setError(null);
+            setSuccess(false);
+            setIsSubmitting(false);
         }
-    }, [credit, payoutType, calculateInterest]);
+    }, [isOpen]);
 
     if (!isOpen || !credit) return null;
 
+    // Calculate full payout amounts
     const remainingPrincipal = credit.remaining_principal ?? credit.principal;
     const accruedInterest = calculateInterest(
         remainingPrincipal,
@@ -75,42 +59,36 @@ export default function RecordPayoutModal({ isOpen, credit, onClose, onSuccess }
         credit.start_date,
         (credit.interest_type as 'simple' | 'compound') || 'simple'
     );
-    const currentValue = remainingPrincipal + accruedInterest;
+    const totalPayout = remainingPrincipal + accruedInterest;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Prevent duplicate submissions
+        if (isSubmitting || loading) return;
+
         setError(null);
+        setIsSubmitting(true);
 
-        const principal = parseFloat(principalAmount) || 0;
-        const interest = parseFloat(interestAmount) || 0;
-
-        if (principal + interest <= 0) {
-            setError('Total payout must be greater than 0');
-            return;
-        }
-
-        if (principal > remainingPrincipal) {
-            setError(`Principal cannot exceed remaining balance (${formatCurrency(remainingPrincipal)})`);
+        if (totalPayout <= 0) {
+            setError('Nothing to pay out');
+            setIsSubmitting(false);
             return;
         }
 
         try {
-            await recordPayout(credit.id, principal, interest, payoutType, notes || undefined);
+            // Always do full payout (principal + interest)
+            await recordPayout(credit.id, remainingPrincipal, accruedInterest, 'full_maturity', notes || undefined);
             setSuccess(true);
             setTimeout(() => {
                 onSuccess();
                 onClose();
-                setSuccess(false);
-                setPrincipalAmount('');
-                setInterestAmount('');
-                setNotes('');
             }, 1500);
         } catch (err: any) {
             setError(err.message);
+            setIsSubmitting(false);
         }
     };
-
-    const isFullPayout = payoutType === 'full_maturity' || payoutType === 'early_withdrawal';
 
     return (
         <div style={{
@@ -126,212 +104,122 @@ export default function RecordPayoutModal({ isOpen, credit, onClose, onSuccess }
             <div style={{
                 background: 'var(--bg-secondary)',
                 borderRadius: '16px',
-                padding: '32px',
+                padding: '28px',
                 width: '100%',
-                maxWidth: '500px',
+                maxWidth: '650px',
                 border: '1px solid var(--border-primary)',
-                maxHeight: '90vh',
-                overflowY: 'auto',
             }}>
                 {/* Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                    <h2 style={{ color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <DollarSign size={24} />
-                        Record Payout
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h2 style={{ color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.25rem' }}>
+                        <DollarSign size={22} />
+                        Record Full Payout
                     </h2>
                     <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                        <X size={24} />
+                        <X size={22} />
                     </button>
                 </div>
 
                 {success ? (
                     <div style={{
                         textAlign: 'center',
-                        padding: '40px',
+                        padding: '30px',
                         color: 'var(--success)',
                     }}>
-                        <CheckCircle size={48} style={{ marginBottom: '16px' }} />
-                        <p style={{ fontSize: '1.2rem', fontWeight: 600 }}>Payout Recorded!</p>
+                        <CheckCircle size={42} style={{ marginBottom: '12px' }} />
+                        <p style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>Payout Recorded!</p>
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit}>
-                        {/* Creditor Info */}
-                        <div style={{
-                            background: 'var(--bg-tertiary)',
-                            borderRadius: '12px',
-                            padding: '16px',
-                            marginBottom: '20px',
-                        }}>
-                            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.85rem' }}>Paying out to:</p>
-                            <p style={{ margin: '4px 0 0', color: 'var(--text-primary)', fontWeight: 600, fontSize: '1.1rem' }}>
-                                {credit.creditor?.full_name || 'Unknown Creditor'}
-                            </p>
-                            <p style={{ margin: '2px 0 0', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                                {credit.creditor?.email}
-                            </p>
-                        </div>
+                        {/* Two Column Layout */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                            {/* Left: Creditor Info */}
+                            <div style={{
+                                background: 'var(--bg-tertiary)',
+                                borderRadius: '10px',
+                                padding: '14px',
+                            }}>
+                                <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.8rem' }}>Paying out to:</p>
+                                <p style={{ margin: '4px 0 0', color: 'var(--text-primary)', fontWeight: 600 }}>
+                                    {credit.creditor?.full_name || 'Unknown'}
+                                </p>
+                                <p style={{ margin: '2px 0 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                                    {credit.creditor?.email}
+                                </p>
+                            </div>
 
-                        {/* Balance Summary */}
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(2, 1fr)',
-                            gap: '12px',
-                            marginBottom: '20px',
-                        }}>
-                            <div style={{ background: 'var(--accent-bg)', padding: '12px', borderRadius: '8px' }}>
-                                <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.8rem' }}>Remaining Principal</p>
-                                <p style={{ margin: '4px 0 0', color: 'var(--accent-primary)', fontWeight: 700 }}>
-                                    {formatCurrency(remainingPrincipal)}
-                                </p>
-                            </div>
-                            <div style={{ background: 'var(--success-bg)', padding: '12px', borderRadius: '8px' }}>
-                                <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.8rem' }}>Interest Accrued</p>
-                                <p style={{ margin: '4px 0 0', color: 'var(--success)', fontWeight: 700 }}>
-                                    {formatCurrency(accruedInterest)}
-                                </p>
-                            </div>
-                            <div style={{ background: 'var(--warning-bg)', padding: '12px', borderRadius: '8px', gridColumn: 'span 2' }}>
-                                <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.8rem' }}>Current Total Value</p>
-                                <p style={{ margin: '4px 0 0', color: 'var(--warning)', fontWeight: 700, fontSize: '1.2rem' }}>
-                                    {formatCurrency(currentValue)}
-                                </p>
+                            {/* Right: Payout Breakdown */}
+                            <div style={{
+                                background: 'var(--bg-tertiary)',
+                                borderRadius: '10px',
+                                padding: '14px',
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.9rem' }}>
+                                    <span style={{ color: 'var(--text-muted)' }}>Principal</span>
+                                    <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{formatCurrency(remainingPrincipal)}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.9rem' }}>
+                                    <span style={{ color: 'var(--text-muted)' }}>Interest</span>
+                                    <span style={{ color: 'var(--success)', fontWeight: 500 }}>+{formatCurrency(accruedInterest)}</span>
+                                </div>
+                                <div style={{ borderTop: '1px solid var(--border-primary)', paddingTop: '6px', display: 'flex', justifyContent: 'space-between' }}>
+                                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Total</span>
+                                    <span style={{ color: 'var(--accent-primary)', fontWeight: 700 }}>{formatCurrency(totalPayout)}</span>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Payout Type */}
-                        <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                                Payout Type
-                            </label>
-                            <select
-                                value={payoutType}
-                                onChange={(e) => setPayoutType(e.target.value as any)}
-                                style={{
-                                    width: '100%',
-                                    padding: '12px',
-                                    borderRadius: '8px',
-                                    border: '1px solid var(--border-secondary)',
-                                    background: 'var(--bg-input)',
-                                    color: 'var(--text-primary)',
-                                    fontSize: '1rem',
-                                }}
-                            >
-                                <option value="full_maturity">Full Maturity Payout (Principal + Interest)</option>
-                                <option value="early_withdrawal">Early Withdrawal (Full)</option>
-                                <option value="interest_only">Interest Only</option>
-                                <option value="partial_principal">Partial Withdrawal</option>
-                            </select>
-                        </div>
-
-                        {/* Amount Inputs */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+                        {/* Notes + Warning Row */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                            {/* Notes */}
                             <div>
-                                <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                                    Principal Amount
+                                <label style={{ display: 'block', marginBottom: '6px', color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.9rem' }}>
+                                    Notes (Optional)
                                 </label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    value={principalAmount}
-                                    onChange={(e) => setPrincipalAmount(e.target.value)}
-                                    disabled={payoutType === 'interest_only' || isFullPayout}
+                                <textarea
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    placeholder="Add notes..."
+                                    rows={2}
                                     style={{
                                         width: '100%',
-                                        padding: '12px',
+                                        padding: '10px',
                                         borderRadius: '8px',
                                         border: '1px solid var(--border-secondary)',
-                                        background: isFullPayout || payoutType === 'interest_only' ? 'var(--bg-tertiary)' : 'var(--bg-input)',
+                                        background: 'var(--bg-input)',
                                         color: 'var(--text-primary)',
-                                        fontSize: '1rem',
+                                        fontSize: '0.9rem',
+                                        resize: 'none',
                                     }}
                                 />
                             </div>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                                    Interest Amount
-                                </label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    value={interestAmount}
-                                    onChange={(e) => setInterestAmount(e.target.value)}
-                                    disabled={payoutType === 'full_maturity'}
-                                    style={{
-                                        width: '100%',
-                                        padding: '12px',
-                                        borderRadius: '8px',
-                                        border: '1px solid var(--border-secondary)',
-                                        background: isFullPayout ? 'var(--bg-tertiary)' : 'var(--bg-input)',
-                                        color: 'var(--text-primary)',
-                                        fontSize: '1rem',
-                                    }}
-                                />
-                            </div>
-                        </div>
 
-                        {/* Total */}
-                        <div style={{
-                            background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
-                            padding: '16px',
-                            borderRadius: '12px',
-                            marginBottom: '20px',
-                            textAlign: 'center',
-                        }}>
-                            <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem' }}>Total Payout</p>
-                            <p style={{ margin: '4px 0 0', color: 'white', fontWeight: 700, fontSize: '1.5rem' }}>
-                                {formatCurrency((parseFloat(principalAmount) || 0) + (parseFloat(interestAmount) || 0))}
-                            </p>
-                        </div>
-
-                        {/* Notes */}
-                        <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                                Notes (Optional)
-                            </label>
-                            <textarea
-                                value={notes}
-                                onChange={(e) => setNotes(e.target.value)}
-                                placeholder="Add any notes about this payout..."
-                                rows={2}
-                                style={{
-                                    width: '100%',
-                                    padding: '12px',
-                                    borderRadius: '8px',
-                                    border: '1px solid var(--border-secondary)',
-                                    background: 'var(--bg-input)',
-                                    color: 'var(--text-primary)',
-                                    fontSize: '1rem',
-                                    resize: 'vertical',
-                                }}
-                            />
-                        </div>
-
-                        {/* Warning for full payout */}
-                        {isFullPayout && (
+                            {/* Warning */}
                             <div style={{
                                 background: 'var(--warning-bg)',
                                 border: '1px solid var(--warning)',
                                 borderRadius: '8px',
-                                padding: '12px',
-                                marginBottom: '20px',
+                                padding: '10px',
                                 display: 'flex',
+                                alignItems: 'flex-start',
                                 gap: '8px',
                             }}>
-                                <AlertCircle size={20} style={{ color: 'var(--warning)', flexShrink: 0 }} />
-                                <p style={{ margin: 0, color: 'var(--warning)', fontSize: '0.9rem' }}>
-                                    This will mark the credit as <strong>Withdrawn</strong> and remove it from active credits.
+                                <AlertCircle size={18} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: '2px' }} />
+                                <p style={{ margin: 0, color: 'var(--warning)', fontSize: '0.85rem' }}>
+                                    This will pay out the full amount and mark credit as <strong>Withdrawn</strong>.
                                 </p>
                             </div>
-                        )}
+                        </div>
 
                         {/* Error */}
                         {error && (
                             <div style={{
                                 background: 'var(--danger-bg)',
                                 color: 'var(--danger)',
-                                padding: '12px',
+                                padding: '10px',
                                 borderRadius: '8px',
-                                marginBottom: '20px',
+                                marginBottom: '12px',
+                                fontSize: '0.9rem',
                             }}>
                                 {error}
                             </div>
@@ -340,26 +228,26 @@ export default function RecordPayoutModal({ isOpen, credit, onClose, onSuccess }
                         {/* Submit */}
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={loading || isSubmitting}
                             style={{
                                 width: '100%',
-                                padding: '14px',
+                                padding: '12px',
                                 borderRadius: '10px',
                                 border: 'none',
                                 background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
                                 color: 'white',
                                 fontWeight: 600,
                                 fontSize: '1rem',
-                                cursor: loading ? 'not-allowed' : 'pointer',
-                                opacity: loading ? 0.6 : 1,
+                                cursor: (loading || isSubmitting) ? 'not-allowed' : 'pointer',
+                                opacity: (loading || isSubmitting) ? 0.6 : 1,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 gap: '8px',
                             }}
                         >
-                            {loading ? <Loader2 size={18} className="animate-spin" /> : <DollarSign size={18} />}
-                            {loading ? 'Processing...' : 'Confirm Payout'}
+                            {(loading || isSubmitting) ? <Loader2 size={18} className="animate-spin" /> : <DollarSign size={18} />}
+                            {(loading || isSubmitting) ? 'Processing...' : `Pay ${formatCurrency(totalPayout)}`}
                         </button>
                     </form>
                 )}

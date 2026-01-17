@@ -12,6 +12,7 @@ import { useCreditorStats } from '@/hooks/dashboard/useCreditorStats';
 import { useUserCounts } from '@/hooks/dashboard/useUserCounts';
 import { useCurrency } from '@/hooks/useCurrency';
 import { createClient } from '@/lib/supabase/client';
+import { calculateSimpleInterest } from '@/lib/interest';
 import { DollarSign, TrendingUp, Users, CheckCircle, Wallet, PiggyBank, Edit, Trash2, Loader2, FileText } from 'lucide-react';
 import EditCreditModal from '@/components/dashboard/EditCreditModal';
 import RecordPayoutModal from '@/components/dashboard/RecordPayoutModal';
@@ -179,16 +180,12 @@ export default function CreditorsPage() {
         },
         {
             key: 'current_accrued',
-            label: 'Accrued Today',
+            label: 'Current Value',
             render: (_, row) => {
-                // Principal + Interest accrued from start date to today
-                const principal = row.principal || 0;
-                const rate = row.interest_rate || 0;
-                const startDate = new Date(row.start_date);
-                const today = new Date();
-                const daysElapsed = Math.max(0, Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
-                const interestAccrued = principal * (rate / 100) * (daysElapsed / 365);
-                return formatCurrency(principal + interestAccrued);
+                // Use remaining_principal from DB (updated after payouts), fallback to principal
+                const remaining = row.remaining_principal ?? row.principal;
+                const interest = calculateSimpleInterest(remaining, row.interest_rate || 0, row.start_date);
+                return formatCurrency(remaining + interest);
             }
         },
         {
@@ -201,6 +198,25 @@ export default function CreditorsPage() {
                 const tenureMonths = row.tenure_months || 0;
                 const totalInterest = principal * (rate / 100) * (tenureMonths / 12);
                 return formatCurrency(principal + totalInterest);
+            }
+        },
+        {
+            key: 'maturity_date',
+            label: 'Matures',
+            render: (_, row) => {
+                // Calculate end date from start_date + tenure
+                if (row.end_date) {
+                    return formatDate(row.end_date);
+                }
+                const startDate = new Date(row.start_date);
+                startDate.setMonth(startDate.getMonth() + (row.tenure_months || 0));
+                const isOverdue = startDate < new Date() && row.status === 'active';
+                return (
+                    <span style={{ color: isOverdue ? 'var(--danger)' : 'inherit' }}>
+                        {formatDate(startDate.toISOString())}
+                        {isOverdue && ' ⚠️'}
+                    </span>
+                );
             }
         },
         {
@@ -368,6 +384,7 @@ export default function CreditorsPage() {
                     setPayoutCredit(null);
                 }}
                 onSuccess={() => {
+                    console.log('Payout successful - calling refetch');
                     refetch();
                 }}
             />

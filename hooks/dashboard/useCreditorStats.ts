@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Credit } from '@/types/dashboard';
+import { calculateSimpleInterest } from '@/lib/interest';
 
 // Time period options
 export const TIME_PERIODS = {
@@ -54,19 +55,6 @@ interface UseCreditorStatsResult {
     refetch: () => void;
 }
 
-// Calculate interest accrued based on principal, rate, and time elapsed
-function calculateInterestAccrued(
-    principal: number,
-    interestRate: number,
-    startDate: string,
-    endDate: string | null
-): number {
-    const start = new Date(startDate);
-    const end = endDate ? new Date(endDate) : new Date();
-    const monthsElapsed = Math.max(0, (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30));
-    // Simple interest: P * R * T / 12 (annualized)
-    return principal * (interestRate / 100) * (monthsElapsed / 12);
-}
 
 export function useCreditorStats(initialPeriod: TimePeriod = 'month'): UseCreditorStatsResult {
     const [allCredits, setAllCredits] = useState<Credit[]>([]);
@@ -110,6 +98,15 @@ export function useCreditorStats(initialPeriod: TimePeriod = 'month'): UseCredit
 
             if (fetchError) throw fetchError;
 
+            // Debug: Log fetched credits to see if remaining_principal is being returned
+            console.log('Fetched credits:', data?.map(c => ({
+                id: c.id,
+                principal: c.principal,
+                remaining_principal: c.remaining_principal,
+                total_paid_out: c.total_paid_out,
+                status: c.status
+            })));
+
             setAllCredits(data || []);
         } catch (err) {
             setError(err instanceof Error ? err : new Error('Failed to fetch credits'));
@@ -122,7 +119,9 @@ export function useCreditorStats(initialPeriod: TimePeriod = 'month'): UseCredit
         fetchCredits();
     }, [fetchCredits]);
 
-    // Filter credits based on time period, date range, and creditor
+    // Filter credits based on date range and creditor
+    // NOTE: Shows ALL active credits by default. Time period filter removed - 
+    // use custom date range for date-based filtering
     const filteredCredits = useMemo(() => {
         let filtered = [...allCredits];
 
@@ -131,7 +130,7 @@ export function useCreditorStats(initialPeriod: TimePeriod = 'month'): UseCredit
             filtered = filtered.filter(c => c.creditor_id === selectedCreditor);
         }
 
-        // Filter by custom date range (takes precedence over time period)
+        // Only filter by date if custom date range is explicitly set
         if (dateRange.startDate || dateRange.endDate) {
             filtered = filtered.filter(credit => {
                 const creditDate = new Date(credit.start_date);
@@ -139,17 +138,11 @@ export function useCreditorStats(initialPeriod: TimePeriod = 'month'): UseCredit
                 if (dateRange.endDate && creditDate > dateRange.endDate) return false;
                 return true;
             });
-        } else if (timePeriod !== 'all') {
-            // Filter by time period preset
-            const daysAgo = TIME_PERIODS[timePeriod].days;
-            const filterDate = new Date();
-            filterDate.setDate(filterDate.getDate() - daysAgo);
-            filterDate.setHours(0, 0, 0, 0); // Start of day
-            filtered = filtered.filter(credit => new Date(credit.start_date) >= filterDate);
         }
+        // Time period presets no longer filter - all credits shown regardless of start date
 
         return filtered;
-    }, [allCredits, timePeriod, dateRange, selectedCreditor]);
+    }, [allCredits, dateRange, selectedCreditor]);
 
     // Calculate stats from filtered credits
     const stats = useMemo<CreditorStats>(() => {
@@ -161,19 +154,19 @@ export function useCreditorStats(initialPeriod: TimePeriod = 'month'): UseCredit
         const matured = filteredCredits.filter(c => c.status === 'matured');
         const paidOut = filteredCredits.filter(c => c.status === 'withdrawn');
 
-        // Calculate values
-        const activeValue = active.reduce((sum, c) => sum + Number(c.principal), 0);
-        const maturedValue = matured.reduce((sum, c) => sum + Number(c.principal), 0);
-        const paidOutValue = paidOut.reduce((sum, c) => sum + Number(c.principal), 0);
-        const totalValue = activeValue + maturedValue + paidOutValue;
+        // Calculate values using remaining_principal (fallback to principal for backwards compatibility)
+        const activeValue = active.reduce((sum, c) => sum + Number(c.remaining_principal ?? c.principal), 0);
+        const maturedValue = matured.reduce((sum, c) => sum + Number(c.remaining_principal ?? c.principal), 0);
+        const paidOutValue = paidOut.reduce((sum, c) => sum + Number(c.total_paid_out ?? c.principal), 0);
+        const totalValue = activeValue + maturedValue;
 
-        // Calculate interest accrued (for all active credits)
+        // Calculate interest accrued (for all active credits) - use remaining principal
         const interestAccrued = active.reduce((sum, c) => {
-            return sum + calculateInterestAccrued(
-                Number(c.principal),
+            const remaining = Number(c.remaining_principal ?? c.principal);
+            return sum + calculateSimpleInterest(
+                remaining,
                 Number(c.interest_rate),
-                c.start_date,
-                null // Calculate up to today
+                c.start_date
             );
         }, 0);
 

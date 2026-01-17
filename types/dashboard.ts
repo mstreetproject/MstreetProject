@@ -31,6 +31,9 @@ export interface Credit {
     start_date: string;
     end_date: string;
     status: 'active' | 'matured' | 'withdrawn';
+    interest_type?: 'simple' | 'compound';
+    remaining_principal?: number;  // Principal remaining after payouts
+    total_paid_out?: number;       // Total amount paid out to creditor
     created_at: string;
     updated_at: string;
     creditor?: {

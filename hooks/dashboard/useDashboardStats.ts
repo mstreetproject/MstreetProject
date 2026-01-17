@@ -57,17 +57,18 @@ export function useDashboardStats(startDate?: Date | null, endDate?: Date | null
                     .from('users')
                     .select('id', { count: 'exact', head: true }),
 
-                // Active credits (Snapshot)
+                // Active credits (Snapshot - includes active and matured as both are liabilities)
                 supabase
                     .from('credits')
-                    .select('principal')
-                    .eq('status', 'active'),
+                    .select('principal, remaining_principal')
+                    .in('status', ['active', 'matured'])
+                    .is('archived_at', null),
 
-                // Active loans (Snapshot)
+                // Active loans (Snapshot - includes all outstanding statuses)
                 supabase
                     .from('loans')
-                    .select('principal')
-                    .eq('status', 'active'),
+                    .select('principal, amount_repaid')
+                    .in('status', ['active', 'partial_repaid', 'overdue']),
 
                 // Bad Debt loans (Snapshot - defaulted)
                 supabase
@@ -93,13 +94,13 @@ export function useDashboardStats(startDate?: Date | null, endDate?: Date | null
 
             const activeCreditsData = activeCredits.data || [];
             const totalActiveCreditsSum = activeCreditsData.reduce(
-                (sum, credit) => sum + Number(credit.principal),
+                (sum, credit: any) => sum + Number(credit.remaining_principal ?? credit.principal),
                 0
             );
 
             const activeLoansData = activeLoans.data || [];
             const totalActiveLoansSum = activeLoansData.reduce(
-                (sum, loan) => sum + Number(loan.principal),
+                (sum, loan: any) => sum + (Number(loan.principal) - Number(loan.amount_repaid || 0)),
                 0
             );
 
