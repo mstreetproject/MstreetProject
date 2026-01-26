@@ -88,7 +88,7 @@ export default function BadDebtsPage() {
                     <div className={sharedStyles.headerLeft}>
                         <h1 className={sharedStyles.pageTitle}>Bad Debts Recovery</h1>
                         <p className={sharedStyles.pageSubtitle}>
-                            Track defaulted loans and recovery progress
+                            Track non-performing loans and recovery progress
                         </p>
                     </div>
                     <div className={sharedStyles.headerRight}>
@@ -155,7 +155,7 @@ export default function BadDebtsPage() {
                             <AlertCircle size={48} style={{ color: 'var(--text-muted)', marginBottom: '16px' }} />
                             <h3 style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>No Bad Debts</h3>
                             <p style={{ margin: 0, color: 'var(--text-muted)' }}>
-                                There are no loans marked as defaulted. Good job!
+                                There are no loans marked as non-performing (full provision required). Good job!
                             </p>
                         </div>
                     ) : (

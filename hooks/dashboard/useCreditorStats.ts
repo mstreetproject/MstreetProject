@@ -26,12 +26,15 @@ export interface CreditorInfo {
 export interface CreditorStats {
     totalCreditors: number;
     activeCount: number;
-    activeValue: number;
+    activeValue: number; // Principal only
     maturedCount: number;
     maturedValue: number;
     paidOutCount: number;
     paidOutValue: number;
-    totalValue: number;
+    totalValue: number; // Deprecated: use totalCurrentValue or totalPrincipal
+    totalPrincipal: number; // Sum of active + matured principal
+    totalCurrentValue: number; // Sum of Principal + Accrued Interest for active credits
+    totalMaturityValue: number; // Sum of Original Principal + Total Expected Interest
     interestAccrued: number;
 }
 
@@ -158,16 +161,40 @@ export function useCreditorStats(initialPeriod: TimePeriod = 'month'): UseCredit
         const activeValue = active.reduce((sum, c) => sum + Number(c.remaining_principal ?? c.principal), 0);
         const maturedValue = matured.reduce((sum, c) => sum + Number(c.remaining_principal ?? c.principal), 0);
         const paidOutValue = paidOut.reduce((sum, c) => sum + Number(c.total_paid_out ?? c.principal), 0);
-        const totalValue = activeValue + maturedValue;
+        const totalPrincipal = activeValue + maturedValue;
+        const totalValue = totalPrincipal; // Deprecated but kept for compatibility
 
-        // Calculate interest accrued (for all active credits) - use remaining principal
-        const interestAccrued = active.reduce((sum, c) => {
-            const remaining = Number(c.remaining_principal ?? c.principal);
+        // --- NEW CALCULATIONS ---
+
+        // 1. Total Current Value: (Remaining Principal + Accrued Interest) for all active credits
+        // Note: We might want to include 'matured' credits here too if they haven't been paid out fully
+        const activeAndMatured = [...active, ...matured];
+
+        const totalCurrentValue = activeAndMatured.reduce((sum, c) => {
+            const principal = Number(c.remaining_principal ?? c.principal);
+            const rate = Number(c.interest_rate);
+            const accruedInterest = calculateSimpleInterest(principal, rate, c.start_date);
+            return sum + principal + accruedInterest;
+        }, 0);
+
+        // 2. Interest Accrued (sum of just the interest part from above)
+        const interestAccrued = activeAndMatured.reduce((sum, c) => {
+            const principal = Number(c.remaining_principal ?? c.principal);
             return sum + calculateSimpleInterest(
-                remaining,
+                principal,
                 Number(c.interest_rate),
                 c.start_date
             );
+        }, 0);
+
+        // 3. Total Maturity Value: Original Principal + (Original Principal * Rate * Tenure/12)
+        // This represents the theoretical max value if held to term
+        const totalMaturityValue = activeAndMatured.reduce((sum, c) => {
+            const originalPrincipal = Number(c.principal);
+            const rate = Number(c.interest_rate);
+            const tenureMonths = Number(c.tenure_months || 0);
+            const totalExpectedInterest = originalPrincipal * (rate / 100) * (tenureMonths / 12);
+            return sum + originalPrincipal + totalExpectedInterest;
         }, 0);
 
         return {
@@ -179,6 +206,9 @@ export function useCreditorStats(initialPeriod: TimePeriod = 'month'): UseCredit
             paidOutCount: paidOut.length,
             paidOutValue,
             totalValue,
+            totalPrincipal,
+            totalCurrentValue,
+            totalMaturityValue,
             interestAccrued,
         };
     }, [filteredCredits]);

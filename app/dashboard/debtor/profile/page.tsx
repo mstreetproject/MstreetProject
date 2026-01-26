@@ -1,386 +1,320 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/dashboard/useUser';
 import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 import {
     User,
     Mail,
     Phone,
-    MapPin,
-    Camera,
-    Loader2,
+    Shield,
+    Calendar,
+    Save,
+    AlertTriangle,
+    Trash2,
     CheckCircle,
-    Save
+    XCircle
 } from 'lucide-react';
-import styles from '../../internal/creditors/page.module.css';
+import styles from './page.module.css';
+import MStreetLoader from '@/components/ui/MStreetLoader';
+
+const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
+};
+
+// Delete Account Modal
+const DeleteAccountModal = ({
+    onClose,
+    onConfirm,
+    loading
+}: {
+    onClose: () => void;
+    onConfirm: () => void;
+    loading: boolean;
+}) => {
+    const [confirmText, setConfirmText] = useState('');
+
+    return (
+        <div className={styles.modalOverlay} onClick={onClose}>
+            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+                <h3 className={styles.modalTitle}>Delete Account</h3>
+                <p className={styles.modalDescription}>
+                    This action is permanent and cannot be undone. All your data, including
+                    transaction history, will be permanently deleted.
+                </p>
+                <div className={styles.modalWarning}>
+                    <strong>Warning:</strong> If you have any active loans or payments,
+                    please contact support before deleting your account.
+                </div>
+                <label className={styles.label}>
+                    Type <strong>DELETE</strong> to confirm
+                </label>
+                <input
+                    type="text"
+                    className={styles.modalInput}
+                    value={confirmText}
+                    onChange={(e) => setConfirmText(e.target.value)}
+                    placeholder="Type DELETE to confirm"
+                />
+                <div className={styles.modalButtons}>
+                    <button
+                        className={styles.buttonSecondary}
+                        onClick={onClose}
+                        style={{ flex: 1 }}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        className={styles.buttonDanger}
+                        onClick={onConfirm}
+                        disabled={confirmText !== 'DELETE' || loading}
+                        style={{ flex: 1 }}
+                    >
+                        <Trash2 size={18} />
+                        {loading ? 'Deleting...' : 'Delete Account'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export default function ProfilePage() {
-    const { user, refetch } = useUser();
-    const [loading, setLoading] = useState(false);
-    const [uploading, setUploading] = useState(false);
-    const [success, setSuccess] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const { user, loading: userLoading } = useUser();
+    const router = useRouter();
 
-    const [formData, setFormData] = useState({
-        full_name: '',
-        phone: '',
-        address: '',
-    });
+    // Form state
+    const [fullName, setFullName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [updating, setUpdating] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
 
-    // Populate form when user loads
+    // Populate form when user data loads
     useEffect(() => {
         if (user) {
-            setFormData({
-                full_name: user.full_name || '',
-                phone: user.phone || '',
-                address: user.address || '',
-            });
+            setFullName(user.full_name || '');
+            setPhone(user.phone || '');
         }
     }, [user]);
 
-    const handleProfilePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setUploading(true);
-        setError(null);
-
-        try {
-            const supabase = createClient();
-            const { data: { user: authUser } } = await supabase.auth.getUser();
-            if (!authUser) throw new Error('Not authenticated');
-
-            // Upload to storage
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${authUser.id}/profile.${fileExt}`;
-
-            const { error: uploadError } = await supabase.storage
-                .from('mstreetstorage')
-                .upload(`profile-pictures/${fileName}`, file, { upsert: true });
-
-            if (uploadError) throw uploadError;
-
-            // Get public URL
-            const { data: { publicUrl } } = supabase.storage
-                .from('mstreetstorage')
-                .getPublicUrl(`profile-pictures/${fileName}`);
-
-            // Update user record
-            const { error: updateError } = await supabase
-                .from('users')
-                .update({ profile_picture_url: publicUrl })
-                .eq('id', authUser.id);
-
-            if (updateError) throw updateError;
-
-            refetch?.();
-            setSuccess(true);
-            setTimeout(() => setSuccess(false), 3000);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Upload failed');
-        } finally {
-            setUploading(false);
-        }
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
-        setError(null);
+        setUpdating(true);
+        setSuccessMessage('');
+        setErrorMessage('');
 
         try {
             const supabase = createClient();
-            const { data: { user: authUser } } = await supabase.auth.getUser();
-            if (!authUser) throw new Error('Not authenticated');
-
-            const { error: updateError } = await supabase
+            const { error } = await supabase
                 .from('users')
                 .update({
-                    full_name: formData.full_name,
-                    phone: formData.phone,
-                    address: formData.address,
+                    full_name: fullName,
+                    phone: phone
                 })
-                .eq('id', authUser.id);
+                .eq('id', user?.id);
 
-            if (updateError) throw updateError;
+            if (error) throw error;
 
-            refetch?.();
-            setSuccess(true);
-            setTimeout(() => setSuccess(false), 3000);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Update failed');
+            setSuccessMessage('Profile updated successfully!');
+        } catch (err: any) {
+            setErrorMessage(err.message || 'Failed to update profile');
         } finally {
-            setLoading(false);
+            setUpdating(false);
         }
     };
 
-    // Show loading state matching internal dashboard
-    if (!user) {
+    const handleDeleteAccount = async () => {
+        setDeleting(true);
+        setErrorMessage('');
+
+        try {
+            const supabase = createClient();
+
+            // First delete user roles
+            await supabase
+                .from('user_roles')
+                .delete()
+                .eq('user_id', user?.id);
+
+            // Delete user from users table
+            const { error } = await supabase
+                .from('users')
+                .delete()
+                .eq('id', user?.id);
+
+            if (error) throw error;
+
+            // Sign out user
+            await supabase.auth.signOut();
+
+            // Redirect to home
+            router.push('/');
+        } catch (err: any) {
+            setErrorMessage(err.message || 'Failed to delete account');
+            setDeleting(false);
+            setShowDeleteModal(false);
+        }
+    };
+
+    if (userLoading) {
         return (
             <div className={styles.loading}>
-                <div className={styles.spinner}></div>
-                <p>Loading profile...</p>
+                <MStreetLoader size={120} />
+                <p style={{ marginTop: '16px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Loading profile...
+                </p>
             </div>
         );
     }
 
+    // Get user roles as a string
+    const userRoles = user?.roles?.map(r => r.name.replace(/_/g, ' ')).join(', ') || 'User';
+
     return (
         <div className={styles.container}>
-            {/* Header */}
             <div className={styles.pageHeader}>
-                <div className={styles.headerLeft}>
-                    <h1 className={styles.pageTitle}>My Profile</h1>
-                    <p className={styles.pageSubtitle}>Manage your account information</p>
-                </div>
+                <h1 className={styles.pageTitle}>Profile Settings</h1>
+                <p className={styles.pageSubtitle}>
+                    Manage your account information and preferences
+                </p>
             </div>
 
-            {/* Profile Card - Centered and Responsive */}
-            <div style={{
-                background: 'var(--bg-secondary)',
-                borderRadius: '16px',
-                border: '1px solid var(--border-primary)',
-                padding: '32px',
-                maxWidth: '600px',
-                margin: '0 auto', // Center the form
-                width: '100%',
-            }}>
-                {/* Profile Picture */}
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    marginBottom: '32px',
-                }}>
-                    <div style={{
-                        position: 'relative',
-                        width: '120px',
-                        height: '120px',
-                        borderRadius: '50%',
-                        background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        overflow: 'hidden',
-                        marginBottom: '16px',
-                    }}>
-                        {user?.profile_picture_url ? (
-                            <img
-                                src={user.profile_picture_url}
-                                alt="Profile"
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            {successMessage && (
+                <div className={styles.successMessage}>
+                    <CheckCircle size={18} />
+                    {successMessage}
+                </div>
+            )}
+
+            {errorMessage && (
+                <div className={styles.errorMessage}>
+                    <XCircle size={18} />
+                    {errorMessage}
+                </div>
+            )}
+
+            <div className={styles.profileGrid}>
+                {/* Account Info Section */}
+                <div className={styles.section}>
+                    <h2 className={styles.sectionTitle}>
+                        <User size={20} className={styles.sectionIcon} />
+                        Account Information
+                    </h2>
+
+                    <div className={styles.infoCard}>
+                        <div className={styles.infoIcon}>
+                            <Mail size={22} />
+                        </div>
+                        <div className={styles.infoContent}>
+                            <div className={styles.infoLabel}>Email Address</div>
+                            <div className={styles.infoValue}>{user?.email}</div>
+                        </div>
+                    </div>
+
+                    <div className={styles.infoCard}>
+                        <div className={styles.infoIcon}>
+                            <Shield size={22} />
+                        </div>
+                        <div className={styles.infoContent}>
+                            <div className={styles.infoLabel}>Role</div>
+                            <div className={styles.infoValue} style={{ textTransform: 'capitalize' }}>
+                                {userRoles}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={styles.infoCard}>
+                        <div className={styles.infoIcon}>
+                            <Calendar size={22} />
+                        </div>
+                        <div className={styles.infoContent}>
+                            <div className={styles.infoLabel}>Member Since</div>
+                            <div className={styles.infoValue}>
+                                {user?.created_at ? formatDate(user.created_at) : 'N/A'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Update Contact Details Section */}
+                <div className={styles.section}>
+                    <h2 className={styles.sectionTitle}>
+                        <Phone size={20} className={styles.sectionIcon} />
+                        Contact Details
+                    </h2>
+
+                    <form onSubmit={handleUpdateProfile}>
+                        <div className={styles.formGroup}>
+                            <label className={styles.label}>Full Name</label>
+                            <input
+                                type="text"
+                                className={styles.input}
+                                value={fullName}
+                                onChange={(e) => setFullName(e.target.value)}
+                                placeholder="Enter your full name"
                             />
-                        ) : (
-                            <User size={48} style={{ color: 'white' }} />
-                        )}
+                        </div>
 
-                        <button
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={uploading}
-                            style={{
-                                position: 'absolute',
-                                bottom: '0',
-                                right: '0',
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '50%',
-                                background: 'var(--bg-secondary)',
-                                border: '2px solid var(--border-primary)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                cursor: 'pointer',
-                                color: 'var(--text-primary)',
-                            }}
-                        >
-                            {uploading ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
-                        </button>
-                    </div>
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleProfilePictureUpload}
-                        style={{ display: 'none' }}
-                    />
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                        Click the camera icon to upload a new photo
-                    </p>
+                        <div className={styles.formGroup}>
+                            <label className={styles.label}>Phone Number</label>
+                            <input
+                                type="tel"
+                                className={styles.input}
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                                placeholder="Enter your phone number"
+                            />
+                        </div>
+
+                        <div className={styles.buttonGroup}>
+                            <button
+                                type="submit"
+                                className={styles.buttonPrimary}
+                                disabled={updating}
+                            >
+                                <Save size={18} />
+                                {updating ? 'Saving...' : 'Save Changes'}
+                            </button>
+                        </div>
+                    </form>
                 </div>
 
-                {/* Success/Error Messages */}
-                {success && (
-                    <div style={{
-                        background: 'var(--success-bg)',
-                        color: 'var(--success)',
-                        padding: '12px 16px',
-                        borderRadius: '8px',
-                        marginBottom: '16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                    }}>
-                        <CheckCircle size={18} />
-                        Profile updated successfully!
-                    </div>
-                )}
-
-                {error && (
-                    <div style={{
-                        background: 'var(--danger-bg)',
-                        color: 'var(--danger)',
-                        padding: '12px 16px',
-                        borderRadius: '8px',
-                        marginBottom: '16px',
-                    }}>
-                        {error}
-                    </div>
-                )}
-
-                {/* Profile Form */}
-                <form onSubmit={handleSubmit}>
-                    <div style={{ marginBottom: '20px' }}>
-                        <label style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            marginBottom: '8px',
-                            color: 'var(--text-secondary)',
-                            fontSize: '0.9rem',
-                        }}>
-                            <User size={16} />
-                            Full Name
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.full_name}
-                            onChange={(e) => setFormData(d => ({ ...d, full_name: e.target.value }))}
-                            style={{
-                                width: '100%',
-                                padding: '12px 16px',
-                                borderRadius: '8px',
-                                background: 'var(--bg-input)',
-                                border: '1px solid var(--border-secondary)',
-                                color: 'var(--text-primary)',
-                                fontSize: '1rem',
-                            }}
-                        />
-                    </div>
-
-                    <div style={{ marginBottom: '20px' }}>
-                        <label style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            marginBottom: '8px',
-                            color: 'var(--text-secondary)',
-                            fontSize: '0.9rem',
-                        }}>
-                            <Mail size={16} />
-                            Email
-                        </label>
-                        <input
-                            type="email"
-                            value={user?.email || ''}
-                            disabled
-                            style={{
-                                width: '100%',
-                                padding: '12px 16px',
-                                borderRadius: '8px',
-                                background: 'var(--bg-tertiary)',
-                                border: '1px solid var(--border-secondary)',
-                                color: 'var(--text-muted)',
-                                fontSize: '1rem',
-                                cursor: 'not-allowed',
-                            }}
-                        />
-                    </div>
-
-                    <div style={{ marginBottom: '20px' }}>
-                        <label style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            marginBottom: '8px',
-                            color: 'var(--text-secondary)',
-                            fontSize: '0.9rem',
-                        }}>
-                            <Phone size={16} />
-                            Phone Number
-                        </label>
-                        <input
-                            type="tel"
-                            value={formData.phone}
-                            onChange={(e) => setFormData(d => ({ ...d, phone: e.target.value }))}
-                            placeholder="Enter your phone number"
-                            style={{
-                                width: '100%',
-                                padding: '12px 16px',
-                                borderRadius: '8px',
-                                background: 'var(--bg-input)',
-                                border: '1px solid var(--border-secondary)',
-                                color: 'var(--text-primary)',
-                                fontSize: '1rem',
-                            }}
-                        />
-                    </div>
-
-                    <div style={{ marginBottom: '24px' }}>
-                        <label style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            marginBottom: '8px',
-                            color: 'var(--text-secondary)',
-                            fontSize: '0.9rem',
-                        }}>
-                            <MapPin size={16} />
-                            Address
-                        </label>
-                        <textarea
-                            value={formData.address}
-                            onChange={(e) => setFormData(d => ({ ...d, address: e.target.value }))}
-                            placeholder="Enter your address"
-                            rows={3}
-                            style={{
-                                width: '100%',
-                                padding: '12px 16px',
-                                borderRadius: '8px',
-                                background: 'var(--bg-input)',
-                                border: '1px solid var(--border-secondary)',
-                                color: 'var(--text-primary)',
-                                fontSize: '1rem',
-                                resize: 'vertical',
-                            }}
-                        />
-                    </div>
-
+                {/* Danger Zone */}
+                <div className={styles.dangerZone}>
+                    <h2 className={styles.dangerTitle}>
+                        <AlertTriangle size={20} />
+                        Danger Zone
+                    </h2>
+                    <p className={styles.dangerDescription}>
+                        Once you delete your account, there is no going back. All your personal
+                        data will be permanently removed from our servers. Please be certain
+                        before proceeding.
+                    </p>
                     <button
-                        type="submit"
-                        disabled={loading}
-                        style={{
-                            width: '100%',
-                            padding: '14px',
-                            borderRadius: '10px',
-                            border: 'none',
-                            background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
-                            color: 'white',
-                            fontWeight: 600,
-                            fontSize: '1rem',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            opacity: loading ? 0.6 : 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px',
-                        }}
+                        className={styles.buttonDanger}
+                        onClick={() => setShowDeleteModal(true)}
                     >
-                        {loading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                        {loading ? 'Saving...' : 'Save Changes'}
+                        <Trash2 size={18} />
+                        Delete Account
                     </button>
-                </form>
+                </div>
             </div>
+
+            {showDeleteModal && (
+                <DeleteAccountModal
+                    onClose={() => setShowDeleteModal(false)}
+                    onConfirm={handleDeleteAccount}
+                    loading={deleting}
+                />
+            )}
         </div>
     );
 }

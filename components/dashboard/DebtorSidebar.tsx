@@ -78,7 +78,7 @@ export default function DebtorSidebar({ userName }: DebtorSidebarProps) {
             <aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''} ${mobileOpen ? styles.mobileOpen : ''}`}>
                 {/* Header */}
                 <div className={styles.header}>
-                    <div className={styles.logo}>
+                    <Link href="/login" className={styles.logo}>
                         {!collapsed && (
                             <>
                                 <img src="/secondary logo2.png" alt="MStreet" className={styles.logoImage} />
@@ -86,7 +86,7 @@ export default function DebtorSidebar({ userName }: DebtorSidebarProps) {
                             </>
                         )}
                         {collapsed && <img src="/secondary logo2.png" alt="MStreet" className={styles.logoImageSmall} />}
-                    </div>
+                    </Link>
                     <button
                         className={styles.collapseBtn}
                         onClick={() => setCollapsed(!collapsed)}

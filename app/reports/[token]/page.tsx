@@ -56,7 +56,7 @@ export default function SharedReportPage({ params }: PageProps) {
                 const { data: loans } = await supabase
                     .from('loans')
                     .select('principal, interest_rate, start_date, amount_repaid, interest_repaid')
-                    .in('status', ['active', 'partial_repaid', 'overdue']);
+                    .in('status', ['performing', 'non_performing']);
 
                 const { data: credits } = await supabase
                     .from('credits')

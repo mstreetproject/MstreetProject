@@ -8,12 +8,11 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { createClient } from '@/lib/supabase/client';
 import {
     Upload,
-    FileText,
-    Loader2,
     CheckCircle,
     X
 } from 'lucide-react';
 import styles from '../../internal/creditors/page.module.css';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 
 // Format date helper
 const formatDate = (dateString: string) => {
@@ -179,8 +178,10 @@ export default function PaymentsPage() {
     if (loading) {
         return (
             <div className={styles.loading}>
-                <div className={styles.spinner}></div>
-                <p>Loading payments...</p>
+                <MStreetLoader size={120} />
+                <p style={{ marginTop: '16px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Loading payments...
+                </p>
             </div>
         );
     }
@@ -270,7 +271,7 @@ export default function PaymentsPage() {
                                         }}
                                     >
                                         <option value="">Choose a loan...</option>
-                                        {loans.filter(l => l.status === 'active' || l.status === 'overdue').map(loan => (
+                                        {loans.filter(l => l.status === 'performing' || l.status === 'non_performing').map(loan => (
                                             <option key={loan.id} value={loan.id}>
                                                 {formatCurrency(loan.principal)} - Due: {formatDate(loan.end_date)}
                                             </option>
@@ -377,7 +378,7 @@ export default function PaymentsPage() {
                                             gap: '8px',
                                         }}
                                     >
-                                        {uploading && <Loader2 size={16} className="animate-spin" />}
+                                        {uploading && <MStreetLoader size={16} color="#ffffff" />}
                                         {uploading ? 'Uploading...' : 'Upload'}
                                     </button>
                                 </div>

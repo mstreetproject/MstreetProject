@@ -15,14 +15,14 @@ export interface DebtorInfo {
 
 export interface DebtorStats {
     totalDebtors: number;
-    activeCount: number;
-    activeValue: number;
-    repaidCount: number;
-    repaidValue: number;
-    overdueCount: number;
-    overdueValue: number;
-    badDebtCount: number;
-    badDebtValue: number;
+    performingCount: number;
+    performingValue: number;
+    preliquidatedCount: number;
+    preliquidatedValue: number;
+    nonPerformingCount: number;
+    nonPerformingValue: number;
+    fullProvisionCount: number;
+    fullProvisionValue: number;
     totalValue: number;
     interestAccrued: number;
 }
@@ -42,19 +42,7 @@ interface UseDebtorStatsResult {
     refetch: () => void;
 }
 
-// Calculate interest accrued based on principal, rate, and time elapsed
-function calculateInterestAccrued(
-    principal: number,
-    interestRate: number,
-    startDate: string,
-    endDate: string | null
-): number {
-    const start = new Date(startDate);
-    const end = endDate ? new Date(endDate) : new Date();
-    const monthsElapsed = Math.max(0, (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30));
-    // Simple interest: P * R * T / 12 (annualized)
-    return principal * (interestRate / 100) * (monthsElapsed / 12);
-}
+import { calculateSimpleInterest } from '@/lib/interest';
 
 export function useDebtorStats(initialPeriod: TimePeriod = 'month'): UseDebtorStatsResult {
     const [allLoans, setAllLoans] = useState<Loan[]>([]);
@@ -145,47 +133,46 @@ export function useDebtorStats(initialPeriod: TimePeriod = 'month'): UseDebtorSt
         // Unique debtors in filtered data
         const uniqueDebtors = new Set(filteredLoans.map(l => l.debtor_id));
 
-        // Filter by status (partial_repaid counts as active for tracking)
-        const active = filteredLoans.filter(l => l.status === 'active' || l.status === 'partial_repaid');
-        const repaid = filteredLoans.filter(l => l.status === 'repaid');
-        const overdue = filteredLoans.filter(l => l.status === 'overdue');
-        const badDebt = filteredLoans.filter(l => l.status === 'defaulted');
+        // Filter by status (performing is the new active)
+        const performing = filteredLoans.filter(l => l.status === 'performing');
+        const preliquidated = filteredLoans.filter(l => l.status === 'preliquidated');
+        const nonPerforming = filteredLoans.filter(l => l.status === 'non_performing');
+        const fullProvision = filteredLoans.filter(l => l.status === 'full_provision');
 
         // Calculate values - use outstanding balance (principal - amount_repaid) not full principal
-        const activeValue = active.reduce((sum, l) => {
+        const performingValue = performing.reduce((sum, l) => {
             const outstanding = Number(l.principal) - (Number(l.amount_repaid) || 0);
             return sum + Math.max(0, outstanding);
         }, 0);
-        const repaidValue = repaid.reduce((sum, l) => sum + Number(l.principal), 0);
-        const overdueValue = overdue.reduce((sum, l) => {
+        const preliquidatedValue = preliquidated.reduce((sum, l) => sum + Number(l.principal), 0);
+        const nonPerformingValue = nonPerforming.reduce((sum, l) => {
             const outstanding = Number(l.principal) - (Number(l.amount_repaid) || 0);
             return sum + Math.max(0, outstanding);
         }, 0);
-        const badDebtValue = badDebt.reduce((sum, l) => sum + Number(l.principal), 0);
-        const totalValue = activeValue + repaidValue + overdueValue + badDebtValue;
+        const fullProvisionValue = fullProvision.reduce((sum, l) => sum + Number(l.principal), 0);
+        const totalValue = performingValue + preliquidatedValue + nonPerformingValue + fullProvisionValue;
 
-        // Calculate interest accrued (for active loans, based on outstanding principal)
-        const interestAccrued = active.reduce((sum, l) => {
+        // Calculate interest accrued (for performing loans, based on outstanding principal)
+        const interestAccrued = performing.reduce((sum, l) => {
             const outstanding = Number(l.principal) - (Number(l.amount_repaid) || 0);
             const interestAlreadyPaid = Number(l.interest_repaid) || 0;
-            return sum + calculateInterestAccrued(
+            return sum + calculateSimpleInterest(
                 outstanding, // Use outstanding balance for interest calculation
                 Number(l.interest_rate),
-                l.start_date,
-                null // Calculate up to today
+                l.start_date
             ) - interestAlreadyPaid; // Subtract already paid interest
         }, 0);
 
         return {
             totalDebtors: uniqueDebtors.size,
-            activeCount: active.length,
-            activeValue,
-            repaidCount: repaid.length,
-            repaidValue,
-            overdueCount: overdue.length,
-            overdueValue,
-            badDebtCount: badDebt.length,
-            badDebtValue,
+            performingCount: performing.length,
+            performingValue,
+            preliquidatedCount: preliquidated.length,
+            preliquidatedValue,
+            nonPerformingCount: nonPerforming.length,
+            nonPerformingValue,
+            fullProvisionCount: fullProvision.length,
+            fullProvisionValue,
             totalValue,
             interestAccrued: Math.max(0, interestAccrued), // Ensure non-negative
         };

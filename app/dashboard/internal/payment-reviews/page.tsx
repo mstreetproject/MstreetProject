@@ -13,10 +13,10 @@ import {
     Eye,
     Clock,
     FileText,
-    Trash2,
-    Loader2
+    Trash2
 } from 'lucide-react';
 import styles from '../creditors/page.module.css';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 
 // Format date helper
 const formatDate = (dateString: string) => {
@@ -67,8 +67,10 @@ export default function PaymentReviewsPage() {
     if (userLoading) {
         return (
             <div className={styles.loading}>
-                <div className={styles.spinner}></div>
-                <p>Loading...</p>
+                <MStreetLoader size={120} />
+                <p style={{ marginTop: '16px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Loading payment reviews...
+                </p>
             </div>
         );
     }
@@ -206,7 +208,7 @@ export default function PaymentReviewsPage() {
         },
         {
             label: archivingId ? 'Archiving...' : '📦 Archive',
-            icon: archivingId ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />,
+            icon: archivingId ? <MStreetLoader size={16} color="var(--danger)" /> : <Trash2 size={16} />,
             onClick: handleArchive,
             variant: 'danger',
         },

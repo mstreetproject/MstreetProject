@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/dashboard/useUser';
 import { useActivityLog } from '@/hooks/useActivityLog';
-import { Loader2, Receipt, DollarSign, Calendar } from 'lucide-react';
+import { Receipt, DollarSign, Calendar } from 'lucide-react';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 import styles from './CreateCreditForm.module.css'; // Reuse same styles
 
 interface CreateExpenseFormProps {
@@ -136,7 +137,7 @@ export default function CreateExpenseForm({ onSuccess }: CreateExpenseFormProps)
                     className={styles.submitBtn}
                     disabled={loading}
                 >
-                    {loading && <Loader2 size={16} className={styles.spinner} />}
+                    {loading && <MStreetLoader size={18} color="#ffffff" />}
                     {loading ? 'Recording...' : 'Record Expense'}
                 </button>
             </div>

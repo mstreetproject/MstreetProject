@@ -14,7 +14,7 @@ export default function WelcomePage() {
                 </div>
                 <h1 style={styles.title}>Email Confirmed!</h1>
                 <p style={styles.subtitle}>
-                    Welcome to **MStreet Financial**. Your account has been successfully verified.
+                    Welcome to **MStreet Finance**. Your account has been successfully verified.
                 </p>
                 <div style={styles.infoBox}>
                     <p style={styles.infoText}>

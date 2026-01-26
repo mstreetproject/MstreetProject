@@ -10,7 +10,6 @@ import {
     Save,
     Plus,
     Trash2,
-    Loader2,
     CheckCircle,
     AlertCircle,
     DollarSign,
@@ -19,6 +18,7 @@ import {
     Clock
 } from 'lucide-react';
 import styles from '../creditors/page.module.css';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 
 export default function SettingsPage() {
     const { user, loading: userLoading } = useUser();
@@ -53,8 +53,10 @@ export default function SettingsPage() {
     if (userLoading || loading) {
         return (
             <div className={styles.loading}>
-                <div className={styles.spinner}></div>
-                <p>Loading...</p>
+                <MStreetLoader size={120} />
+                <p style={{ marginTop: '16px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Loading settings...
+                </p>
             </div>
         );
     }
@@ -148,7 +150,7 @@ export default function SettingsPage() {
                             disabled={saving}
                             className={styles.createBtn}
                         >
-                            {saving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
+                            {saving ? <MStreetLoader size={20} color="#ffffff" /> : <Save size={20} />}
                             <span>{saving ? 'Saving...' : 'Save Changes'}</span>
                         </button>
                     </div>

@@ -11,16 +11,13 @@ import { useUser } from '@/hooks/dashboard/useUser';
 import { useDebtorStats } from '@/hooks/dashboard/useDebtorStats';
 import { useUserCounts } from '@/hooks/dashboard/useUserCounts';
 import { useCurrency } from '@/hooks/useCurrency';
-import { TrendingUp, DollarSign, Users, AlertCircle, CheckCircle, Wallet, PiggyBank, Edit, Trash2, Loader2, FileText } from 'lucide-react';
+import { TrendingUp, Users, Wallet, PiggyBank, CheckCircle, AlertCircle, UserPlus } from 'lucide-react';
 import styles from '../creditors/page.module.css';
-import EditLoanModal from '@/components/dashboard/EditLoanModal';
-import RecordRepaymentModal from '@/components/dashboard/RecordRepaymentModal';
-import LoanHistoryModal from '@/components/dashboard/LoanHistoryModal';
-import LoanDetailsModal from '@/components/dashboard/LoanDetailsModal';
-import { createClient } from '@/lib/supabase/client';
 import { useActivityLog } from '@/hooks/useActivityLog';
-import { RowAction } from '@/components/dashboard/DataTable';
+import CreateDebtorModal from '@/components/dashboard/CreateDebtorModal';
 import { useState } from 'react';
+import RepaymentTable from '@/components/dashboard/RepaymentTable';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 
 // Format date
 const formatDate = (dateString: string) => {
@@ -50,72 +47,8 @@ export default function DebtorsPage() {
     const { formatCurrency } = useCurrency();
     const { logActivity } = useActivityLog();
 
-    // Modal State
-    const [editingLoan, setEditingLoan] = useState<any>(null);
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [repaymentLoan, setRepaymentLoan] = useState<any>(null);
-    const [showRepaymentModal, setShowRepaymentModal] = useState(false);
-    const [historyLoanId, setHistoryLoanId] = useState<string | null>(null);
-    const [showHistoryModal, setShowHistoryModal] = useState(false);
-    const [archivingId, setArchivingId] = useState<string | null>(null);
-
     // Details Modal State
-    const [selectedLoan, setSelectedLoan] = useState<any>(null);
-    const [showDetailsModal, setShowDetailsModal] = useState(false);
-
-    // Handlers
-    const handleRowClick = (row: any) => {
-        // Prevent modal open if clicking action button happens automatically via event propagation? 
-        // DataTable might handle this, usually row click catches everything unless stopPropagation is used on buttons.
-        setSelectedLoan(row);
-        setShowDetailsModal(true);
-    };
-
-    const handleEdit = (row: any) => {
-        setEditingLoan(row);
-        setShowEditModal(true);
-    };
-
-    const handleRepayment = (row: any) => {
-        setRepaymentLoan(row);
-        setShowRepaymentModal(true);
-    };
-
-    const handleViewHistory = (row: any) => {
-        setHistoryLoanId(row.id);
-        setShowHistoryModal(true);
-    };
-
-    const handleArchive = async (row: any) => {
-        const reason = prompt(`Archive this loan for ${row.debtor?.full_name}?\n\nEnter reason (optional):`);
-        if (reason !== null) {
-            setArchivingId(row.id);
-            try {
-                const supabase = createClient();
-                const { error } = await supabase
-                    .from('loans')
-                    .update({
-                        status: 'archived', // Assuming 'archived' status or add a separate column
-                        // archived_at: new Date().toISOString(), // If column exists
-                    })
-                    .eq('id', row.id);
-
-                if (error) throw error;
-
-                await logActivity('UPDATE_LOAN', 'loan', row.id, {
-                    status: 'archived',
-                    reason: reason || 'Archived by admin'
-                });
-
-                alert('Loan archived!');
-                refetch();
-            } catch (err: any) {
-                alert(`Error archiving loan: ${err.message}`);
-            } finally {
-                setArchivingId(null);
-            }
-        }
-    };
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     // RBAC Guard
     const hasAccess = user?.roles?.some(
@@ -125,8 +58,10 @@ export default function DebtorsPage() {
     if (userLoading) {
         return (
             <div className={styles.loading}>
-                <div className={styles.spinner}></div>
-                <p>Loading...</p>
+                <MStreetLoader size={120} />
+                <p style={{ marginTop: '16px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Loading debtors...
+                </p>
             </div>
         );
     }
@@ -145,85 +80,6 @@ export default function DebtorsPage() {
         ? debtors.find(d => d.id === selectedDebtor)
         : null;
 
-    // Table columns
-    const columns: Column[] = [
-        {
-            key: 'debtor_name',
-            label: 'Debtor',
-            render: (_, row) => (
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontWeight: 600 }}>{row.debtor?.full_name || 'N/A'}</span>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{row.debtor?.email}</span>
-                </div>
-            )
-        },
-        {
-            key: 'principal',
-            label: 'Amount',
-            render: (value) => formatCurrency(value)
-        },
-        {
-            key: 'interest_rate',
-            label: 'Rate',
-            render: (value) => `${value}%`
-        },
-        {
-            key: 'status',
-            label: 'Status',
-            render: (value) => {
-                const statusStyles: Record<string, { bg: string; color: string; label: string }> = {
-                    active: { bg: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', label: 'Active' },
-                    partial_repaid: { bg: 'rgba(168, 85, 247, 0.15)', color: '#a855f7', label: 'Partial' },
-                    repaid: { bg: 'rgba(16, 185, 129, 0.15)', color: '#10b981', label: 'Repaid' },
-                    overdue: { bg: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', label: 'Overdue' },
-                    defaulted: { bg: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', label: 'Defaulted' },
-                    archived: { bg: 'rgba(107, 114, 128, 0.15)', color: '#6b7280', label: 'Archived' },
-                };
-                const style = statusStyles[value] || statusStyles.active;
-                return (
-                    <span style={{
-                        padding: '4px 10px',
-                        borderRadius: '12px',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        background: style.bg,
-                        color: style.color,
-                        textTransform: 'capitalize',
-                    }}>
-                        {style.label}
-                    </span>
-                );
-            }
-        },
-    ];
-
-    // Row Actions
-    const rowActions: RowAction[] = [
-        {
-            label: '💰 Record Repayment',
-            icon: <DollarSign size={16} />,
-            onClick: handleRepayment,
-            hidden: (row) => row.status === 'repaid' || row.status === 'archived',
-        },
-        {
-            label: '📜 History',
-            icon: <FileText size={16} />,
-            onClick: handleViewHistory,
-        },
-        {
-            label: 'Edit',
-            icon: <Edit size={16} />,
-            onClick: handleEdit,
-            hidden: (row) => row.status === 'archived',
-        },
-        {
-            label: archivingId ? 'Archiving...' : '📦 Archive',
-            icon: archivingId ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />,
-            onClick: handleArchive,
-            variant: 'danger',
-            hidden: (row) => row.status === 'archived',
-        },
-    ];
 
     return (
         <DashboardLayout currentUser={user || undefined}>
@@ -239,6 +95,15 @@ export default function DebtorsPage() {
                         </p>
                     </div>
                     <div className={styles.headerRight} style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                        {/* Create Debtor Button */}
+                        <button
+                            className={styles.createBtn}
+                            onClick={() => setShowCreateModal(true)}
+                        >
+                            <UserPlus size={20} />
+                            <span>Add Debtor</span>
+                        </button>
+
                         {/* Debtors Count Badge */}
                         <div className={styles.creditorsCount}>
                             <Users size={20} />
@@ -262,9 +127,9 @@ export default function DebtorsPage() {
                                 <div style={{ fontSize: '0.7rem', fontWeight: 500, opacity: 0.85, marginBottom: '2px' }}>Expected Revenue</div>
                                 <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>
                                     {loansLoading ? (
-                                        <Loader2 size={18} className="animate-spin" />
+                                        <MStreetLoader size={18} color="#ffffff" />
                                     ) : (
-                                        formatCurrency(stats.activeValue + stats.interestAccrued)
+                                        formatCurrency(stats.performingValue + stats.interestAccrued)
                                     )}
                                 </div>
                             </div>
@@ -305,33 +170,33 @@ export default function DebtorsPage() {
                         loading={loansLoading}
                     />
                     <StatsCard
-                        title="Active Loans"
-                        value={stats.activeCount}
-                        change={formatCurrency(stats.activeValue)}
+                        title="Performing"
+                        value={stats.performingCount}
+                        change={formatCurrency(stats.performingValue)}
                         changeType="neutral"
                         icon={TrendingUp}
                         loading={loansLoading}
                     />
                     <StatsCard
-                        title="Repaid"
-                        value={stats.repaidCount}
-                        change={formatCurrency(stats.repaidValue)}
+                        title="Preliquidated"
+                        value={stats.preliquidatedCount}
+                        change={formatCurrency(stats.preliquidatedValue)}
                         changeType="positive"
                         icon={CheckCircle}
                         loading={loansLoading}
                     />
                     <StatsCard
-                        title="Overdue"
-                        value={stats.overdueCount}
-                        change={formatCurrency(stats.overdueValue)}
+                        title="Non-performing"
+                        value={stats.nonPerformingCount}
+                        change={formatCurrency(stats.nonPerformingValue)}
                         changeType="negative"
                         icon={AlertCircle}
                         loading={loansLoading}
                     />
                     <StatsCard
-                        title="Bad Debt"
-                        value={stats.badDebtCount}
-                        change={formatCurrency(stats.badDebtValue)}
+                        title="Full Provision"
+                        value={stats.fullProvisionCount}
+                        change={formatCurrency(stats.fullProvisionValue)}
                         changeType="negative"
                         icon={AlertCircle}
                         loading={loansLoading}
@@ -345,65 +210,21 @@ export default function DebtorsPage() {
                             ? `Loans for ${selectedDebtorInfo.full_name}`
                             : 'All Loans'}
                     </h2>
-                    <DataTable
-                        columns={columns}
-                        data={loans}
-                        loading={loansLoading}
-                        emptyMessage="No loans found"
-                        searchable
-                        searchPlaceholder="Search loans..."
-                        searchKeys={['debtor.full_name', 'debtor.email', 'status']}
-                        paginated
-                        defaultPageSize={10}
-                        actions={rowActions}
-                        onRowClick={handleRowClick}
+                    <RepaymentTable
+                        initialLoans={loans}
+                        isLoading={loansLoading}
+                        onRefresh={refetch}
                     />
                 </div>
             </div>
 
-            {/* Loan Details Modal */}
-            <LoanDetailsModal
-                isOpen={showDetailsModal}
-                loan={selectedLoan}
-                onClose={() => {
-                    setShowDetailsModal(false);
-                    setSelectedLoan(null);
-                }}
-            />
-
-            {/* Edit Loan Modal */}
-            <EditLoanModal
-                isOpen={showEditModal}
-                loan={editingLoan}
-                onClose={() => {
-                    setShowEditModal(false);
-                    setEditingLoan(null);
-                }}
+            {/* Create Debtor Modal */}
+            <CreateDebtorModal
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
                 onSuccess={() => {
                     refetch();
-                }}
-            />
-
-            {/* Record Repayment Modal */}
-            <RecordRepaymentModal
-                isOpen={showRepaymentModal}
-                loan={repaymentLoan}
-                onClose={() => {
-                    setShowRepaymentModal(false);
-                    setRepaymentLoan(null);
-                }}
-                onSuccess={() => {
-                    refetch();
-                }}
-            />
-
-            {/* Loan History Modal */}
-            <LoanHistoryModal
-                isOpen={showHistoryModal}
-                loanId={historyLoanId}
-                onClose={() => {
-                    setShowHistoryModal(false);
-                    setHistoryLoanId(null);
+                    setShowCreateModal(false);
                 }}
             />
         </DashboardLayout>

@@ -13,6 +13,7 @@ import {
     Calendar
 } from 'lucide-react';
 import styles from '../../internal/creditors/page.module.css';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 
 // Format date helper
 const formatDate = (dateString: string) => {
@@ -26,13 +27,13 @@ const formatDate = (dateString: string) => {
 // Status badge component
 const StatusBadge = ({ status }: { status: string }) => {
     const colors: Record<string, { bg: string; color: string }> = {
-        active: { bg: 'var(--accent-bg)', color: 'var(--accent-primary)' },
-        repaid: { bg: 'var(--success-bg)', color: 'var(--success)' },
-        overdue: { bg: 'var(--warning-bg)', color: 'var(--warning)' },
-        defaulted: { bg: 'var(--danger-bg)', color: 'var(--danger)' },
+        performing: { bg: 'var(--accent-bg)', color: 'var(--accent-primary)' },
+        preliquidated: { bg: 'var(--success-bg)', color: 'var(--success)' },
+        non_performing: { bg: 'var(--warning-bg)', color: 'var(--warning)' },
+        full_provision: { bg: 'var(--danger-bg)', color: 'var(--danger)' },
     };
 
-    const style = colors[status] || colors.active;
+    const style = colors[status] || colors.performing;
 
     return (
         <span style={{
@@ -44,7 +45,7 @@ const StatusBadge = ({ status }: { status: string }) => {
             background: style.bg,
             color: style.color,
         }}>
-            {status}
+            {status.replace('_', ' ')}
         </span>
     );
 };
@@ -114,8 +115,10 @@ export default function LoansPage() {
     if (loading) {
         return (
             <div className={styles.loading}>
-                <div className={styles.spinner}></div>
-                <p>Loading loans...</p>
+                <MStreetLoader size={120} />
+                <p style={{ marginTop: '16px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Loading loans...
+                </p>
             </div>
         );
     }

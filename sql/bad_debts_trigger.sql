@@ -14,8 +14,8 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-    -- Only proceed if status is changing TO 'defaulted'
-    IF NEW.status = 'defaulted' AND (OLD.status IS NULL OR OLD.status != 'defaulted') THEN
+    -- Only proceed if status is changing TO 'full_provision'
+    IF NEW.status = 'full_provision' AND (OLD.status IS NULL OR OLD.status != 'full_provision') THEN
         
         -- Check if this loan is already in bad_debts
         IF NOT EXISTS (SELECT 1 FROM bad_debts WHERE loan_id = NEW.id) THEN
@@ -30,10 +30,10 @@ BEGIN
                 NEW.id,
                 CURRENT_DATE,
                 COALESCE(NEW.principal, 0),  -- Just use principal like dashboard
-                'Loan marked as defaulted - auto-captured by system'
+                'Loan marked as non-performing (Full provision required) - auto-captured by system'
             );
             
-            RAISE NOTICE 'Loan % marked as defaulted. Amount: %', NEW.id, NEW.principal;
+            RAISE NOTICE 'Loan % marked as Full Provision. Amount: %', NEW.id, NEW.principal;
         END IF;
     END IF;
     

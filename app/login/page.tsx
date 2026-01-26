@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import MStreetLoader from "@/components/ui/MStreetLoader";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -52,6 +53,17 @@ export default function LoginPage() {
 
                 if (redirectTo) {
                     router.push(redirectTo);
+                    return;
+                }
+
+                const roleCount = [
+                    userData?.is_internal,
+                    userData?.is_creditor,
+                    userData?.is_debtor
+                ].filter(Boolean).length;
+
+                if (roleCount > 1) {
+                    router.push('/portal');
                 } else if (userData?.is_internal) {
                     router.push('/dashboard/internal');
                 } else if (userData?.is_creditor) {
@@ -80,7 +92,7 @@ export default function LoginPage() {
                 </div>
                 <div style={styles.header}>
                     <h1 style={styles.title}>Welcome Back</h1>
-                    <p style={styles.subtitle}>Log in to your MStreet account</p>
+                    <p style={styles.subtitle}>Log in to your MStreets account</p>
                 </div>
 
                 <form onSubmit={handleSubmit} style={styles.form}>
@@ -119,9 +131,14 @@ export default function LoginPage() {
                         style={{
                             ...styles.button,
                             opacity: loading ? 0.7 : 1,
-                            cursor: loading ? "not-allowed" : "pointer"
+                            cursor: loading ? "not-allowed" : "pointer",
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px'
                         }}
                     >
+                        {loading && <MStreetLoader size={20} color="#070757" />}
                         {loading ? "Logging in..." : "Log In"}
                     </button>
                 </form>

@@ -129,6 +129,31 @@ export function useAllLoanRequests() {
                 : 'UPDATE_LOAN_REQUEST';
         await logActivity(action, 'loan_request', requestId, { new_status: status, notes });
 
+        // --- NEW: Send Personal Notification to Debtor ---
+        if (status === 'approved' || status === 'rejected') {
+            // Fetch request details to get debtor_id and amount
+            const { data: requestData } = await supabase
+                .from('loan_requests')
+                .select('debtor_id, amount_requested')
+                .eq('id', requestId)
+                .single();
+
+            if (requestData) {
+                const { error: notifError } = await supabase
+                    .from('notifications')
+                    .insert({
+                        user_id: requestData.debtor_id, // Target the debtor
+                        type: 'loan',
+                        title: `Loan Request ${status === 'approved' ? 'Approved' : 'Rejected'}`,
+                        message: `Your loan request for ${requestData.amount_requested} has been ${status}.${notes ? ` Reason: ${notes}` : ''}`,
+                        link: '/dashboard/debtor'
+                    });
+
+                if (notifError) console.error('Error sending notification:', notifError);
+            }
+        }
+        // -------------------------------------------------
+
         await fetchRequests();
     }, [fetchRequests, logActivity]);
 

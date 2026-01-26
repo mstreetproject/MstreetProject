@@ -4,9 +4,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useUser } from '@/hooks/dashboard/useUser';
 import { createClient } from '@/lib/supabase/client';
-import { Loader2, Trash2, Filter, Calendar, Eye } from 'lucide-react';
+import { Trash2, Filter, Calendar, Eye } from 'lucide-react';
 import LogDetailsModal from '@/components/dashboard/LogDetailsModal';
 import styles from './page.module.css';
+import MStreetLoader from '@/components/ui/MStreetLoader';
+import { useDelayedLoading } from '@/hooks/useDelayedLoading';
 
 interface AuditLog {
     id: string;
@@ -23,16 +25,18 @@ interface AuditLog {
 }
 
 export default function AuditLogsPage() {
-    const { user, loading: userLoading } = useUser();
+    const { user, loading: initialUserLoading } = useUser();
+    const userLoading = useDelayedLoading(initialUserLoading, 1500);
     const [logs, setLogs] = useState<AuditLog[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [initialFetchLoading, setInitialFetchLoading] = useState(true);
+    const loading = useDelayedLoading(initialFetchLoading, 1500);
     const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
     const [actionFilter, setActionFilter] = useState('');
     const [entityFilter, setEntityFilter] = useState('');
 
     const fetchLogs = useCallback(async () => {
         try {
-            setLoading(true);
+            setInitialFetchLoading(true);
             const supabase = createClient();
 
             let query = supabase
@@ -57,7 +61,7 @@ export default function AuditLogsPage() {
         } catch (err) {
             console.error('Error fetching logs:', err);
         } finally {
-            setLoading(false);
+            setInitialFetchLoading(false);
         }
     }, [actionFilter, entityFilter]);
 
@@ -89,8 +93,10 @@ export default function AuditLogsPage() {
     if (userLoading) {
         return (
             <div className={styles.loading}>
-                <div className={styles.spinner}></div>
-                <p>Loading...</p>
+                <MStreetLoader size={120} />
+                <p style={{ marginTop: '16px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Loading audit logs...
+                </p>
             </div>
         );
     }
@@ -211,7 +217,10 @@ export default function AuditLogsPage() {
                             {loading ? (
                                 <tr>
                                     <td colSpan={6} style={{ padding: '40px', textAlign: 'center' }}>
-                                        <Loader2 className="animate-spin" style={{ margin: '0 auto' }} />
+                                        <MStreetLoader size={60} />
+                                        <p style={{ marginTop: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                            Fetching activity logs...
+                                        </p>
                                     </td>
                                 </tr>
                             ) : logs.length === 0 ? (

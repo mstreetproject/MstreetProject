@@ -11,20 +11,40 @@ export interface Notification {
     created_at: string;
 }
 
+import { useUser } from '@/hooks/dashboard/useUser';
+
 export function useNotifications() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(true);
+    const { user } = useUser(); // Use centralized user hook
 
     const supabase = createClient();
 
     const fetchNotifications = useCallback(async () => {
+        if (!user) return; // Wait for user
+
         try {
-            const { data, error } = await supabase
+            let query = supabase
                 .from('notifications')
                 .select('*')
                 .order('created_at', { ascending: false })
                 .limit(50);
+
+            // Check roles
+            const isStaff = user.roles?.some(r =>
+                ['super_admin', 'finance_manager', 'ops_officer', 'risk_officer'].includes(r.name)
+            );
+
+            if (isStaff) {
+                // Staff sees System (null) + Own
+                query = query.or(`user_id.is.null,user_id.eq.${user.id}`);
+            } else {
+                // Regular users ONLY see Own
+                query = query.eq('user_id', user.id);
+            }
+
+            const { data, error } = await query;
 
             if (error) throw error;
 
@@ -35,7 +55,7 @@ export function useNotifications() {
         } finally {
             setLoading(false);
         }
-    }, [supabase]);
+    }, [supabase, user]);
 
     const markAsRead = async (id: string) => {
         // Optimistic update

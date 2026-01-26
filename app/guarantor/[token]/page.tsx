@@ -7,10 +7,10 @@ import {
     User,
     Camera,
     Upload,
-    Loader2,
     CheckCircle,
     AlertCircle
 } from 'lucide-react';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 
 interface GuarantorData {
     id: string;
@@ -194,11 +194,15 @@ export default function GuarantorFormPage() {
             <div style={{
                 minHeight: '100vh',
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
                 background: 'linear-gradient(135deg, #0a1929 0%, #1a365d 100%)',
             }}>
-                <Loader2 size={40} style={{ color: '#02b3ff' }} className="animate-spin" />
+                <MStreetLoader size={120} />
+                <p style={{ marginTop: '24px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>
+                    Initializing verification...
+                </p>
             </div>
         );
     }
@@ -437,7 +441,7 @@ export default function GuarantorFormPage() {
                             gap: '8px',
                         }}
                     >
-                        {submitting && <Loader2 size={18} className="animate-spin" />}
+                        {submitting && <MStreetLoader size={24} color="#ffffff" />}
                         {submitting ? 'Submitting...' : 'Submit Verification'}
                     </button>
                 </form>

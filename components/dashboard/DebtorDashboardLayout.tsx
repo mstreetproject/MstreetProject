@@ -64,7 +64,7 @@ export default function DebtorDashboardLayout({ children, currentUser }: DebtorD
             {/* Sidebar - Using existing Sidebar styling */}
             <aside className={`${styles.sidebar} ${sidebarOpen ? styles.open : ''}`}>
                 <div className={styles.header}>
-                    <Link href="/dashboard/debtor" className={styles.logo}>
+                    <Link href="/login" className={styles.logo}>
                         <img src="/secondary logo2.png" alt="MStreet" className={styles.logoImage} />
                     </Link>
                     <button

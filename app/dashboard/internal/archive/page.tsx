@@ -6,22 +6,20 @@ import DataTable, { Column, RowAction } from '@/components/dashboard/DataTable';
 import { useUser } from '@/hooks/dashboard/useUser';
 import { useAllLoanRequests } from '@/hooks/dashboard/useAllLoanRequests';
 import { useAllPaymentUploads } from '@/hooks/dashboard/useAllPaymentUploads';
+import { usePayoutRequests } from '../../../../hooks/dashboard/usePayoutRequests';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useActivityLog } from '@/hooks/useActivityLog';
 import { createClient } from '@/lib/supabase/client';
 import {
-    Archive,
+
     RefreshCw,
     Trash2,
-    Clock,
     User,
-    X,
-    Loader2,
     AlertCircle,
-    FileText,
-    DollarSign
+    Banknote
 } from 'lucide-react';
 import styles from '../creditors/page.module.css';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 
 const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -43,6 +41,15 @@ export default function ArchivePage() {
     const { user, loading: userLoading } = useUser();
     const { archivedRequests, fetchArchivedRequests, restoreRequest, permanentlyDeleteRequest } = useAllLoanRequests();
     const { archivedUploads, fetchArchivedUploads, restoreUpload, permanentlyDeleteUpload } = useAllPaymentUploads();
+
+    // Payout Hook
+    const {
+        archivedRequests: archivedPayouts,
+        fetchArchivedRequests: fetchArchivedPayouts,
+        restoreRequest: restorePayout,
+        permanentlyDeleteRequest: permanentlyDeletePayout
+    } = usePayoutRequests();
+
     const { formatCurrency } = useCurrency();
     const { logActivity } = useActivityLog();
     const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -73,11 +80,10 @@ export default function ArchivePage() {
             .from('loans')
             .select(`*, debtor:users!debtor_id(full_name, email)`)
             .eq('status', 'archived')
-            .order('created_at', { ascending: false }); // Archived at column might not be set by default logic unless we updated previously
+            .order('created_at', { ascending: false });
         if (!error) setArchivedLoans(data || []);
     }, []);
 
-    // Fetch archived data on mount
     // Fetch archived data on mount
     useEffect(() => {
         if (hasAccess && !loaded) {
@@ -85,19 +91,29 @@ export default function ArchivePage() {
                 fetchArchivedRequests(),
                 fetchArchivedUploads(),
                 fetchArchivedCredits(),
-                fetchArchivedLoans()
+                fetchArchivedLoans(),
+                fetchArchivedPayouts()
             ])
                 .then(() => setLoaded(true));
         }
-    }, [hasAccess, loaded, fetchArchivedRequests, fetchArchivedUploads, fetchArchivedCredits, fetchArchivedLoans]);
+    }, [hasAccess, loaded, fetchArchivedRequests, fetchArchivedUploads, fetchArchivedCredits, fetchArchivedLoans, fetchArchivedPayouts]);
 
     if (userLoading) {
-        return <div className={styles.loading}><div className={styles.spinner}></div><p>Loading...</p></div>;
+        return (
+            <div className={styles.loading}>
+                <MStreetLoader size={120} />
+                <p style={{ marginTop: '16px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Loading archive...
+                </p>
+            </div>
+        );
     }
 
     if (!hasAccess) {
         return <div className={styles.error}><h1>Access Denied</h1></div>;
     }
+
+    // --- HANDLERS ---
 
     // Loan request handlers
     const handleRestoreRequest = async (row: any) => {
@@ -165,42 +181,6 @@ export default function ArchivePage() {
         }
     };
 
-    // Credit columns
-    const creditColumns: Column[] = [
-        {
-            key: 'creditor',
-            label: 'Creditor',
-            render: (_, row) => (
-                <div>
-                    <strong>{row.creditor?.full_name || 'Unknown'}</strong>
-                    <br />
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{row.creditor?.email}</span>
-                </div>
-            )
-        },
-        { key: 'principal', label: 'Principal', render: (value) => formatCurrency(value) },
-        { key: 'archive_reason', label: 'Reason', render: (value) => value || '-' },
-        { key: 'archived_at', label: 'Archived', render: (value) => value ? formatDate(value) : '-' },
-    ];
-
-    // Loan columns
-    const loanColumns: Column[] = [
-        {
-            key: 'debtor',
-            label: 'Debtor',
-            render: (_, row) => (
-                <div>
-                    <strong>{row.debtor?.full_name || 'Unknown'}</strong>
-                    <br />
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{row.debtor?.email}</span>
-                </div>
-            )
-        },
-        { key: 'principal', label: 'Principal', render: (value) => formatCurrency(value) },
-        { key: 'archive_reason', label: 'Reason', render: (value) => value || '-' },
-        { key: 'archived_at', label: 'Archived', render: (value) => value ? formatDate(value) : '-' },
-    ];
-
     // Credit handlers
     const handleRestoreCredit = async (row: any) => {
         if (confirm(`Restore this credit from ${row.creditor?.full_name}?`)) {
@@ -236,13 +216,11 @@ export default function ArchivePage() {
         if (confirm(`⚠️ PERMANENT DELETE\n\nThis will permanently delete this credit.\n\nThis action CANNOT be undone!`)) {
             setActionLoading(row.id);
             try {
-                // Log before deletion
                 await logActivity('DELETE_CREDIT', 'credit', row.id, {
                     creditor: row.creditor?.full_name,
                     principal: row.principal,
                     permanent: true,
                 });
-
                 const supabase = createClient();
                 const { error } = await supabase.from('credits').delete().eq('id', row.id);
                 if (error) throw error;
@@ -265,8 +243,8 @@ export default function ArchivePage() {
                 const { error } = await supabase
                     .from('loans')
                     .update({
-                        status: 'active', // Restore to active? Or should it go back to previous status? Defaulting to active for now.
-                        archived_at: null, // Just in case we use this
+                        status: 'active',
+                        archived_at: null,
                         archive_reason: null
                     })
                     .eq('id', row.id);
@@ -295,13 +273,11 @@ export default function ArchivePage() {
         if (confirm(`⚠️ PERMANENT DELETE\n\nThis will permanently delete this loan.\n\nThis action CANNOT be undone!`)) {
             setActionLoading(row.id);
             try {
-                // Log before deletion
                 await logActivity('DELETE_LOAN', 'loan', row.id, {
                     debtor: row.debtor?.full_name,
                     principal: row.principal,
                     permanent: true,
                 });
-
                 const supabase = createClient();
                 const { error } = await supabase.from('loans').delete().eq('id', row.id);
                 if (error) throw error;
@@ -315,7 +291,41 @@ export default function ArchivePage() {
         }
     };
 
-    // Loan request columns
+    // Payout Handlers
+    const handleRestorePayout = async (row: any) => {
+        if (confirm(`Restore this payout request from ${row.creditor?.full_name}?`)) {
+            setActionLoading(row.id);
+            try {
+                await restorePayout(row.id);
+                alert('Payout restored!');
+            } catch (err: any) {
+                alert('Error: ' + err.message);
+            } finally {
+                setActionLoading(null);
+            }
+        }
+    };
+
+    const handlePermanentDeletePayout = async (row: any) => {
+        if (!isSuperAdmin) {
+            alert('Only Super Admins can permanently delete.');
+            return;
+        }
+        if (confirm(`⚠️ PERMANENT DELETE\n\nThis will permanently delete this payout request.\n\nThis action CANNOT be undone!`)) {
+            setActionLoading(row.id);
+            try {
+                await permanentlyDeletePayout(row.id);
+                alert('Permanently deleted!');
+            } catch (err: any) {
+                alert('Error: ' + err.message);
+            } finally {
+                setActionLoading(null);
+            }
+        }
+    };
+
+    // --- COLUMNS ---
+
     const requestColumns: Column[] = [
         {
             key: 'debtor',
@@ -354,7 +364,6 @@ export default function ArchivePage() {
         },
     ];
 
-    // Payment upload columns
     const uploadColumns: Column[] = [
         {
             key: 'debtor',
@@ -380,6 +389,66 @@ export default function ArchivePage() {
             }
         },
     ];
+
+    const creditColumns: Column[] = [
+        {
+            key: 'creditor',
+            label: 'Creditor',
+            render: (_, row) => (
+                <div>
+                    <strong>{row.creditor?.full_name || 'Unknown'}</strong>
+                    <br />
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{row.creditor?.email}</span>
+                </div>
+            )
+        },
+        { key: 'principal', label: 'Principal', render: (value) => formatCurrency(value) },
+        { key: 'archive_reason', label: 'Reason', render: (value) => value || '-' },
+        { key: 'archived_at', label: 'Archived', render: (value) => value ? formatDate(value) : '-' },
+    ];
+
+    const loanColumns: Column[] = [
+        {
+            key: 'debtor',
+            label: 'Debtor',
+            render: (_, row) => (
+                <div>
+                    <strong>{row.debtor?.full_name || 'Unknown'}</strong>
+                    <br />
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{row.debtor?.email}</span>
+                </div>
+            )
+        },
+        { key: 'principal', label: 'Principal', render: (value) => formatCurrency(value) },
+        { key: 'archive_reason', label: 'Reason', render: (value) => value || '-' },
+        { key: 'archived_at', label: 'Archived', render: (value) => value ? formatDate(value) : '-' },
+    ];
+
+    const payoutColumns: Column[] = [
+        {
+            key: 'creditor',
+            label: 'Creditor',
+            render: (_, row) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                        width: '32px', height: '32px', borderRadius: '50%',
+                        background: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                        <Banknote size={16} color="white" />
+                    </div>
+                    <div>
+                        <strong>{row.creditor?.full_name}</strong>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{row.creditor?.email}</div>
+                    </div>
+                </div>
+            )
+        },
+        { key: 'amount', label: 'Amount', render: (value) => formatCurrency(value) },
+        { key: 'status', label: 'Status', render: (value) => <span className={styles.badge}>{value}</span> },
+        { key: 'created_at', label: 'Requested', render: (value) => formatDate(value) },
+    ];
+
+    // --- ACTIONS ---
 
     const requestActions: RowAction[] = [
         {
@@ -441,6 +510,21 @@ export default function ArchivePage() {
         },
     ];
 
+    const payoutActions: RowAction[] = [
+        {
+            label: '↩️ Restore',
+            icon: <RefreshCw size={16} />,
+            onClick: handleRestorePayout,
+        },
+        {
+            label: '🗑️ Delete Forever',
+            icon: <Trash2 size={16} />,
+            onClick: handlePermanentDeletePayout,
+            variant: 'danger',
+            hidden: () => !isSuperAdmin,
+        },
+    ];
+
     return (
         <DashboardLayout currentUser={user || undefined}>
             <div className={styles.container}>
@@ -485,6 +569,21 @@ export default function ArchivePage() {
                         paginated
                         defaultPageSize={10}
                         actions={requestActions}
+                    />
+                </div>
+
+                {/* Payout Requests Section */}
+                <div className={styles.section}>
+                    <h2 className={styles.sectionTitle}>Archived Payout Requests ({archivedPayouts.length})</h2>
+                    <DataTable
+                        columns={payoutColumns}
+                        data={archivedPayouts}
+                        loading={!loaded}
+                        emptyMessage="No archived payout requests"
+                        searchable
+                        paginated
+                        defaultPageSize={10}
+                        actions={payoutActions}
                     />
                 </div>
 

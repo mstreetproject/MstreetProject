@@ -13,11 +13,13 @@ import { useUserCounts } from '@/hooks/dashboard/useUserCounts';
 import { useCurrency } from '@/hooks/useCurrency';
 import { createClient } from '@/lib/supabase/client';
 import { calculateSimpleInterest } from '@/lib/interest';
-import { DollarSign, TrendingUp, Users, CheckCircle, Wallet, PiggyBank, Edit, Trash2, Loader2, FileText } from 'lucide-react';
+import { DollarSign, TrendingUp, Users, CheckCircle, Wallet, PiggyBank, Edit, Trash2, FileText, UserPlus } from 'lucide-react';
 import EditCreditModal from '@/components/dashboard/EditCreditModal';
 import RecordPayoutModal from '@/components/dashboard/RecordPayoutModal';
 import PayoutHistoryModal from '@/components/dashboard/PayoutHistoryModal';
 import styles from './page.module.css';
+import CreateCreditorModal from '@/components/dashboard/CreateCreditorModal';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 
 // Format date
 const formatDate = (dateString: string) => {
@@ -77,6 +79,7 @@ export default function CreditorsPage() {
     const [historyCreditId, setHistoryCreditId] = useState<string | null>(null);
     const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [archivingId, setArchivingId] = useState<string | null>(null);
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     // Handle Edit
     const handleEdit = (row: any) => {
@@ -136,8 +139,10 @@ export default function CreditorsPage() {
     if (userLoading) {
         return (
             <div className={styles.loading}>
-                <div className={styles.spinner}></div>
-                <p>Loading...</p>
+                <MStreetLoader size={120} />
+                <p style={{ marginTop: '16px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Loading creditors...
+                </p>
             </div>
         );
     }
@@ -251,7 +256,7 @@ export default function CreditorsPage() {
         },
         {
             label: archivingId ? 'Archiving...' : '📦 Archive',
-            icon: archivingId ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />,
+            icon: archivingId ? <MStreetLoader size={16} color="var(--danger)" /> : <Trash2 size={16} />,
             onClick: handleArchive,
             variant: 'danger',
         },
@@ -271,7 +276,14 @@ export default function CreditorsPage() {
                         </p>
                     </div>
                     <div className={styles.headerRight}>
-
+                        {/* Create Creditor Button */}
+                        <button
+                            className={styles.createBtn}
+                            onClick={() => setShowCreateModal(true)}
+                        >
+                            <UserPlus size={20} />
+                            <span>Add Creditor</span>
+                        </button>
 
                         {/* Creditors Count Badge */}
                         <div className={styles.creditorsCount}>
@@ -303,7 +315,9 @@ export default function CreditorsPage() {
                 <div className={styles.statsGrid}>
                     <StatsCard
                         title="Total Value"
-                        value={formatCurrency(stats.totalValue)}
+                        value={formatCurrency(stats.totalCurrentValue)}
+                        change={formatCurrency(stats.totalPrincipal)} // Show principal as subtext
+                        changeType="neutral"
                         icon={Wallet}
                         loading={creditsLoading}
                     />
@@ -317,15 +331,15 @@ export default function CreditorsPage() {
                     <StatsCard
                         title="Active Credits"
                         value={stats.activeCount}
-                        change={formatCurrency(stats.activeValue)}
+                        change={formatCurrency(stats.activeValue)} // Keeping active principal here
                         changeType="neutral"
                         icon={DollarSign}
                         loading={creditsLoading}
                     />
                     <StatsCard
-                        title="Matured"
-                        value={stats.maturedCount}
-                        change={formatCurrency(stats.maturedValue)}
+                        title="Maturity Value"
+                        value={formatCurrency(stats.totalMaturityValue)}
+                        change={`${stats.maturedCount} matured`}
                         changeType="positive"
                         icon={TrendingUp}
                         loading={creditsLoading}
@@ -396,6 +410,16 @@ export default function CreditorsPage() {
                 onClose={() => {
                     setShowHistoryModal(false);
                     setHistoryCreditId(null);
+                }}
+            />
+
+            {/* Create Creditor Modal */}
+            <CreateCreditorModal
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                onSuccess={() => {
+                    refetch();
+                    setShowCreateModal(false);
                 }}
             />
         </DashboardLayout >

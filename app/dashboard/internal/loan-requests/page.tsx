@@ -16,11 +16,12 @@ import {
     X,
     ExternalLink,
     Trash2,
-    Loader2,
     AlertCircle
 } from 'lucide-react';
 import { useActivityLog } from '@/hooks/useActivityLog';
 import styles from '../creditors/page.module.css';
+import MStreetLoader from '@/components/ui/MStreetLoader';
+import { useDelayedLoading } from '@/hooks/useDelayedLoading';
 
 const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -58,7 +59,8 @@ const StatusBadge = ({ status }: { status: string }) => {
 };
 
 export default function LoanRequestsPage() {
-    const { user, loading: userLoading } = useUser();
+    const { user, loading: initialUserLoading } = useUser();
+    const userLoading = useDelayedLoading(initialUserLoading, 1500);
     const { logActivity } = useActivityLog();
     const { requests, loading, updateStatus, updateGuarantorStatus, archiveRequest } = useAllLoanRequests();
     const { formatCurrency } = useCurrency();
@@ -70,7 +72,14 @@ export default function LoanRequestsPage() {
     );
 
     if (userLoading) {
-        return <div className={styles.loading}><div className={styles.spinner}></div><p>Loading...</p></div>;
+        return (
+            <div className={styles.loading}>
+                <MStreetLoader size={120} />
+                <p style={{ marginTop: '16px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Loading loan requests...
+                </p>
+            </div>
+        );
     }
 
     if (!hasAccess) {
@@ -206,7 +215,7 @@ export default function LoanRequestsPage() {
         },
         {
             label: archivingId ? 'Archiving...' : '📦 Archive',
-            icon: archivingId ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />,
+            icon: archivingId ? <MStreetLoader size={20} /> : <Trash2 size={16} />,
             onClick: handleArchive,
             variant: 'danger',
         },

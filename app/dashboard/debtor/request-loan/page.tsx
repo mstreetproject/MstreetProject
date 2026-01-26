@@ -13,7 +13,6 @@ import {
     Send,
     Link as LinkIcon,
     Copy,
-    Loader2,
     X,
     User,
     Trash2,
@@ -21,6 +20,7 @@ import {
     Users
 } from 'lucide-react';
 import styles from '../../internal/creditors/page.module.css';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 
 // Format date
 const formatDate = (dateString: string) => {
@@ -345,7 +345,7 @@ export default function RequestLoanPage() {
                         }}
                     >
                         {deletingRequest === value ? (
-                            <Loader2 size={14} className="animate-spin" />
+                            <MStreetLoader size={14} color="var(--danger)" />
                         ) : (
                             <Trash2 size={14} />
                         )}
@@ -360,8 +360,10 @@ export default function RequestLoanPage() {
     if (loading || settingsLoading) {
         return (
             <div className={styles.loading}>
-                <div className={styles.spinner}></div>
-                <p>Loading...</p>
+                <MStreetLoader size={120} />
+                <p style={{ marginTop: '16px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Loading loan requests...
+                </p>
             </div>
         );
     }
@@ -572,7 +574,7 @@ export default function RequestLoanPage() {
                                         gap: '8px',
                                     }}
                                 >
-                                    {submitting && <Loader2 size={16} className="animate-spin" />}
+                                    {submitting && <MStreetLoader size={16} color="#ffffff" />}
                                     Submit Request
                                 </button>
                             </div>
@@ -732,7 +734,7 @@ export default function RequestLoanPage() {
                                         gap: '8px',
                                     }}
                                 >
-                                    {submitting && <Loader2 size={16} className="animate-spin" />}
+                                    {submitting && <MStreetLoader size={16} color="#ffffff" />}
                                     {editingRequest.status === 'rejected' ? 'Resubmit Request' : 'Update Request'}
                                 </button>
                             </div>
@@ -868,7 +870,7 @@ export default function RequestLoanPage() {
                                                 }}
                                             >
                                                 {deletingGuarantor === g.id ? (
-                                                    <Loader2 size={14} className="animate-spin" />
+                                                    <MStreetLoader size={14} color="var(--danger)" />
                                                 ) : (
                                                     <Trash2 size={14} />
                                                 )}

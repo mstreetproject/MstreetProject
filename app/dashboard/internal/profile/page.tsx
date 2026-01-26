@@ -18,6 +18,8 @@ import {
     XCircle
 } from 'lucide-react';
 import styles from './page.module.css';
+import MStreetLoader from '@/components/ui/MStreetLoader';
+import { useDelayedLoading } from '@/hooks/useDelayedLoading';
 
 const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -85,7 +87,8 @@ const DeleteAccountModal = ({
 };
 
 export default function ProfilePage() {
-    const { user, loading: userLoading } = useUser();
+    const { user, loading: initialUserLoading } = useUser();
+    const userLoading = useDelayedLoading(initialUserLoading, 1500);
     const router = useRouter();
 
     // Form state
@@ -167,8 +170,10 @@ export default function ProfilePage() {
     if (userLoading) {
         return (
             <div className={styles.loading}>
-                <div className={styles.spinner}></div>
-                <p>Loading profile...</p>
+                <MStreetLoader size={120} />
+                <p style={{ marginTop: '16px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Loading profile...
+                </p>
             </div>
         );
     }

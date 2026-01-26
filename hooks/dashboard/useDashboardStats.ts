@@ -64,17 +64,17 @@ export function useDashboardStats(startDate?: Date | null, endDate?: Date | null
                     .in('status', ['active', 'matured'])
                     .is('archived_at', null),
 
-                // Active loans (Snapshot - includes all outstanding statuses)
+                // Active/Performing loans (Snapshot - includes all outstanding statuses)
                 supabase
                     .from('loans')
                     .select('principal, amount_repaid')
-                    .in('status', ['active', 'partial_repaid', 'overdue']),
+                    .in('status', ['performing', 'non_performing']),
 
-                // Bad Debt loans (Snapshot - defaulted)
+                // Bad Debt loans (Snapshot - full_provision)
                 supabase
                     .from('loans')
                     .select('principal')
-                    .eq('status', 'defaulted'),
+                    .eq('status', 'full_provision'),
 
                 // Interest revenue (Filtered)
                 interestQuery,

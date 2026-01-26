@@ -7,6 +7,7 @@ import ProfitLossSection from '@/components/dashboard/ProfitLossSection';
 import BalanceSheetSection from '@/components/dashboard/BalanceSheetSection';
 import { FileText, TrendingUp, Building2 } from 'lucide-react';
 import styles from './page.module.css';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 
 type ReportTab = 'pnl' | 'balance';
 
@@ -22,8 +23,10 @@ export default function ReportsPage() {
     if (userLoading) {
         return (
             <div className={styles.loadingContainer}>
-                <div className={styles.spinner}></div>
-                <p>Loading...</p>
+                <MStreetLoader size={120} />
+                <p style={{ marginTop: '16px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Loading reports...
+                </p>
             </div>
         );
     }

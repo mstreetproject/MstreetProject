@@ -12,6 +12,21 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Sequence for loan reference numbers
+CREATE SEQUENCE IF NOT EXISTS loan_ref_seq START 1;
+
+-- Function to generate loan reference number
+-- Format: MSF00001
+CREATE OR REPLACE FUNCTION generate_loan_ref()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.reference_no IS NULL THEN
+        NEW.reference_no := 'MSF' || LPAD(nextval('loan_ref_seq')::TEXT, 5, '0');
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Helper function for RBAC checks
 CREATE OR REPLACE FUNCTION has_any_role(role_names text[])
 RETURNS boolean AS $$
@@ -102,7 +117,15 @@ CREATE TABLE loans (
   tenure_months INTEGER NOT NULL,
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
-  status TEXT CHECK (status IN ('active', 'repaid', 'overdue', 'defaulted')) DEFAULT 'active',
+  status TEXT CHECK (status IN ('performing', 'non_performing', 'full_provision', 'preliquidated', 'archived')) DEFAULT 'performing',
+  
+  -- Enhanced financial tracking fields
+  repayment_cycle TEXT CHECK (repayment_cycle IN ('fortnightly', 'monthly', 'bi_monthly', 'quarterly', 'quadrimester', 'semiannual', 'annually', 'bullet')),
+  origination_date DATE,
+  disbursed_date DATE,
+  first_repayment_date DATE,
+  reference_no TEXT UNIQUE,
+
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
@@ -131,6 +154,51 @@ CREATE TABLE bad_debts (
     amount NUMERIC(15,2) NOT NULL,
     reason TEXT,
     created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Loan Advances: Loan requests from users
+CREATE TABLE loan_advances (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ref_no TEXT UNIQUE NOT NULL,                              -- Reference number
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL, -- FK to users table
+    
+    -- Principal Amounts
+    principal_amount_ngn NUMERIC(15, 2),                      -- Principal amount in NGN
+    principal_amount_usd NUMERIC(15, 2),                      -- Principal amount in USD
+    disbursed_amount NUMERIC(15, 2),                          -- Actual disbursed amount
+    
+    -- Loan Terms
+    rate NUMERIC(5, 2) NOT NULL,                              -- Interest rate (%)
+    tenor_months INTEGER NOT NULL,                            -- Loan tenure in months
+    
+    -- Pre-liquidation
+    is_preliquidated BOOLEAN DEFAULT FALSE,                   -- Was the loan pre-liquidated?
+    preliquidated_amount NUMERIC(15, 2),                      -- Amount pre-liquidated
+    
+    -- Loan Balance
+    balance_of_loan NUMERIC(15, 2),                           -- Remaining loan balance
+    
+    -- Important Dates
+    disbursed_date DATE,                                      -- Date loan was disbursed
+    origination_date DATE,                                    -- Date loan originated
+    first_repayment_due_date DATE,                            -- First repayment due date
+    termination_date DATE,                                    -- Early termination date (if applicable)
+    maturity_date DATE,                                       -- Loan maturity date
+    
+    -- Status Flags
+    is_approved BOOLEAN DEFAULT FALSE,                        -- Has loan been approved?
+    is_disbursed BOOLEAN DEFAULT FALSE,                       -- Has loan been disbursed?
+    is_performing BOOLEAN DEFAULT TRUE,                       -- Is the loan performing?
+    is_closed BOOLEAN DEFAULT FALSE,                          -- Is the loan closed?
+    
+    -- Status (single aggregate status for convenience)
+    status TEXT CHECK (status IN ('pending', 'approved', 'disbursed', 'performing', 'non_performing', 'preliquidated', 'closed', 'rejected')) DEFAULT 'pending',
+    
+    -- Audit Fields
+    approved_by UUID REFERENCES users(id),                    -- Who approved the loan
+    approved_at TIMESTAMP,                                    -- When the loan was approved
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
 -- 5. Operations & Financials
@@ -197,6 +265,7 @@ ALTER TABLE loans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE loan_guarantors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE loan_status_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bad_debts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE loan_advances ENABLE ROW LEVEL SECURITY;
 ALTER TABLE operating_expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE monthly_financials ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
@@ -254,6 +323,11 @@ CREATE POLICY "Staff manage loan_status_history" ON loan_status_history FOR ALL 
 CREATE POLICY "View bad_debts" ON bad_debts FOR SELECT USING (has_any_role(ARRAY['super_admin', 'finance_manager', 'risk_officer']));
 CREATE POLICY "Staff manage bad_debts" ON bad_debts FOR ALL USING (has_any_role(ARRAY['super_admin', 'risk_officer', 'finance_manager']));
 
+-- LOAN ADVANCES
+CREATE POLICY "Users view own loan advances" ON loan_advances FOR SELECT USING (user_id = auth.uid() OR has_any_role(ARRAY['super_admin', 'finance_manager', 'ops_officer', 'risk_officer']));
+CREATE POLICY "Users insert own loan advances" ON loan_advances FOR INSERT WITH CHECK (user_id = auth.uid() OR has_any_role(ARRAY['super_admin', 'finance_manager', 'ops_officer']));
+CREATE POLICY "Staff manage loan_advances" ON loan_advances FOR ALL USING (has_any_role(ARRAY['super_admin', 'finance_manager', 'ops_officer']));
+
 -- FINANCIALS & OPS
 CREATE POLICY "Manage expenses" ON operating_expenses FOR ALL USING (has_any_role(ARRAY['super_admin', 'finance_manager']));
 CREATE POLICY "Manage monthly_financials" ON monthly_financials FOR ALL USING (has_any_role(ARRAY['super_admin', 'finance_manager']));
@@ -269,6 +343,13 @@ CREATE POLICY "Super admin manage data_locks" ON data_locks FOR ALL USING (has_a
 CREATE TRIGGER set_updated_at_users BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
 CREATE TRIGGER set_updated_at_credits BEFORE UPDATE ON credits FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
 CREATE TRIGGER set_updated_at_loans BEFORE UPDATE ON loans FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
+CREATE TRIGGER set_updated_at_loan_advances BEFORE UPDATE ON loan_advances FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
+
+-- Trigger for auto-generating loan reference numbers
+CREATE TRIGGER trg_generate_loan_ref
+BEFORE INSERT ON loans
+FOR EACH ROW
+EXECUTE FUNCTION generate_loan_ref();
 
 -- 11. Supabase Auth Sync
 -- This function automatically creates a public.users row when a new user signs up via Supabase Auth
@@ -336,3 +417,6 @@ CREATE INDEX idx_user_roles_user_id ON user_roles(user_id);
 CREATE INDEX idx_audit_logs_user_id ON audit_logs(user_id);
 CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at);
 CREATE INDEX idx_operating_expenses_month ON operating_expenses(expense_month);
+CREATE INDEX idx_loan_advances_user_id ON loan_advances(user_id);
+CREATE INDEX idx_loan_advances_status ON loan_advances(status);
+CREATE INDEX idx_loan_advances_ref_no ON loan_advances(ref_no);

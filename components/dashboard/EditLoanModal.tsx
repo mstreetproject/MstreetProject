@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { X, RefreshCcw, Calendar } from 'lucide-react';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 import { createClient } from '@/lib/supabase/client';
 import { useActivityLog } from '@/hooks/useActivityLog';
 import styles from './CreateExpenseModal.module.css'; // Reuse same modal styles
+import { calculateLoanDates, RepaymentCycle } from '@/lib/loan-utils';
 
 interface Loan {
     id: string;
@@ -15,6 +17,11 @@ interface Loan {
     start_date: string;
     end_date: string;
     status: string;
+    repayment_cycle?: string;
+    origination_date?: string;
+    disbursed_date?: string;
+    first_repayment_date?: string;
+    reference_no?: string;
     debtor?: {
         full_name: string;
         email: string;
@@ -37,7 +44,9 @@ export default function EditLoanModal({ isOpen, loan, onClose, onSuccess }: Edit
         principal: '',
         interest_rate: '',
         tenure_months: '',
-        start_date: '',
+        origination_date: '',
+        disbursed_date: '',
+        repayment_cycle: '' as RepaymentCycle,
         status: 'active',
     });
 
@@ -48,7 +57,9 @@ export default function EditLoanModal({ isOpen, loan, onClose, onSuccess }: Edit
                 principal: loan.principal.toString(),
                 interest_rate: loan.interest_rate.toString(),
                 tenure_months: loan.tenure_months.toString(),
-                start_date: loan.start_date,
+                origination_date: loan.origination_date || loan.start_date,
+                disbursed_date: loan.disbursed_date || loan.start_date,
+                repayment_cycle: (loan.repayment_cycle || 'monthly') as RepaymentCycle,
                 status: loan.status,
             });
         }
@@ -56,11 +67,6 @@ export default function EditLoanModal({ isOpen, loan, onClose, onSuccess }: Edit
 
     if (!isOpen || !loan) return null;
 
-    const calculateEndDate = (startDate: string, tenureMonths: number): string => {
-        const date = new Date(startDate);
-        date.setMonth(date.getMonth() + tenureMonths);
-        return date.toISOString().split('T')[0];
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -68,13 +74,22 @@ export default function EditLoanModal({ isOpen, loan, onClose, onSuccess }: Edit
         setLoading(true);
 
         try {
-            if (!formData.principal || !formData.interest_rate || !formData.tenure_months || !formData.start_date) {
+            if (!formData.principal || !formData.interest_rate || !formData.tenure_months || !formData.origination_date) {
                 throw new Error('Please fill in all required fields');
             }
 
             const supabase = createClient();
             const tenure = parseInt(formData.tenure_months);
-            const endDate = calculateEndDate(formData.start_date, tenure);
+
+            const calculated = calculateLoanDates(
+                formData.origination_date,
+                tenure,
+                formData.repayment_cycle
+            );
+
+            if (!calculated) {
+                throw new Error('Failed to calculate loan dates');
+            }
 
             const { error: updateError } = await supabase
                 .from('loans')
@@ -82,8 +97,12 @@ export default function EditLoanModal({ isOpen, loan, onClose, onSuccess }: Edit
                     principal: parseFloat(formData.principal),
                     interest_rate: parseFloat(formData.interest_rate),
                     tenure_months: tenure,
-                    start_date: formData.start_date,
-                    end_date: endDate,
+                    start_date: formData.disbursed_date,
+                    origination_date: formData.origination_date,
+                    disbursed_date: formData.disbursed_date,
+                    end_date: calculated.formattedMaturityDate,
+                    first_repayment_date: calculated.formattedFirstRepaymentDate,
+                    repayment_cycle: formData.repayment_cycle,
                     status: formData.status,
                 })
                 .eq('id', loan.id);
@@ -105,9 +124,17 @@ export default function EditLoanModal({ isOpen, loan, onClose, onSuccess }: Edit
             if (tenure !== loan.tenure_months) {
                 changes.tenure_months = { from: loan.tenure_months, to: tenure };
             }
-            // Check Start Date
-            if (formData.start_date !== loan.start_date) {
-                changes.start_date = { from: loan.start_date, to: formData.start_date };
+            // Check Origination Date
+            if (formData.origination_date !== (loan.origination_date || loan.start_date)) {
+                changes.origination_date = { from: loan.origination_date || loan.start_date, to: formData.origination_date };
+            }
+            // Check Disbursement Date
+            if (formData.disbursed_date !== (loan.disbursed_date || loan.start_date)) {
+                changes.disbursed_date = { from: loan.disbursed_date || loan.start_date, to: formData.disbursed_date };
+            }
+            // Check Repayment Cycle
+            if (formData.repayment_cycle !== loan.repayment_cycle) {
+                changes.repayment_cycle = { from: loan.repayment_cycle, to: formData.repayment_cycle };
             }
             // Check Status
             if (formData.status !== loan.status) {
@@ -211,17 +238,53 @@ export default function EditLoanModal({ isOpen, loan, onClose, onSuccess }: Edit
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label htmlFor="start_date" className={styles.label}>
-                            Start Date *
+                        <label htmlFor="origination_date" className={styles.label}>
+                            Origination Date *
                         </label>
                         <input
-                            id="start_date"
+                            id="origination_date"
                             type="date"
-                            value={formData.start_date}
-                            onChange={(e) => setFormData(d => ({ ...d, start_date: e.target.value }))}
+                            value={formData.origination_date}
+                            onChange={(e) => setFormData(d => ({ ...d, origination_date: e.target.value }))}
                             className={styles.input}
                             required
                         />
+                    </div>
+
+                    <div className={styles.formGroup}>
+                        <label htmlFor="disbursed_date" className={styles.label}>
+                            Disbursement Date *
+                        </label>
+                        <input
+                            id="disbursed_date"
+                            type="date"
+                            value={formData.disbursed_date}
+                            onChange={(e) => setFormData(d => ({ ...d, disbursed_date: e.target.value }))}
+                            className={styles.input}
+                            required
+                        />
+                    </div>
+
+                    <div className={styles.formGroup}>
+                        <label htmlFor="repayment_cycle" className={styles.label}>
+                            Repayment Cycle *
+                        </label>
+                        <select
+                            id="repayment_cycle"
+                            value={formData.repayment_cycle}
+                            onChange={(e) => setFormData(d => ({ ...d, repayment_cycle: e.target.value as RepaymentCycle }))}
+                            className={styles.input}
+                            required
+                        >
+                            <option value="fortnightly">Fortnightly (2 weeks)</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="bi_monthly">Bi-Monthly (2 months)</option>
+                            <option value="quarterly">Quarterly</option>
+                            <option value="quadrimester">Quadrimester (4 months)</option>
+                            <option value="semiannual">Semiannual (6 months)</option>
+                            <option value="annually">Annually</option>
+                            <option value="bullet">Bullet (At Maturity)</option>
+                        </select>
                     </div>
 
                     <div className={styles.formGroup}>
@@ -234,10 +297,10 @@ export default function EditLoanModal({ isOpen, loan, onClose, onSuccess }: Edit
                             onChange={(e) => setFormData(d => ({ ...d, status: e.target.value }))}
                             className={styles.input}
                         >
-                            <option value="active">Active</option>
-                            <option value="repaid">Repaid</option>
-                            <option value="overdue">Overdue</option>
-                            <option value="defaulted">Defaulted</option>
+                            <option value="performing">Performing -(Active)</option>
+                            <option value="non_performing">Non-performing - (Overdue)</option>
+                            <option value="full_provision">Non-performing - Full provision required</option>
+                            <option value="preliquidated">Preliquidated - Closed (repaid)</option>
                         </select>
                     </div>
                 </form>
@@ -256,7 +319,7 @@ export default function EditLoanModal({ isOpen, loan, onClose, onSuccess }: Edit
                         className={styles.submitBtn}
                         disabled={loading}
                     >
-                        {loading && <Loader2 size={16} className="animate-spin" />}
+                        {loading && <MStreetLoader size={18} color="#ffffff" />}
                         {loading ? 'Saving...' : 'Save Changes'}
                     </button>
                 </div>

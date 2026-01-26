@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useCurrency } from '@/hooks/useCurrency';
-import { X, Loader2, DollarSign, AlertCircle, CheckCircle, ToggleLeft, ToggleRight, Calculator } from 'lucide-react';
+import { X, DollarSign, AlertCircle, CheckCircle, ToggleLeft, ToggleRight, Calculator } from 'lucide-react';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 import { createClient } from '@/lib/supabase/client';
 import { useActivityLog } from '@/hooks/useActivityLog';
 
@@ -17,6 +18,7 @@ interface Loan {
     status: string;
     amount_repaid?: number;
     interest_repaid?: number;
+    reference_no?: string;
     debtor?: {
         full_name: string;
         email: string;
@@ -155,9 +157,9 @@ export default function RecordRepaymentModal({ isOpen, loan, onClose, onSuccess 
 
             // Update status based on repayment progress
             if (isPrincipalFullyRepaid) {
-                updateData.status = 'repaid';
+                updateData.status = 'preliquidated';
             } else if (newAmountRepaid > 0) {
-                updateData.status = 'partial_repaid';
+                updateData.status = 'performing'; // Still performing even if partial payment made
             }
 
             const { error: loanUpdateError } = await supabase
@@ -241,8 +243,11 @@ export default function RecordRepaymentModal({ isOpen, loan, onClose, onSuccess 
                             marginBottom: '20px',
                         }}>
                             <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.85rem' }}>Receiving payment from:</p>
-                            <p style={{ margin: '4px 0 0', color: 'var(--text-primary)', fontWeight: 600, fontSize: '1.1rem' }}>
+                            <p style={{ margin: '4px 0 0', color: 'var(--text-primary)', fontWeight: 600, fontSize: '1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 {loan.debtor?.full_name || 'Unknown Debtor'}
+                                {loan.reference_no && (
+                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>#{loan.reference_no}</span>
+                                )}
                             </p>
                             <p style={{ margin: '2px 0 0', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
                                 {loan.debtor?.email}
@@ -442,7 +447,7 @@ export default function RecordRepaymentModal({ isOpen, loan, onClose, onSuccess 
                                 gap: '8px',
                             }}
                         >
-                            {loading ? <Loader2 size={18} className="animate-spin" /> : <DollarSign size={18} />}
+                            {loading ? <MStreetLoader size={18} color="#ffffff" /> : <DollarSign size={18} />}
                             {loading ? 'Processing...' : `Confirm ${isPartialPayment ? 'Partial' : 'Full'} Payment`}
                         </button>
                     </form>

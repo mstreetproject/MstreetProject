@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { X } from 'lucide-react';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/dashboard/useUser';
 import { useActivityLog } from '@/hooks/useActivityLog';
@@ -154,7 +155,7 @@ export default function CreateExpenseModal({ isOpen, onClose, onSuccess }: Creat
                         className={styles.submitBtn}
                         disabled={loading}
                     >
-                        {loading && <Loader2 size={16} className="animate-spin" />}
+                        {loading && <MStreetLoader size={18} color="#ffffff" />}
                         {loading ? 'Saving...' : 'Create Expense'}
                     </button>
                 </div>

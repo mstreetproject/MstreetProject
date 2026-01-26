@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useCreditorPayouts } from '@/hooks/dashboard/useCreditorPayouts';
 import { useCurrency } from '@/hooks/useCurrency';
-import { X, Loader2, DollarSign, AlertCircle, CheckCircle } from 'lucide-react';
+import { X, DollarSign, AlertCircle, CheckCircle } from 'lucide-react';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 
 interface Credit {
     id: string;
@@ -246,7 +247,7 @@ export default function RecordPayoutModal({ isOpen, credit, onClose, onSuccess }
                                 gap: '8px',
                             }}
                         >
-                            {(loading || isSubmitting) ? <Loader2 size={18} className="animate-spin" /> : <DollarSign size={18} />}
+                            {(loading || isSubmitting) ? <MStreetLoader size={18} color="#ffffff" /> : <DollarSign size={18} />}
                             {(loading || isSubmitting) ? 'Processing...' : `Pay ${formatCurrency(totalPayout)}`}
                         </button>
                     </form>

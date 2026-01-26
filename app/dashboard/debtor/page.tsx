@@ -27,14 +27,18 @@ const formatDate = (dateString: string) => {
 
 // Status badge component
 const StatusBadge = ({ status }: { status: string }) => {
-    const colors: Record<string, { bg: string; color: string }> = {
-        active: { bg: 'var(--accent-bg)', color: 'var(--accent-primary)' },
-        repaid: { bg: 'var(--success-bg)', color: 'var(--success)' },
-        overdue: { bg: 'var(--warning-bg)', color: 'var(--warning)' },
-        defaulted: { bg: 'var(--danger-bg)', color: 'var(--danger)' },
-        pending: { bg: 'var(--warning-bg)', color: 'var(--warning)' },
-        approved: { bg: 'var(--success-bg)', color: 'var(--success)' },
-        rejected: { bg: 'var(--danger-bg)', color: 'var(--danger)' },
+    const colors: Record<string, { bg: string; color: string; label?: string }> = {
+        performing: { bg: 'var(--success-bg)', color: 'var(--success)', label: 'Performing' },
+        preliquidated: { bg: 'var(--accent-bg)', color: 'var(--accent-primary)', label: 'Preliquidated' },
+        non_performing: { bg: 'var(--warning-bg)', color: 'var(--warning)', label: 'Non-performing' },
+        full_provision: { bg: 'var(--danger-bg)', color: 'var(--danger)', label: 'Full Provision' },
+        active: { bg: 'var(--accent-bg)', color: 'var(--accent-primary)', label: 'Active' },
+        repaid: { bg: 'var(--success-bg)', color: 'var(--success)', label: 'Repaid' },
+        overdue: { bg: 'var(--warning-bg)', color: 'var(--warning)', label: 'Overdue' },
+        defaulted: { bg: 'var(--danger-bg)', color: 'var(--danger)', label: 'Defaulted' },
+        pending: { bg: 'var(--warning-bg)', color: 'var(--warning)', label: 'Pending' },
+        approved: { bg: 'var(--success-bg)', color: 'var(--success)', label: 'Approved' },
+        rejected: { bg: 'var(--danger-bg)', color: 'var(--danger)', label: 'Rejected' },
     };
 
     const style = colors[status] || colors.active;
@@ -49,7 +53,7 @@ const StatusBadge = ({ status }: { status: string }) => {
             background: style.bg,
             color: style.color,
         }}>
-            {status}
+            {style.label || status}
         </span>
     );
 };
@@ -143,7 +147,7 @@ export default function DebtorDashboardPage() {
                     loading={loansLoading}
                 />
                 <StatsCard
-                    title="Active Loans"
+                    title="Performing Loans"
                     value={stats.activeLoans.toString()}
                     change="In progress"
                     changeType="neutral"
@@ -158,7 +162,7 @@ export default function DebtorDashboardPage() {
                     loading={loansLoading}
                 />
                 <StatsCard
-                    title="Repaid"
+                    title="Preliquidated"
                     value={formatCurrency(stats.repaidAmount)}
                     changeType="positive"
                     icon={CheckCircle}

@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/dashboard/useUser';
 import { useActivityLog } from '@/hooks/useActivityLog';
-import { Loader2, User, DollarSign, Percent, Calendar, Clock } from 'lucide-react';
+import { User, DollarSign, Percent, Calendar, Clock } from 'lucide-react';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 import styles from './CreateCreditForm.module.css';
 
 interface Creditor {
@@ -227,7 +228,7 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
                     className={styles.submitBtn}
                     disabled={loading || loadingCreditors}
                 >
-                    {loading && <Loader2 size={16} className={styles.spinner} />}
+                    {loading && <MStreetLoader size={18} color="#ffffff" />}
                     {loading ? 'Recording...' : 'Record Credit'}
                 </button>
             </div>

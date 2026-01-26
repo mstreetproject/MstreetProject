@@ -147,3 +147,60 @@
 .logoutBtn:hover {
     background: var(--danger-bg);
 }
+
+/* Collapsible Menu Styles */
+.menuGroup {
+    display: flex;
+    flex-direction: column;
+}
+
+.navButton {
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    font-size: 1rem;
+    text-align: left;
+    justify-content: flex-start;
+}
+
+.chevron {
+    margin-left: auto;
+    transition: transform 0.2s ease;
+    color: var(--text-muted);
+}
+
+.subMenu {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-left: 12px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    border-left: 2px solid var(--border-primary);
+    margin-left: 24px;
+}
+
+.subItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-weight: 400;
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.subItem:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-secondary);
+}
+
+.subItem.active {
+    background: var(--accent-bg);
+    color: var(--accent-secondary);
+    font-weight: 500;
+}

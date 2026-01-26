@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { useCreditorPayouts } from '@/hooks/dashboard/useCreditorPayouts';
 import { useCurrency } from '@/hooks/useCurrency';
-import { X, Loader2, Calendar, FileText } from 'lucide-react';
+import { X, Calendar, FileText } from 'lucide-react';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 
 interface PayoutHistoryModalProps {
     isOpen: boolean;
@@ -80,7 +81,7 @@ export default function PayoutHistoryModal({ isOpen, creditId, onClose }: Payout
                 <div style={{ overflowY: 'auto', flex: 1 }}>
                     {loading ? (
                         <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
-                            <Loader2 size={32} className="animate-spin" style={{ color: 'var(--accent-primary)' }} />
+                            <MStreetLoader size={60} />
                         </div>
                     ) : payouts.length === 0 ? (
                         <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>

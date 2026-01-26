@@ -11,6 +11,7 @@ import { Users, UserPlus, Shield, Activity, Edit, Trash2, UserX } from 'lucide-r
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import styles from '../creditors/page.module.css';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 
 const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -218,8 +219,10 @@ export default function StaffPage() {
     if (userLoading) {
         return (
             <div className={styles.loading}>
-                <div className={styles.spinner}></div>
-                <p>Loading...</p>
+                <MStreetLoader size={120} />
+                <p style={{ marginTop: '16px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Loading staff...
+                </p>
             </div>
         );
     }

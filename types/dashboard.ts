@@ -50,9 +50,17 @@ export interface Loan {
     tenure_months: number;
     start_date: string;
     end_date: string;
-    status: 'active' | 'partial_repaid' | 'repaid' | 'overdue' | 'defaulted' | 'archived';
+    status: 'performing' | 'non_performing' | 'full_provision' | 'preliquidated' | 'archived';
     amount_repaid?: number;  // Track principal repaid so far
     interest_repaid?: number; // Track interest repaid so far
+
+    // New fields
+    repayment_cycle?: string;
+    origination_date?: string;
+    disbursed_date?: string;
+    first_repayment_date?: string;
+    reference_no?: string;
+
     created_at: string;
     updated_at: string;
     debtor?: {

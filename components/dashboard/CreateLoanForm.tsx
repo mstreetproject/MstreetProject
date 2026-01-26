@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/dashboard/useUser';
 import { useActivityLog } from '@/hooks/useActivityLog';
-import { Loader2, User, DollarSign, Percent, Calendar, Clock } from 'lucide-react';
+import { User, DollarSign, Percent, Calendar, Clock, RefreshCcw } from 'lucide-react';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 import styles from './CreateCreditForm.module.css'; // Reuse same styles
+import { calculateLoanDates, RepaymentCycle, LoanDates } from '@/lib/loan-utils';
 
 interface Debtor {
     id: string;
@@ -31,8 +33,22 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
         principal: '',
         interest_rate: '',
         tenure_months: '',
-        start_date: new Date().toISOString().split('T')[0],
+        origination_date: new Date().toISOString().split('T')[0],
+        disbursed_date: new Date().toISOString().split('T')[0],
+        repayment_cycle: 'monthly' as RepaymentCycle,
     });
+
+    const [calculatedDates, setCalculatedDates] = useState<LoanDates | null>(null);
+
+    // Update calculated dates whenever relevant fields change
+    useEffect(() => {
+        const result = calculateLoanDates(
+            formData.origination_date,
+            parseInt(formData.tenure_months),
+            formData.repayment_cycle
+        );
+        setCalculatedDates(result);
+    }, [formData.origination_date, formData.tenure_months, formData.repayment_cycle]);
 
     // Fetch debtors on mount
     useEffect(() => {
@@ -56,11 +72,6 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
         fetchDebtors();
     }, []);
 
-    const calculateEndDate = (startDate: string, tenureMonths: number): string => {
-        const date = new Date(startDate);
-        date.setMonth(date.getMonth() + tenureMonths);
-        return date.toISOString().split('T')[0];
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -75,7 +86,10 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
 
             const supabase = createClient();
             const tenure = parseInt(formData.tenure_months);
-            const endDate = calculateEndDate(formData.start_date, tenure);
+
+            if (!calculatedDates) {
+                throw new Error('Could not calculate loan dates. Please check your inputs.');
+            }
 
             const { data: insertedData, error: insertError } = await supabase
                 .from('loans')
@@ -84,9 +98,13 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
                     principal: parseFloat(formData.principal),
                     interest_rate: parseFloat(formData.interest_rate),
                     tenure_months: tenure,
-                    start_date: formData.start_date,
-                    end_date: endDate,
-                    status: 'active',
+                    start_date: formData.disbursed_date, // start_date is now synced with disbursed_date
+                    end_date: calculatedDates.formattedMaturityDate,
+                    origination_date: formData.origination_date,
+                    disbursed_date: formData.disbursed_date,
+                    first_repayment_date: calculatedDates.formattedFirstRepaymentDate,
+                    repayment_cycle: formData.repayment_cycle,
+                    status: 'performing',
                 })
                 .select()
                 .single();
@@ -108,7 +126,9 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
                 principal: '',
                 interest_rate: '',
                 tenure_months: '',
-                start_date: new Date().toISOString().split('T')[0],
+                origination_date: new Date().toISOString().split('T')[0],
+                disbursed_date: new Date().toISOString().split('T')[0],
+                repayment_cycle: 'monthly' as RepaymentCycle,
             });
             onSuccess?.();
         } catch (err) {
@@ -206,19 +226,79 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label htmlFor="start_date" className={styles.label}>
+                    <label htmlFor="origination_date" className={styles.label}>
                         <Calendar size={16} />
-                        Disbursement Date *
+                        Origination Date *
                     </label>
                     <input
-                        id="start_date"
+                        id="origination_date"
                         type="date"
-                        value={formData.start_date}
-                        onChange={(e) => setFormData(d => ({ ...d, start_date: e.target.value }))}
+                        value={formData.origination_date}
+                        onChange={(e) => {
+                            const newDate = e.target.value;
+                            setFormData(d => ({
+                                ...d,
+                                origination_date: newDate,
+                                // Sync disbursed_date if it was matching origination_date before
+                                disbursed_date: d.disbursed_date === d.origination_date ? newDate : d.disbursed_date
+                            }));
+                        }}
                         className={styles.input}
                         required
                     />
                 </div>
+
+                <div className={styles.formGroup}>
+                    <label htmlFor="disbursed_date" className={styles.label}>
+                        <Clock size={16} />
+                        Disbursement Date *
+                    </label>
+                    <input
+                        id="disbursed_date"
+                        type="date"
+                        value={formData.disbursed_date}
+                        onChange={(e) => setFormData(d => ({ ...d, disbursed_date: e.target.value }))}
+                        className={styles.input}
+                        required
+                    />
+                </div>
+
+                <div className={styles.formGroup}>
+                    <label htmlFor="repayment_cycle" className={styles.label}>
+                        <RefreshCcw size={16} />
+                        Repayment Cycle *
+                    </label>
+                    <select
+                        id="repayment_cycle"
+                        value={formData.repayment_cycle}
+                        onChange={(e) => setFormData(d => ({ ...d, repayment_cycle: e.target.value as RepaymentCycle }))}
+                        className={styles.select}
+                        required
+                    >
+                        <option value="fortnightly">Fortnightly (2 weeks)</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="bi_monthly">Bi-Monthly (2 months)</option>
+                        <option value="quarterly">Quarterly</option>
+                        <option value="quadrimester">Quadrimester (4 months)</option>
+                        <option value="semiannual">Semiannual (6 months)</option>
+                        <option value="annually">Annually</option>
+                        <option value="bullet">Bullet (At Maturity)</option>
+                    </select>
+                </div>
+
+                {calculatedDates && (
+                    <div className={styles.calculationPreview}>
+                        <div className={styles.previewItem}>
+                            <span className={styles.previewLabel}>1st Repayment</span>
+                            <span className={styles.previewValue}>{calculatedDates.formattedFirstRepaymentDate}</span>
+                        </div>
+                        <div className={styles.previewDivider}></div>
+                        <div className={styles.previewItem}>
+                            <span className={styles.previewLabel}>Maturity Date</span>
+                            <span className={styles.previewValue}>{calculatedDates.formattedMaturityDate}</span>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className={styles.formFooter}>
@@ -227,7 +307,7 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
                     className={styles.submitBtn}
                     disabled={loading || loadingDebtors}
                 >
-                    {loading && <Loader2 size={16} className={styles.spinner} />}
+                    {loading && <MStreetLoader size={18} color="#ffffff" />}
                     {loading ? 'Processing...' : 'Disburse Loan'}
                 </button>
             </div>

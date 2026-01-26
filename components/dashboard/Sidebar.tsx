@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -14,7 +15,12 @@ import {
     X,
     UserPlus,
     Receipt,
-    Settings
+    Settings,
+    Banknote,
+    ChevronDown,
+    ChevronRight,
+    Coins,
+    CreditCard
 } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
@@ -43,6 +49,7 @@ const menuItems = [
         icon: TrendingUp,
         roles: ['super_admin', 'finance_manager', 'ops_officer', 'risk_officer']
     },
+
     {
         label: 'Staff',
         href: '/dashboard/internal/staff',
@@ -51,13 +58,17 @@ const menuItems = [
     },
     {
         label: 'Operations',
-        href: '/dashboard/internal/operations',
         icon: UserPlus,
-        roles: ['super_admin', 'finance_manager', 'ops_officer']
+        roles: ['super_admin', 'finance_manager', 'ops_officer'],
+        subItems: [
+            { label: 'Record Credit', href: '/dashboard/internal/operations/record-credit', icon: Coins },
+            { label: 'Disburse Loan', href: '/dashboard/internal/operations/disburse-loan', icon: CreditCard },
+            { label: 'Record Expense', href: '/dashboard/internal/operations/record-expense', icon: Receipt }
+        ]
     },
     {
-        label: 'Loan Requests',
-        href: '/dashboard/internal/loan-requests',
+        label: 'Money Request',
+        href: '/dashboard/internal/money-requests',
         icon: FileText,
         roles: ['super_admin', 'finance_manager', 'ops_officer']
     },
@@ -114,11 +125,40 @@ const menuItems = [
 
 export default function Sidebar({ isOpen, onClose, userRole = '' }: SidebarProps) {
     const pathname = usePathname();
+    const [manuallyExpandedMenus, setManuallyExpandedMenus] = useState<string[]>([]);
+    const [manuallyCollapsedMenus, setManuallyCollapsedMenus] = useState<string[]>([]);
 
     // Filter menu items based on user role
     const filteredMenuItems = menuItems.filter(item =>
         item.roles.includes(userRole)
     );
+
+    // Check if a menu should be expanded
+    const isMenuExpanded = (label: string, subItems?: typeof menuItems[0]['subItems']) => {
+        // If manually collapsed, keep it closed
+        if (manuallyCollapsedMenus.includes(label)) return false;
+        // If manually expanded, keep it open
+        if (manuallyExpandedMenus.includes(label)) return true;
+        // Auto-expand if on an active sub-item
+        if (subItems) {
+            return subItems.some(sub => pathname === sub.href);
+        }
+        return false;
+    };
+
+    const toggleMenu = (label: string) => {
+        const isCurrentlyExpanded = isMenuExpanded(label, menuItems.find(m => m.label === label)?.subItems);
+
+        if (isCurrentlyExpanded) {
+            // Collapse it
+            setManuallyCollapsedMenus(prev => [...prev, label]);
+            setManuallyExpandedMenus(prev => prev.filter(l => l !== label));
+        } else {
+            // Expand it
+            setManuallyExpandedMenus(prev => [...prev, label]);
+            setManuallyCollapsedMenus(prev => prev.filter(l => l !== label));
+        }
+    };
 
     return (
         <>
@@ -128,7 +168,7 @@ export default function Sidebar({ isOpen, onClose, userRole = '' }: SidebarProps
 
             <aside className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
                 <div className={styles.header}>
-                    <Link href="/" className={styles.logo} onClick={onClose}>
+                    <Link href="/login" className={styles.logo} onClick={onClose}>
                         <Image
                             src="/secondary logo2.png"
                             alt="MStreet Finance"
@@ -160,12 +200,56 @@ export default function Sidebar({ isOpen, onClose, userRole = '' }: SidebarProps
                     ) : (
                         filteredMenuItems.map((item) => {
                             const Icon = item.icon;
-                            const isActive = pathname === item.href;
+                            const hasSubItems = item.subItems && item.subItems.length > 0;
+                            const isExpanded = hasSubItems && isMenuExpanded(item.label, item.subItems);
+                            const isActive = item.href ? pathname === item.href : false;
+                            const hasActiveChild = item.subItems?.some(sub => pathname === sub.href);
 
+                            // If has sub-items, render collapsible menu
+                            if (hasSubItems) {
+                                return (
+                                    <div key={item.label} className={styles.menuGroup}>
+                                        <button
+                                            className={`${styles.navItem} ${styles.navButton} ${hasActiveChild ? styles.active : ''}`}
+                                            onClick={() => toggleMenu(item.label)}
+                                            aria-expanded={isExpanded}
+                                        >
+                                            <Icon className={styles.navIcon} size={20} />
+                                            <span>{item.label}</span>
+                                            {isExpanded ? (
+                                                <ChevronDown className={styles.chevron} size={16} />
+                                            ) : (
+                                                <ChevronRight className={styles.chevron} size={16} />
+                                            )}
+                                        </button>
+                                        {isExpanded && (
+                                            <div className={styles.subMenu}>
+                                                {item.subItems!.map((subItem) => {
+                                                    const SubIcon = subItem.icon;
+                                                    const isSubActive = pathname === subItem.href;
+                                                    return (
+                                                        <Link
+                                                            key={subItem.href}
+                                                            href={subItem.href}
+                                                            className={`${styles.subItem} ${isSubActive ? styles.active : ''}`}
+                                                            onClick={onClose}
+                                                        >
+                                                            <SubIcon className={styles.navIcon} size={16} />
+                                                            <span>{subItem.label}</span>
+                                                        </Link>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            }
+
+                            // Regular menu item without sub-items
                             return (
                                 <Link
                                     key={item.href}
-                                    href={item.href}
+                                    href={item.href!}
                                     className={`${styles.navItem} ${isActive ? styles.active : ''}`}
                                     onClick={onClose}
                                 >

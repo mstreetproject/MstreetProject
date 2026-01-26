@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Loader2 } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
-import { useUser } from '@/hooks/dashboard/useUser';
+import { X, CheckCircle, AlertCircle } from 'lucide-react';
+import MStreetLoader from '@/components/ui/MStreetLoader';
+import { useActivityLog } from '@/hooks/useActivityLog';
 import styles from './CreateCreditorModal.module.css';
 
 interface CreateCreditorModalProps {
@@ -13,22 +13,42 @@ interface CreateCreditorModalProps {
 }
 
 export default function CreateCreditorModal({ isOpen, onClose, onSuccess }: CreateCreditorModalProps) {
-    const { user } = useUser();
+    const { logActivity } = useActivityLog();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
 
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
+        password: '',
         phone: '',
         address: ''
     });
 
     if (!isOpen) return null;
 
+    const resetForm = () => {
+        setFormData({
+            fullName: '',
+            email: '',
+            password: '',
+            phone: '',
+            address: ''
+        });
+        setError(null);
+        setSuccess(null);
+    };
+
+    const handleClose = () => {
+        resetForm();
+        onClose();
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
+        setSuccess(null);
         setLoading(true);
 
         try {
@@ -36,34 +56,51 @@ export default function CreateCreditorModal({ isOpen, onClose, onSuccess }: Crea
                 throw new Error('Full Name and Email are required');
             }
 
-            const supabase = createClient();
+            if (!formData.password || formData.password.length < 6) {
+                throw new Error('Password is required (min. 6 characters)');
+            }
 
-            // Insert new user with is_creditor flag
-            const { error: insertError } = await supabase
-                .from('users')
-                .insert({
-                    full_name: formData.fullName,
-                    email: formData.email,
-                    phone: formData.phone || null,
-                    address: formData.address || null,
-                    is_creditor: true,
-                    // Passwords and auth accounts are separate; 
-                    // this creates the DB record first. 
-                    // If auth link is needed later, they can sign up with this email.
-                });
+            // Use admin API to create user with auth
+            const apiPayload = {
+                full_name: formData.fullName,
+                email: formData.email,
+                password: formData.password,
+                phone: formData.phone || null,
+                address: formData.address || null,
+                is_internal: false,
+                is_creditor: true,
+                is_debtor: false
+            };
 
-            if (insertError) throw insertError;
-
-            // Success
-            onSuccess();
-            onClose();
-            // Reset form
-            setFormData({
-                fullName: '',
-                email: '',
-                phone: '',
-                address: ''
+            const response = await fetch('/api/admin/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(apiPayload)
             });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to create creditor');
+            }
+
+            const responseData = await response.json();
+
+            // Log the activity
+            await logActivity('CREATE_USER', 'user', responseData.user?.id || '', {
+                full_name: formData.fullName,
+                email: formData.email,
+                is_creditor: true,
+            });
+
+            setSuccess(`Creditor "${formData.fullName}" created successfully!`);
+
+            // Auto close after success
+            setTimeout(() => {
+                resetForm();
+                onSuccess();
+                onClose();
+            }, 1500);
+
         } catch (err: any) {
             setError(err.message || 'Failed to create creditor');
         } finally {
@@ -77,16 +114,26 @@ export default function CreateCreditorModal({ isOpen, onClose, onSuccess }: Crea
                 <div className={styles.header}>
                     <div>
                         <h2 className={styles.title}>Add New Creditor</h2>
-                        <p className={styles.subtitle}>Enter creditor details below</p>
+                        <p className={styles.subtitle}>Create a new creditor account with login access</p>
                     </div>
-                    <button onClick={onClose} className={styles.closeBtn} type="button">
+                    <button onClick={handleClose} className={styles.closeBtn} type="button">
                         <X size={24} />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className={styles.form}>
+                    {/* Success notification */}
+                    {success && (
+                        <div className={styles.successMessage}>
+                            <CheckCircle size={18} />
+                            {success}
+                        </div>
+                    )}
+
+                    {/* Error notification */}
                     {error && (
                         <div className={styles.error}>
+                            <AlertCircle size={18} />
                             {error}
                         </div>
                     )}
@@ -123,6 +170,22 @@ export default function CreateCreditorModal({ isOpen, onClose, onSuccess }: Crea
                     </div>
 
                     <div className={styles.formGroup}>
+                        <label htmlFor="password" className={styles.label}>
+                            Password *
+                        </label>
+                        <input
+                            id="password"
+                            type="password"
+                            value={formData.password}
+                            onChange={(e) => setFormData(d => ({ ...d, password: e.target.value }))}
+                            placeholder="Min. 6 characters"
+                            className={styles.input}
+                            required
+                            minLength={6}
+                        />
+                    </div>
+
+                    <div className={styles.formGroup}>
                         <label htmlFor="phone" className={styles.label}>
                             Phone Number
                         </label>
@@ -154,7 +217,7 @@ export default function CreateCreditorModal({ isOpen, onClose, onSuccess }: Crea
                 <div className={styles.footer}>
                     <button
                         type="button"
-                        onClick={onClose}
+                        onClick={handleClose}
                         className={styles.cancelBtn}
                         disabled={loading}
                     >
@@ -163,9 +226,9 @@ export default function CreateCreditorModal({ isOpen, onClose, onSuccess }: Crea
                     <button
                         onClick={handleSubmit}
                         className={styles.submitBtn}
-                        disabled={loading}
+                        disabled={loading || !!success}
                     >
-                        {loading && <Loader2 size={16} className="animate-spin" />}
+                        {loading && <MStreetLoader size={18} color="#ffffff" />}
                         {loading ? 'Creating...' : 'Create Creditor'}
                     </button>
                 </div>

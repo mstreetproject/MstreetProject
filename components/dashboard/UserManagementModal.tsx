@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, User, Briefcase, DollarSign, TrendingUp } from 'lucide-react';
+import { X, User, Briefcase, DollarSign, TrendingUp } from 'lucide-react';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 import { createClient } from '@/lib/supabase/client';
 import { useActivityLog } from '@/hooks/useActivityLog';
 import styles from './UserManagementModal.module.css';
@@ -372,7 +373,7 @@ export default function UserManagementModal({ isOpen, onClose, onSuccess, initia
                         className={styles.submitBtn}
                         disabled={loading}
                     >
-                        {loading && <Loader2 size={16} className="animate-spin" />}
+                        {loading && <MStreetLoader size={18} color="#ffffff" />}
                         {loading ? 'Saving...' : 'Save User'}
                     </button>
                 </div>

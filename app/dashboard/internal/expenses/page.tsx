@@ -8,9 +8,11 @@ import TimePeriodFilter from '@/components/dashboard/TimePeriodFilter';
 import DateRangeFilter from '@/components/dashboard/DateRangeFilter';
 import CurrencySelector from '@/components/dashboard/CurrencySelector';
 import EditExpenseModal from '@/components/dashboard/EditExpenseModal';
+import CreateExpenseModal from '@/components/dashboard/CreateExpenseModal';
 import { useUser } from '@/hooks/dashboard/useUser';
 import { useExpenseStats } from '@/hooks/dashboard/useExpenseStats';
 import { useCurrency } from '@/hooks/useCurrency';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 import { useActivityLog } from '@/hooks/useActivityLog';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -21,7 +23,8 @@ import {
     Calendar,
     BarChart3,
     Edit,
-    Trash2
+    Trash2,
+    PlusCircle
 } from 'lucide-react';
 import styles from '../creditors/page.module.css';
 
@@ -51,6 +54,7 @@ export default function ExpensesPage() {
     const { logActivity } = useActivityLog();
     const [editingExpense, setEditingExpense] = useState<any>(null);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     // Check permissions
     const hasAccess = user?.roles?.some(
@@ -95,8 +99,10 @@ export default function ExpensesPage() {
     if (userLoading) {
         return (
             <div className={styles.loading}>
-                <div className={styles.spinner}></div>
-                <p>Loading expenses...</p>
+                <MStreetLoader size={120} />
+                <p style={{ marginTop: '16px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Loading expenses...
+                </p>
             </div>
         );
     }
@@ -164,6 +170,15 @@ export default function ExpensesPage() {
                         <p className={styles.pageSubtitle}>Track and manage company expenses</p>
                     </div>
                     <div className={styles.headerRight}>
+                        {/* Create Expense Button */}
+                        <button
+                            className={styles.createBtn}
+                            onClick={() => setShowCreateModal(true)}
+                        >
+                            <PlusCircle size={20} />
+                            <span>Add Expense</span>
+                        </button>
+
                         <div className={styles.expensesCount}>
                             <Receipt size={20} />
                             <span className={styles.countValue}>{stats.totalCount}</span>
@@ -237,6 +252,16 @@ export default function ExpensesPage() {
                 }}
                 onSuccess={() => {
                     refetch();
+                }}
+            />
+
+            {/* Create Expense Modal */}
+            <CreateExpenseModal
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                onSuccess={() => {
+                    refetch();
+                    setShowCreateModal(false);
                 }}
             />
         </DashboardLayout>

@@ -5,6 +5,7 @@ import { useDebtorLoans } from '@/hooks/dashboard/useDebtorLoans';
 import { useCurrency } from '@/hooks/useCurrency';
 import { FileText, Download, Eye, AlertCircle } from 'lucide-react';
 import styles from '../../internal/creditors/page.module.css';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 
 // Format date helper
 const formatDate = (dateString: string) => {
@@ -23,8 +24,10 @@ export default function DocumentsPage() {
     if (loading) {
         return (
             <div className={styles.loading}>
-                <div className={styles.spinner}></div>
-                <p>Loading documents...</p>
+                <MStreetLoader size={120} />
+                <p style={{ marginTop: '16px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Loading documents...
+                </p>
             </div>
         );
     }
@@ -117,10 +120,10 @@ export default function DocumentsPage() {
                                     gap: '8px',
                                     padding: '6px 12px',
                                     borderRadius: '20px',
-                                    background: loan.status === 'active' ? 'var(--accent-bg)' :
-                                        loan.status === 'repaid' ? 'var(--success-bg)' : 'var(--warning-bg)',
-                                    color: loan.status === 'active' ? 'var(--accent-primary)' :
-                                        loan.status === 'repaid' ? 'var(--success)' : 'var(--warning)',
+                                    background: loan.status === 'performing' ? 'var(--accent-bg)' :
+                                        loan.status === 'preliquidated' ? 'var(--success-bg)' : 'var(--warning-bg)',
+                                    color: loan.status === 'performing' ? 'var(--accent-primary)' :
+                                        loan.status === 'preliquidated' ? 'var(--success)' : 'var(--warning)',
                                     fontSize: '0.8rem',
                                     fontWeight: 600,
                                     textTransform: 'capitalize',

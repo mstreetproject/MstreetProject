@@ -49,7 +49,7 @@ export default function BalanceSheetSection({ onShare }: Props) {
             const { data: loans } = await supabase
                 .from('loans')
                 .select('principal, interest_rate, start_date, amount_repaid, interest_repaid')
-                .in('status', ['active', 'partial_repaid', 'overdue']);
+                .in('status', ['performing', 'non_performing']);
 
             // Calculate loans receivable (principal - amount repaid)
             let loansReceivable = 0;
@@ -236,7 +236,7 @@ export default function BalanceSheetSection({ onShare }: Props) {
                         <div className={styles.lineItem}>
                             <span className={styles.itemName}>
                                 Loans Receivable
-                                <span className={styles.itemCount}>({data.loansReceivableCount} active loans)</span>
+                                <span className={styles.itemCount}>({data.loansReceivableCount} performing loans)</span>
                             </span>
                             <span className={styles.itemValue}>{formatCurrency(data.loansReceivable)}</span>
                         </div>

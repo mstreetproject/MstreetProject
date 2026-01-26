@@ -8,7 +8,7 @@ export default function Navigation() {
                 <div className="flex items-center gap-8">
                     <Link href="/" className="text-xl font-bold text-primary flex items-center gap-2">
                         <Landmark className="text-secondary" />
-                        <span>MStreet</span>
+                        <span>MStreets</span>
                     </Link>
 
                     <div className="flex items-center gap-4">

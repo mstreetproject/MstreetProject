@@ -15,6 +15,7 @@ import { useRecentExpenses } from '@/hooks/dashboard/useRecentExpenses';
 import { useAuditLogs } from '@/hooks/dashboard/useAuditLogs';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useCreditorStats, TIME_PERIODS, TimePeriod, DateRange } from '@/hooks/dashboard/useCreditorStats';
+import { useDelayedLoading } from '@/hooks/useDelayedLoading';
 import {
     Users,
     DollarSign,
@@ -25,6 +26,7 @@ import {
     AlertCircle
 } from 'lucide-react';
 import styles from './page.module.css';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 
 
 
@@ -41,14 +43,18 @@ const formatDate = (dateString: string) => {
 const StatusBadge = ({ status }: { status: string }) => {
     const getStatusClass = () => {
         switch (status) {
+            case 'performing':
             case 'active':
                 return styles.statusActive;
             case 'matured':
             case 'repaid':
+            case 'preliquidated':
                 return styles.statusSuccess;
             case 'withdrawn':
                 return styles.statusNeutral;
+            case 'non_performing':
             case 'overdue':
+            case 'full_provision':
             case 'defaulted':
                 return styles.statusDanger;
             default:
@@ -58,13 +64,18 @@ const StatusBadge = ({ status }: { status: string }) => {
 
     return (
         <span className={`${styles.statusBadge} ${getStatusClass()}`}>
-            {status}
+            {status === 'performing' || status === 'active' ? 'Performing' :
+                status === 'non_performing' || status === 'overdue' ? 'Non-performing' :
+                    status === 'full_provision' || status === 'defaulted' ? 'Full Provision' :
+                        status === 'preliquidated' || status === 'repaid' ? 'Preliquidated' :
+                            status}
         </span>
     );
 };
 
 export default function InternalDashboard() {
-    const { user, loading: userLoading } = useUser();
+    const { user, loading: initialUserLoading } = useUser();
+    const userLoading = useDelayedLoading(initialUserLoading, 1500);
 
     // State for filters
     const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
@@ -126,8 +137,10 @@ export default function InternalDashboard() {
     if (userLoading) {
         return (
             <div className={styles.loading}>
-                <div className={styles.spinner}></div>
-                <p>Loading dashboard...</p>
+                <MStreetLoader size={120} />
+                <p style={{ marginTop: '16px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Loading your dashboard...
+                </p>
             </div>
         );
     }
@@ -313,7 +326,7 @@ export default function InternalDashboard() {
                         loading={statsLoading || creditorStatsLoading}
                     />
                     <StatsCard
-                        title="Active Loans"
+                        title="Performing Loans"
                         value={stats ? stats.totalActiveLoans.count : 0}
                         change={stats ? formatCurrency(stats.totalActiveLoans.sum) : '$0'}
                         changeType="neutral"

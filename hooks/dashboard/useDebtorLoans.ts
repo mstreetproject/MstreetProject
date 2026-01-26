@@ -10,7 +10,7 @@ interface Loan {
     tenure_months: number;
     start_date: string;
     end_date: string;
-    status: 'active' | 'repaid' | 'overdue' | 'defaulted';
+    status: 'performing' | 'preliquidated' | 'non_performing' | 'full_provision' | 'archived';
     created_at: string;
 }
 
@@ -67,23 +67,23 @@ export function useDebtorLoans() {
 
     // Calculate stats from loans
     const stats = useMemo<DebtorLoanStats>(() => {
-        const active = loans.filter(l => l.status === 'active');
-        const repaid = loans.filter(l => l.status === 'repaid');
-        const overdue = loans.filter(l => l.status === 'overdue');
-        const defaulted = loans.filter(l => l.status === 'defaulted');
+        const performing = loans.filter(l => l.status === 'performing');
+        const preliquidated = loans.filter(l => l.status === 'preliquidated');
+        const nonPerforming = loans.filter(l => l.status === 'non_performing');
+        const fullProvision = loans.filter(l => l.status === 'full_provision');
 
-        const activeValue = active.reduce((sum, l) => sum + Number(l.principal), 0);
-        const overdueValue = overdue.reduce((sum, l) => sum + Number(l.principal), 0);
-        const repaidValue = repaid.reduce((sum, l) => sum + Number(l.principal), 0);
+        const performingValue = performing.reduce((sum, l) => sum + Number(l.principal), 0);
+        const nonPerformingValue = nonPerforming.reduce((sum, l) => sum + Number(l.principal), 0);
+        const preliquidatedValue = preliquidated.reduce((sum, l) => sum + Number(l.principal), 0);
         const totalBorrowed = loans.reduce((sum, l) => sum + Number(l.principal), 0);
 
         return {
             totalLoans: loans.length,
-            activeLoans: active.length,
+            activeLoans: performing.length,
             totalBorrowed,
-            totalOutstanding: activeValue + overdueValue,
-            repaidAmount: repaidValue,
-            overdueAmount: overdueValue,
+            totalOutstanding: performingValue + nonPerformingValue,
+            repaidAmount: preliquidatedValue,
+            overdueAmount: nonPerformingValue,
         };
     }, [loans]);
 

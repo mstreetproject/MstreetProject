@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { X } from 'lucide-react';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 import { createClient } from '@/lib/supabase/client';
 import { useActivityLog } from '@/hooks/useActivityLog';
 import styles from './CreateExpenseModal.module.css'; // Reuse same modal styles
@@ -255,7 +256,7 @@ export default function EditCreditModal({ isOpen, credit, onClose, onSuccess }: 
                         className={styles.submitBtn}
                         disabled={loading}
                     >
-                        {loading && <Loader2 size={16} className="animate-spin" />}
+                        {loading && <MStreetLoader size={18} color="#ffffff" />}
                         {loading ? 'Saving...' : 'Save Changes'}
                     </button>
                 </div>

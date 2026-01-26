@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MStreet Finance",
+  title: "MStreets Finance",
   description: "Secure & Accessible Finance Management System",
 };
 

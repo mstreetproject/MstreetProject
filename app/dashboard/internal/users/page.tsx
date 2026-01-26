@@ -10,6 +10,7 @@ import { Users, UserPlus, Shield, Activity, Edit, UserX, Briefcase, DollarSign, 
 import UserManagementModal from '@/components/dashboard/UserManagementModal';
 import styles from './page.module.css';
 import { createClient } from '@/lib/supabase/client';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 
 export default function UsersPage() {
     const { user, loading: userLoading } = useUser();
@@ -26,7 +27,16 @@ export default function UsersPage() {
     const isSuperAdmin = user?.roles?.some(role => role.name === 'super_admin');
 
     // Access Check
-    if (userLoading) return <div className={styles.loading}><div className={styles.spinner}></div></div>;
+    if (userLoading) {
+        return (
+            <div className={styles.loading}>
+                <MStreetLoader size={120} />
+                <p style={{ marginTop: '16px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Loading user management...
+                </p>
+            </div>
+        );
+    }
     if (!isSuperAdmin) {
         return (
             <div className={styles.error}>
