@@ -1,0 +1,61 @@
+.container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inputGroup {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.dateInput {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-primary);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    width: 130px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dateInput:hover {
+    border-color: var(--accent-primary);
+}
+
+.dateInput:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(2, 179, 255, 0.15);
+}
+
+@media (max-width: 480px) {
+    .container {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .inputGroup {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .dateInput {
+        width: 100%;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .separator {
+        margin: 0 4px;
+    }
+
+    .clearBtn {
+        align-self: flex-end;
+    }
+}
