@@ -4,10 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/dashboard/useUser';
 import { useActivityLog } from '@/hooks/useActivityLog';
-import { User, DollarSign, Percent, Calendar, Clock, RefreshCcw } from 'lucide-react';
+import DataTable, { Column } from '@/components/dashboard/DataTable';
+import { User, Percent, Calendar, Clock, RefreshCcw } from 'lucide-react';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 import styles from './CreateCreditForm.module.css'; // Reuse same styles
-import { calculateLoanDates, RepaymentCycle, LoanDates } from '@/lib/loan-utils';
+import { calculateLoanDates, RepaymentCycle, LoanDates, generateRepaymentSchedule } from '@/lib/loan-utils';
+import { Upload, FileText, CheckCircle2, List, Banknote } from 'lucide-react';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface Debtor {
     id: string;
@@ -21,6 +24,7 @@ interface CreateLoanFormProps {
 
 export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
     const { user } = useUser();
+    const { formatCurrency } = useCurrency();
     const { logActivity } = useActivityLog();
     const [debtors, setDebtors] = useState<Debtor[]>([]);
     const [loading, setLoading] = useState(false);
@@ -39,6 +43,8 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
     });
 
     const [calculatedDates, setCalculatedDates] = useState<LoanDates | null>(null);
+    const [loanDocs, setLoanDocs] = useState<File[]>([]);
+    const [uploadingDocs, setUploadingDocs] = useState(false);
 
     // Update calculated dates whenever relevant fields change
     useEffect(() => {
@@ -73,6 +79,12 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
     }, []);
 
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            setLoanDocs(Array.from(e.target.files));
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
@@ -86,19 +98,22 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
 
             const supabase = createClient();
             const tenure = parseInt(formData.tenure_months);
+            const principalBase = parseFloat(formData.principal);
+            const rateBase = parseFloat(formData.interest_rate);
 
             if (!calculatedDates) {
                 throw new Error('Could not calculate loan dates. Please check your inputs.');
             }
 
+            // 1. Insert Loan
             const { data: insertedData, error: insertError } = await supabase
                 .from('loans')
                 .insert({
                     debtor_id: formData.debtor_id,
-                    principal: parseFloat(formData.principal),
-                    interest_rate: parseFloat(formData.interest_rate),
+                    principal: principalBase,
+                    interest_rate: rateBase,
                     tenure_months: tenure,
-                    start_date: formData.disbursed_date, // start_date is now synced with disbursed_date
+                    start_date: formData.origination_date,
                     end_date: calculatedDates.formattedMaturityDate,
                     origination_date: formData.origination_date,
                     disbursed_date: formData.disbursed_date,
@@ -110,14 +125,62 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
                 .single();
 
             if (insertError) throw insertError;
+            const loanId = insertedData.id;
 
-            // Log the loan creation
+            // 2. Generate and Insert Repayment Schedule
+            const schedule = generateRepaymentSchedule(
+                principalBase,
+                rateBase,
+                tenure,
+                formData.repayment_cycle,
+                formData.origination_date
+            );
+
+            const { error: scheduleError } = await supabase
+                .from('repayment_schedules')
+                .insert(schedule.map(s => ({
+                    ...s,
+                    loan_id: loanId,
+                    status: 'pending'
+                })));
+
+            if (scheduleError) throw scheduleError;
+
+            // 3. Upload Loan Documents if any
+            if (loanDocs.length > 0) {
+                setUploadingDocs(true);
+                for (const file of loanDocs) {
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${formData.debtor_id}/${loanId}/${Date.now()}_${file.name}`;
+
+                    const { error: uploadError } = await supabase.storage
+                        .from('mstreetstorage')
+                        .upload(`loan-documents/${fileName}`, file);
+
+                    if (uploadError) throw uploadError;
+
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('mstreetstorage')
+                        .getPublicUrl(`loan-documents/${fileName}`);
+
+                    await supabase.from('loan_documents').insert({
+                        loan_id: loanId,
+                        debtor_id: formData.debtor_id,
+                        file_url: publicUrl,
+                        file_name: file.name
+                    });
+                }
+            }
+
+            // Log activity
             const selectedDebtor = debtors.find(d => d.id === formData.debtor_id);
-            await logActivity('CREATE_LOAN', 'loan', insertedData?.id || '', {
+            await logActivity('CREATE_LOAN', 'loan', loanId, {
                 debtor_name: selectedDebtor?.full_name,
-                principal: parseFloat(formData.principal),
-                interest_rate: parseFloat(formData.interest_rate),
+                principal: principalBase,
+                interest_rate: rateBase,
                 tenure_months: tenure,
+                schedule_count: schedule.length,
+                docs_count: loanDocs.length
             });
 
             setSuccess(true);
@@ -130,11 +193,13 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
                 disbursed_date: new Date().toISOString().split('T')[0],
                 repayment_cycle: 'monthly' as RepaymentCycle,
             });
+            setLoanDocs([]);
             onSuccess?.();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to disburse loan');
         } finally {
             setLoading(false);
+            setUploadingDocs(false);
         }
     };
 
@@ -173,7 +238,7 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
 
                 <div className={styles.formGroup}>
                     <label htmlFor="principal" className={styles.label}>
-                        <DollarSign size={16} />
+                        <Banknote size={16} />
                         Loan Amount *
                     </label>
                     <input
@@ -192,7 +257,7 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
                 <div className={styles.formGroup}>
                     <label htmlFor="interest_rate" className={styles.label}>
                         <Percent size={16} />
-                        Interest Rate (% p.a.) *
+                        Interest Rate (%) *
                     </label>
                     <input
                         id="interest_rate"
@@ -299,6 +364,111 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
                         </div>
                     </div>
                 )}
+
+                {/* Repayment Plan Preview Section */}
+                {calculatedDates && formData.principal && formData.tenure_months && (
+                    <div style={{ gridColumn: '1 / -1', marginTop: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: 'var(--text-primary)' }}>
+                            <List size={18} />
+                            <span style={{ fontWeight: 600 }}>Repayment Plan Preview</span>
+                        </div>
+                        <DataTable
+                            columns={[
+                                {
+                                    key: 'installment_no',
+                                    label: '#',
+                                    width: '60px',
+                                    align: 'center'
+                                },
+                                {
+                                    key: 'due_date',
+                                    label: 'Due Date',
+                                    width: '120px'
+                                },
+                                {
+                                    key: 'principal_amount',
+                                    label: 'Principal',
+                                    width: '140px',
+                                    align: 'right',
+                                    render: (val) => <span style={{ fontWeight: 500 }}>{formatCurrency(val)}</span>
+                                },
+                                {
+                                    key: 'interest_amount',
+                                    label: 'Interest',
+                                    width: '120px',
+                                    align: 'right',
+                                    render: (val) => <span style={{ color: 'var(--accent-primary)' }}>{formatCurrency(val)}</span>
+                                },
+                                {
+                                    key: 'total_amount',
+                                    label: 'Total',
+                                    width: '140px',
+                                    align: 'right',
+                                    render: (val, row) => (
+                                        <span style={{ fontWeight: 700, color: 'var(--success)' }}>
+                                            {formatCurrency((row.principal_amount || 0) + (row.interest_amount || 0))}
+                                        </span>
+                                    )
+                                }
+                            ]}
+                            data={generateRepaymentSchedule(
+                                parseFloat(formData.principal) || 0,
+                                parseFloat(formData.interest_rate) || 0,
+                                parseInt(formData.tenure_months) || 0,
+                                formData.repayment_cycle,
+                                formData.origination_date
+                            )}
+                            emptyMessage="No repayment schedule generated"
+                        />
+                    </div>
+                )}
+
+                <div style={{ gridColumn: '1 / -1', marginTop: '24px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: 'var(--text-primary)' }}>
+                        <Upload size={18} />
+                        <span style={{ fontWeight: 600 }}>Offer Letter</span>
+                    </div>
+                    <div style={{
+                        border: '2px dashed var(--border-secondary)',
+                        borderRadius: '12px',
+                        padding: '24px',
+                        textAlign: 'center',
+                        background: 'var(--bg-tertiary)',
+                        cursor: 'pointer'
+                    }} onClick={() => document.getElementById('loan-doc-upload')?.click()}>
+                        <input
+                            id="loan-doc-upload"
+                            type="file"
+                            multiple
+                            onChange={handleFileChange}
+                            style={{ display: 'none' }}
+                        />
+                        {loanDocs.length > 0 ? (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+                                {loanDocs.map((file, i) => (
+                                    <div key={i} style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        background: 'var(--bg-card)',
+                                        padding: '6px 12px',
+                                        borderRadius: '8px',
+                                        fontSize: '0.85rem'
+                                    }}>
+                                        <FileText size={14} />
+                                        <span>{file.name}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div>
+                                <Upload size={32} style={{ color: 'var(--text-muted)', marginBottom: '12px' }} />
+                                <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Click or drag files to upload the offer letter</p>
+                                <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>PDF, PNG, JPG accepted</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
 
             <div className={styles.formFooter}>

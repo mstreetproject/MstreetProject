@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import DataTable, { Column, RowAction } from '@/components/dashboard/DataTable';
 import { useDebtorStats } from '@/hooks/dashboard/useDebtorStats';
 import { useCurrency } from '@/hooks/useCurrency';
-import { DollarSign, FileText, Edit, Trash2 } from 'lucide-react';
+import { Banknote, FileText, Edit, Trash2, CheckCircle } from 'lucide-react';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 import styles from '@/app/dashboard/internal/creditors/page.module.css';
 import EditLoanModal from '@/components/dashboard/EditLoanModal';
@@ -106,7 +106,14 @@ export default function RepaymentTable({
         {
             key: 'reference_no',
             label: 'REF. NO',
-            render: (value) => <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{value || '---'}</span>
+            render: (value, row) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{value || '---'}</span>
+                    {row.loan_documents?.some((d: any) => d.is_signed) && (
+                        <CheckCircle size={14} style={{ color: '#10b981' }} />
+                    )}
+                </div>
+            )
         },
         {
             key: 'debtor_name',
@@ -165,7 +172,7 @@ export default function RepaymentTable({
     const rowActions: RowAction[] = [
         {
             label: '💰 Record Repayment',
-            icon: <DollarSign size={16} />,
+            icon: <Banknote size={16} />,
             onClick: handleRepayment,
             hidden: (row) => row.status === 'preliquidated' || row.status === 'archived',
         },

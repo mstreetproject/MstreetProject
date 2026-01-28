@@ -9,6 +9,7 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { AlertCircle, TrendingUp, CheckCircle, Clock } from 'lucide-react';
 import sharedStyles from '../creditors/page.module.css';
 import styles from './page.module.css';
+import DataTable, { Column } from '@/components/dashboard/DataTable';
 
 // Format date
 const formatDate = (dateString: string) => {
@@ -142,15 +143,17 @@ export default function BadDebtsPage() {
 
                 {/* Bad Debts Section */}
                 <div className={sharedStyles.section}>
-                    <h2 className={sharedStyles.sectionTitle}>All Bad Debts</h2>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                        <h2 className={sharedStyles.sectionTitle}>All Bad Debts</h2>
+                    </div>
 
                     {badDebts.length === 0 ? (
                         <div style={{
                             textAlign: 'center',
                             padding: '60px 20px',
-                            background: 'var(--card-bg)',
+                            background: 'var(--bg-card)',
                             borderRadius: '12px',
-                            border: '1px solid var(--border-color)',
+                            border: '1px solid var(--border-primary)',
                         }}>
                             <AlertCircle size={48} style={{ color: 'var(--text-muted)', marginBottom: '16px' }} />
                             <h3 style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>No Bad Debts</h3>
@@ -159,106 +162,66 @@ export default function BadDebtsPage() {
                             </p>
                         </div>
                     ) : (
-                        <>
-                            {/* Desktop Table */}
-                            <div className={`${styles.tableContainer} ${styles.desktopTable}`}>
-                                <table className={styles.table}>
-                                    <thead>
-                                        <tr className={styles.tableHeader}>
-                                            <th className={styles.tableHeaderCell}>Debtor</th>
-                                            <th className={`${styles.tableHeaderCell} ${styles.alignRight}`}>Original Amount</th>
-                                            <th className={`${styles.tableHeaderCell} ${styles.alignRight}`}>Recovered</th>
-                                            <th className={`${styles.tableHeaderCell} ${styles.alignRight}`}>Remaining</th>
-                                            <th className={`${styles.tableHeaderCell} ${styles.alignCenter}`}>Status</th>
-                                            <th className={styles.tableHeaderCell}>Declared</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {badDebts.map((bd: BadDebt) => {
-                                            const remaining = Number(bd.amount || 0) - Number(bd.recovered_amount || 0);
-                                            const recoveryPercent = Number(bd.amount) > 0 ? ((Number(bd.recovered_amount) || 0) / Number(bd.amount) * 100) : 0;
-                                            return (
-                                                <tr key={bd.id} className={styles.tableRow}>
-                                                    <td className={styles.tableCell}>
-                                                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                                                            {bd.loan?.debtor?.full_name || 'Unknown'}
-                                                        </div>
-                                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                                            {bd.loan?.debtor?.email || '—'}
-                                                        </div>
-                                                    </td>
-                                                    <td className={`${styles.tableCell} ${styles.alignRight}`} style={{ fontWeight: 600, color: '#ef4444' }}>
-                                                        {formatCurrency(bd.amount)}
-                                                    </td>
-                                                    <td className={`${styles.tableCell} ${styles.alignRight}`} style={{ fontWeight: 600, color: '#10b981' }}>
-                                                        {formatCurrency(bd.recovered_amount || 0)}
-                                                    </td>
-                                                    <td className={`${styles.tableCell} ${styles.alignRight}`} style={{ fontWeight: 600, color: remaining > 0 ? '#f59e0b' : '#10b981' }}>
-                                                        {formatCurrency(remaining)}
-                                                    </td>
-                                                    <td className={`${styles.tableCell} ${styles.alignCenter}`}>
-                                                        <StatusBadge isRecovered={bd.is_fully_recovered} recoveryPercent={recoveryPercent} />
-                                                    </td>
-                                                    <td className={styles.tableCell} style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                                                        {formatDate(bd.declared_date)}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* Mobile Cards */}
-                            <div className={styles.mobileCards}>
-                                {badDebts.map((bd: BadDebt) => {
-                                    const remaining = Number(bd.amount || 0) - Number(bd.recovered_amount || 0);
-                                    const recoveryPercent = Number(bd.amount) > 0 ? ((Number(bd.recovered_amount) || 0) / Number(bd.amount) * 100) : 0;
-                                    return (
-                                        <div key={bd.id} className={styles.mobileCard}>
-                                            <div className={styles.mobileCardHeader}>
-                                                <div>
-                                                    <div className={styles.mobileCardDebtor}>
-                                                        {bd.loan?.debtor?.full_name || 'Unknown'}
-                                                    </div>
-                                                    <div className={styles.mobileCardEmail}>
-                                                        {bd.loan?.debtor?.email || '—'}
-                                                    </div>
-                                                </div>
-                                                <StatusBadge isRecovered={bd.is_fully_recovered} recoveryPercent={recoveryPercent} />
+                        <DataTable
+                            columns={[
+                                {
+                                    key: 'debtor',
+                                    label: 'Debtor',
+                                    render: (_, row: BadDebt) => (
+                                        <div>
+                                            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                                                {row.loan?.debtor?.full_name || 'Unknown'}
                                             </div>
-
-                                            <div className={styles.mobileCardGrid}>
-                                                <div className={styles.mobileCardItem}>
-                                                    <span className={styles.mobileCardLabel}>Original</span>
-                                                    <span className={`${styles.mobileCardValue} ${styles.red}`}>
-                                                        {formatCurrency(bd.amount)}
-                                                    </span>
-                                                </div>
-                                                <div className={styles.mobileCardItem}>
-                                                    <span className={styles.mobileCardLabel}>Recovered</span>
-                                                    <span className={`${styles.mobileCardValue} ${styles.green}`}>
-                                                        {formatCurrency(bd.recovered_amount || 0)}
-                                                    </span>
-                                                </div>
-                                                <div className={styles.mobileCardItem}>
-                                                    <span className={styles.mobileCardLabel}>Remaining</span>
-                                                    <span className={`${styles.mobileCardValue} ${remaining > 0 ? styles.orange : styles.green}`}>
-                                                        {formatCurrency(remaining)}
-                                                    </span>
-                                                </div>
-                                                <div className={styles.mobileCardItem}>
-                                                    <span className={styles.mobileCardLabel}>Declared</span>
-                                                    <span className={styles.mobileCardValue} style={{ color: 'var(--text-muted)' }}>
-                                                        {formatDate(bd.declared_date)}
-                                                    </span>
-                                                </div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                {row.loan?.debtor?.email || '—'}
                                             </div>
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        </>
+                                    )
+                                },
+                                {
+                                    key: 'amount',
+                                    label: 'Original Amount',
+                                    render: (val) => <div style={{ textAlign: 'right', fontWeight: 600, color: '#ef4444' }}>{formatCurrency(val)}</div>
+                                },
+                                {
+                                    key: 'recovered_amount',
+                                    label: 'Recovered',
+                                    render: (val) => <div style={{ textAlign: 'right', fontWeight: 600, color: '#10b981' }}>{formatCurrency(val || 0)}</div>
+                                },
+                                {
+                                    key: 'remaining',
+                                    label: 'Remaining',
+                                    render: (_, row: BadDebt) => {
+                                        const remaining = Number(row.amount || 0) - Number(row.recovered_amount || 0);
+                                        return <div style={{ textAlign: 'right', fontWeight: 600, color: remaining > 0 ? '#f59e0b' : '#10b981' }}>{formatCurrency(remaining)}</div>
+                                    }
+                                },
+                                {
+                                    key: 'status',
+                                    label: 'Status',
+                                    render: (_, row: BadDebt) => {
+                                        const recoveryPercent = Number(row.amount) > 0 ? ((Number(row.recovered_amount) || 0) / Number(row.amount) * 100) : 0;
+                                        return (
+                                            <div style={{ textAlign: 'center' }}>
+                                                <StatusBadge isRecovered={row.is_fully_recovered} recoveryPercent={recoveryPercent} />
+                                            </div>
+                                        );
+                                    }
+                                },
+                                {
+                                    key: 'declared_date',
+                                    label: 'Declared',
+                                    render: (val) => formatDate(val)
+                                }
+                            ]}
+                            data={badDebts}
+                            loading={loading}
+                            emptyMessage="No bad debts found"
+                            searchable
+                            searchKeys={['loan.debtor.full_name', 'loan.debtor.email']}
+                            paginated
+                            defaultPageSize={10}
+                        />
                     )}
                 </div>
             </div>

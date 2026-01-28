@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/dashboard/useUser';
 import { useActivityLog } from '@/hooks/useActivityLog';
-import { User, Banknote, Percent, Calendar, Clock } from 'lucide-react';
+import { User, Banknote, Percent, Calendar, Clock, TrendingUp } from 'lucide-react';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 import styles from './CreateCreditForm.module.css';
 
@@ -14,11 +14,7 @@ interface Creditor {
     email: string;
 }
 
-interface CreateCreditFormProps {
-    onSuccess?: () => void;
-}
-
-export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
+export default function RecordInvestmentForm() {
     const { user } = useUser();
     const { logActivity } = useActivityLog();
     const [creditors, setCreditors] = useState<Creditor[]>([]);
@@ -35,7 +31,7 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
         start_date: new Date().toISOString().split('T')[0],
     });
 
-    // Fetch creditors on mount
+    // Fetch creditors
     useEffect(() => {
         async function fetchCreditors() {
             try {
@@ -94,13 +90,13 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
 
             if (insertError) throw insertError;
 
-            // Log the credit creation
+            // Log as Investment
             const selectedCreditor = creditors.find(c => c.id === formData.creditor_id);
-            await logActivity('CREATE_CREDIT', 'credit', insertedData?.id || '', {
+            await logActivity('RECORD_INVESTMENT', 'credit', insertedData?.id || '', {
                 creditor_name: selectedCreditor?.full_name,
-                principal: parseFloat(formData.principal),
-                interest_rate: parseFloat(formData.interest_rate),
-                tenure_months: tenure,
+                amount: parseFloat(formData.principal),
+                rate: parseFloat(formData.interest_rate),
+                tenure: tenure,
             });
 
             setSuccess(true);
@@ -111,9 +107,8 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
                 tenure_months: '',
                 start_date: new Date().toISOString().split('T')[0],
             });
-            onSuccess?.();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to record credit');
+            setError(err instanceof Error ? err.message : 'Failed to record investment');
         } finally {
             setLoading(false);
         }
@@ -121,17 +116,20 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
 
     return (
         <form onSubmit={handleSubmit} className={styles.form}>
-            <h3 className={styles.formTitle}>Record Placement</h3>
-            <p className={styles.formSubtitle}>Record funds received from a creditor</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                <TrendingUp size={24} style={{ color: 'var(--accent-primary)' }} />
+                <h3 className={styles.formTitle} style={{ margin: 0 }}>Record New Investment</h3>
+            </div>
+            <p className={styles.formSubtitle}>Enter investment details for a creditor placement</p>
 
             {error && <div className={styles.errorMessage}>{error}</div>}
-            {success && <div className={styles.successMessage}>Placement recorded successfully!</div>}
+            {success && <div className={styles.successMessage}>Investment recorded successfully!</div>}
 
             <div className={styles.formGrid}>
                 <div className={styles.formGroup}>
                     <label htmlFor="creditor_id" className={styles.label}>
                         <User size={16} />
-                        Creditor *
+                        Creditor Portfolio *
                     </label>
                     <select
                         id="creditor_id"
@@ -142,7 +140,7 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
                         disabled={loadingCreditors}
                     >
                         <option value="">
-                            {loadingCreditors ? 'Loading...' : 'Select a creditor'}
+                            {loadingCreditors ? 'Loading portfolios...' : 'Select a creditor'}
                         </option>
                         {creditors.map(c => (
                             <option key={c.id} value={c.id}>
@@ -155,7 +153,7 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
                 <div className={styles.formGroup}>
                     <label htmlFor="principal" className={styles.label}>
                         <Banknote size={16} />
-                        Principal Amount *
+                        Investment Principal *
                     </label>
                     <input
                         id="principal"
@@ -173,7 +171,7 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
                 <div className={styles.formGroup}>
                     <label htmlFor="interest_rate" className={styles.label}>
                         <Percent size={16} />
-                        Interest Rate (%) *
+                        ROI Rate (%) *
                     </label>
                     <input
                         id="interest_rate"
@@ -183,7 +181,7 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
                         max="100"
                         value={formData.interest_rate}
                         onChange={(e) => setFormData(d => ({ ...d, interest_rate: e.target.value }))}
-                        placeholder="8.5"
+                        placeholder="10.0"
                         className={styles.input}
                         required
                     />
@@ -192,7 +190,7 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
                 <div className={styles.formGroup}>
                     <label htmlFor="tenure_months" className={styles.label}>
                         <Clock size={16} />
-                        Tenure (Months) *
+                        Lock-in Period (Months) *
                     </label>
                     <input
                         id="tenure_months"
@@ -209,7 +207,7 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
                 <div className={styles.formGroup}>
                     <label htmlFor="start_date" className={styles.label}>
                         <Calendar size={16} />
-                        Start Date *
+                        Investment Date *
                     </label>
                     <input
                         id="start_date"
@@ -227,11 +225,13 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
                     type="submit"
                     className={styles.submitBtn}
                     disabled={loading || loadingCreditors}
+                    style={{ background: 'var(--accent-primary)', color: '#070757', fontWeight: 'bold' }}
                 >
-                    {loading && <MStreetLoader size={18} color="#ffffff" />}
-                    {loading ? 'Recording...' : 'Record Placement'}
+                    {loading && <MStreetLoader size={18} color="#070757" />}
+                    {loading ? 'Processing...' : 'Secure Investment'}
                 </button>
             </div>
         </form>
     );
 }
+

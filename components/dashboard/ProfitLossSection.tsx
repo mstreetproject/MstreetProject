@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import StatsCard from './StatsCard';
 import DateRangeFilter from './DateRangeFilter';
 import { useCurrency } from '@/hooks/useCurrency';
-import { TrendingUp, TrendingDown, DollarSign, Wallet, AlertOctagon, Download, Share2, Check } from 'lucide-react';
+import { TrendingUp, TrendingDown, Banknote, Wallet, AlertOctagon, Download, Share2, Check } from 'lucide-react';
 import styles from './ProfitLossSection.module.css';
 
 interface PnLSummary {
@@ -156,7 +156,7 @@ export default function ProfitLossSection() {
                 <StatsCard
                     title="Operating Expenses"
                     value={formatCurrency(data.operating_expenses)}
-                    icon={DollarSign}
+                    icon={Banknote}
                     loading={loading}
                     changeType="negative"
                     change="Ops & Overhead"

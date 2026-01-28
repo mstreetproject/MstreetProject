@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useCurrency } from '@/hooks/useCurrency';
-import { X, DollarSign, AlertCircle, CheckCircle, ToggleLeft, ToggleRight, Calculator } from 'lucide-react';
+import { X, Banknote, AlertCircle, CheckCircle, ToggleLeft, ToggleRight, Calculator } from 'lucide-react';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 import { createClient } from '@/lib/supabase/client';
 import { useActivityLog } from '@/hooks/useActivityLog';
@@ -216,7 +216,7 @@ export default function RecordRepaymentModal({ isOpen, loan, onClose, onSuccess 
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                     <h2 style={{ color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <DollarSign size={24} />
+                        <Banknote size={24} />
                         Record Repayment
                     </h2>
                     <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
@@ -447,7 +447,7 @@ export default function RecordRepaymentModal({ isOpen, loan, onClose, onSuccess 
                                 gap: '8px',
                             }}
                         >
-                            {loading ? <MStreetLoader size={18} color="#ffffff" /> : <DollarSign size={18} />}
+                            {loading ? <MStreetLoader size={18} color="#ffffff" /> : <Banknote size={18} />}
                             {loading ? 'Processing...' : `Confirm ${isPartialPayment ? 'Partial' : 'Full'} Payment`}
                         </button>
                     </form>

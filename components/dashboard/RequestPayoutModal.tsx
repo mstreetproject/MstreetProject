@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/dashboard/useUser';
 import { useCurrency } from '@/hooks/useCurrency';
-import { X, DollarSign, Send } from 'lucide-react';
+import { X, Banknote, Send } from 'lucide-react';
 import MStreetLoader from '../ui/MStreetLoader';
 
 interface Investment {
@@ -162,7 +162,7 @@ export default function RequestPayoutModal({ isOpen, onClose, onSuccess, investm
                             Amount to Withdraw
                         </label>
                         <div style={{ position: 'relative' }}>
-                            <DollarSign size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                            <Banknote size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                             <input
                                 type="number"
                                 step="0.01"

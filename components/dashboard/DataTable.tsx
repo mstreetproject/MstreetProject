@@ -9,6 +9,8 @@ export interface Column {
     key: string;
     label: string;
     render?: (value: any, row: any) => React.ReactNode;
+    width?: string;
+    align?: 'left' | 'center' | 'right';
 }
 
 export interface RowAction {
@@ -298,7 +300,15 @@ export default function DataTable({
                         <thead>
                             <tr>
                                 {columns.map((column) => (
-                                    <th key={column.key} className={styles.th}>
+                                    <th
+                                        key={column.key}
+                                        className={styles.th}
+                                        style={{
+                                            width: column.width,
+                                            minWidth: column.width,
+                                            textAlign: column.align || 'left'
+                                        }}
+                                    >
                                         {column.label}
                                     </th>
                                 ))}
@@ -317,7 +327,16 @@ export default function DataTable({
                                     onClick={() => onRowClick?.(row)}
                                 >
                                     {columns.map((column) => (
-                                        <td key={column.key} className={styles.td} data-label={column.label}>
+                                        <td
+                                            key={column.key}
+                                            className={styles.td}
+                                            data-label={column.label}
+                                            style={{
+                                                width: column.width,
+                                                minWidth: column.width,
+                                                textAlign: column.align || 'left'
+                                            }}
+                                        >
                                             {column.render ? column.render(row[column.key], row) : row[column.key]}
                                         </td>
                                     ))}

@@ -67,6 +67,7 @@ export interface Loan {
         full_name: string;
         email: string;
     };
+    loan_documents?: { is_signed: boolean }[];
 }
 
 export interface DashboardStats {

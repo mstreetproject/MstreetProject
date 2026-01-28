@@ -7,7 +7,6 @@ import { usePathname } from 'next/navigation';
 import {
     LayoutDashboard,
     Users,
-    DollarSign,
     TrendingUp,
     FileText,
     UserCircle,
@@ -40,7 +39,7 @@ const menuItems = [
     {
         label: 'Creditors',
         href: '/dashboard/internal/creditors',
-        icon: DollarSign,
+        icon: Banknote,
         roles: ['super_admin', 'finance_manager', 'ops_officer']
     },
     {
@@ -61,9 +60,10 @@ const menuItems = [
         icon: UserPlus,
         roles: ['super_admin', 'finance_manager', 'ops_officer'],
         subItems: [
-            { label: 'Record Credit', href: '/dashboard/internal/operations/record-credit', icon: Coins },
+            { label: 'Record Placement', href: '/dashboard/internal/operations/record-placement', icon: Coins },
             { label: 'Disburse Loan', href: '/dashboard/internal/operations/disburse-loan', icon: CreditCard },
-            { label: 'Record Expense', href: '/dashboard/internal/operations/record-expense', icon: Receipt }
+            { label: 'Repayments', href: '/dashboard/internal/operations/repayments', icon: Banknote },
+            { label: 'Record Investment', href: '/dashboard/internal/operations/record-investment', icon: TrendingUp }
         ]
     },
     {

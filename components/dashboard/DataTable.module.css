@@ -452,6 +452,10 @@
         padding: 6px 0;
         border-bottom: 1px solid var(--border-secondary);
         font-size: 0.85rem;
+        /* Override inline styles on mobile */
+        width: 100% !important;
+        min-width: unset !important;
+        text-align: right !important;
     }
 
     .td:last-child {

@@ -6,7 +6,7 @@ import DataTable, { Column } from '@/components/dashboard/DataTable';
 import { useDebtorLoans } from '@/hooks/dashboard/useDebtorLoans';
 import { useCurrency } from '@/hooks/useCurrency';
 import {
-    DollarSign,
+    Banknote,
     Clock,
     CheckCircle,
     AlertTriangle,
@@ -77,7 +77,7 @@ export default function LoansPage() {
         {
             key: 'interest_rate',
             label: 'Interest Rate',
-            render: (value) => `${value}% p.a.`
+            render: (value) => `${value}%`
         },
         {
             key: 'tenure_months',
@@ -140,7 +140,7 @@ export default function LoansPage() {
                     value={formatCurrency(stats.totalBorrowed)}
                     change={`${stats.totalLoans} loans total`}
                     changeType="neutral"
-                    icon={DollarSign}
+                    icon={Banknote}
                     loading={loading}
                 />
                 <StatsCard
@@ -164,7 +164,7 @@ export default function LoansPage() {
                     value={formatCurrency(stats.repaidAmount)}
                     change="Completed"
                     changeType="positive"
-                    icon={CheckCircle}
+                    icon={Banknote}
                     loading={loading}
                 />
             </div>

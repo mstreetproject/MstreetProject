@@ -69,7 +69,8 @@ export function useDebtorStats(initialPeriod: TimePeriod = 'month'): UseDebtorSt
                         id,
                         full_name,
                         email
-                    )
+                    ),
+                    loan_documents(is_signed)
                 `)
                 .order('created_at', { ascending: false });
 

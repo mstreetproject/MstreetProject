@@ -18,6 +18,7 @@ export type ActivityAction =
     // Credit actions
     | 'CREATE_CREDIT'
     | 'UPDATE_CREDIT'
+    | 'RECORD_INVESTMENT'
     | 'ARCHIVE_CREDIT'
     | 'RESTORE_CREDIT'
     | 'DELETE_CREDIT'
@@ -50,9 +51,12 @@ export type ActivityAction =
     | 'REJECT_PAYMENT_UPLOAD'
     | 'ARCHIVE_PAYMENT_UPLOAD'
     | 'RESTORE_PAYMENT_UPLOAD'
-    | 'DELETE_PAYMENT_UPLOAD';
+    | 'DELETE_PAYMENT_UPLOAD'
+    // Document actions
+    | 'SIGN_DOCUMENT'
+    | 'UPLOAD_DOCUMENT';
 
-export type EntityType = 'user' | 'loan' | 'credit' | 'payout' | 'system' | 'expense' | 'loan_request' | 'payment_upload';
+export type EntityType = 'user' | 'loan' | 'credit' | 'payout' | 'system' | 'expense' | 'loan_request' | 'payment_upload' | 'loan_document';
 
 export function useActivityLog() {
     const logActivity = useCallback(async (

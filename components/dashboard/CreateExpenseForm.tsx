@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/dashboard/useUser';
 import { useActivityLog } from '@/hooks/useActivityLog';
-import { Receipt, DollarSign, Calendar } from 'lucide-react';
+import { Receipt, Banknote, Calendar } from 'lucide-react';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 import styles from './CreateCreditForm.module.css'; // Reuse same styles
 
@@ -99,7 +99,7 @@ export default function CreateExpenseForm({ onSuccess }: CreateExpenseFormProps)
 
                 <div className={styles.formGroup}>
                     <label htmlFor="amount" className={styles.label}>
-                        <DollarSign size={16} />
+                        <Banknote size={16} />
                         Amount *
                     </label>
                     <input

@@ -71,7 +71,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const formatCurrency = useCallback((amount: number): string => {
-        return new Intl.NumberFormat(currency.locale, {
+        return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: currency.code,
             minimumFractionDigits: 2,
@@ -80,7 +80,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     }, [currency]);
 
     const formatCompact = useCallback((amount: number): string => {
-        return new Intl.NumberFormat(currency.locale, {
+        return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: currency.code,
             notation: 'compact',

@@ -97,7 +97,7 @@ export default function EditLoanModal({ isOpen, loan, onClose, onSuccess }: Edit
                     principal: parseFloat(formData.principal),
                     interest_rate: parseFloat(formData.interest_rate),
                     tenure_months: tenure,
-                    start_date: formData.disbursed_date,
+                    start_date: formData.origination_date,
                     origination_date: formData.origination_date,
                     disbursed_date: formData.disbursed_date,
                     end_date: calculated.formattedMaturityDate,
@@ -205,7 +205,7 @@ export default function EditLoanModal({ isOpen, loan, onClose, onSuccess }: Edit
 
                     <div className={styles.formGroup}>
                         <label htmlFor="interest_rate" className={styles.label}>
-                            Interest Rate (% p.a.) *
+                            Interest Rate (%) *
                         </label>
                         <input
                             id="interest_rate"

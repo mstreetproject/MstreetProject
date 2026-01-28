@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, User, Briefcase, DollarSign, TrendingUp } from 'lucide-react';
+import { X, User, Briefcase, Banknote, TrendingUp } from 'lucide-react';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 import { createClient } from '@/lib/supabase/client';
 import { useActivityLog } from '@/hooks/useActivityLog';
@@ -341,7 +341,7 @@ export default function UserManagementModal({ isOpen, onClose, onSuccess, initia
                                     onChange={(e) => setFormData(d => ({ ...d, is_creditor: e.target.checked }))}
                                     className={styles.checkbox}
                                 />
-                                <DollarSign size={18} className="text-green-400" />
+                                <Banknote size={18} className="text-green-400" />
                                 <span>Creditor (Lender)</span>
                             </label>
 

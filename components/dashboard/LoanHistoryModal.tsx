@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, FileText, DollarSign, Calendar } from 'lucide-react';
+import { X, FileText, Banknote, Calendar } from 'lucide-react';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 import { createClient } from '@/lib/supabase/client';
 import { useCurrency } from '@/hooks/useCurrency';
@@ -127,7 +127,7 @@ export default function LoanHistoryModal({ isOpen, loanId, onClose }: LoanHistor
                         </div>
                     ) : repayments.length === 0 ? (
                         <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                            <DollarSign size={48} style={{ opacity: 0.3, marginBottom: '16px' }} />
+                            <Banknote size={48} style={{ opacity: 0.3, marginBottom: '16px' }} />
                             <p>No repayments recorded yet</p>
                         </div>
                     ) : (

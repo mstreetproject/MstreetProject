@@ -1,10 +1,14 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { X, Calendar, DollarSign, Clock, Hash, Percent, User, ArrowRight, History } from 'lucide-react';
+import { X, Calendar, Banknote, Clock, Hash, Percent, User, ArrowRight, History, FileText, List, ExternalLink, CheckCircle } from 'lucide-react';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 import { useCurrency } from '@/hooks/useCurrency';
 import { createClient } from '@/lib/supabase/client';
+import { useRepaymentSchedule } from '@/hooks/dashboard/useRepaymentSchedule';
+import { useLoanDocuments } from '@/hooks/dashboard/useLoanDocuments';
+import DataTable from '@/components/dashboard/DataTable';
+import PdfViewerModal from '@/components/dashboard/PdfViewerModal';
 
 interface LoanRepayment {
     id: string;
@@ -47,6 +51,10 @@ export default function LoanDetailsModal({ isOpen, loan, onClose }: LoanDetailsM
     const { formatCurrency } = useCurrency();
     const [repayments, setRepayments] = useState<LoanRepayment[]>([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
+    const [viewingPdf, setViewingPdf] = useState<{ url: string, name: string } | null>(null);
+
+    const { schedule, loading: loadingSchedule } = useRepaymentSchedule(loan?.id || null);
+    const { documents, loading: loadingDocs } = useLoanDocuments(loan?.id || null);
 
     useEffect(() => {
         if (isOpen && loan?.id) {
@@ -237,7 +245,7 @@ export default function LoanDetailsModal({ isOpen, loan, onClose }: LoanDetailsM
                         {/* Principal */}
                         <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-secondary)', padding: '16px', borderRadius: '12px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: 'var(--text-muted)' }}>
-                                <DollarSign size={16} />
+                                <Banknote size={16} />
                                 <span style={{ fontSize: '0.85rem' }}>Principal Amount</span>
                             </div>
                             <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
@@ -252,7 +260,7 @@ export default function LoanDetailsModal({ isOpen, loan, onClose }: LoanDetailsM
                                 <span style={{ fontSize: '0.85rem' }}>Interest Rate</span>
                             </div>
                             <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                                {loan.interest_rate}% <span style={{ fontSize: '0.8rem', fontWeight: 400, color: 'var(--text-muted)' }}>p.a.</span>
+                                {loan.interest_rate}%
                             </div>
                         </div>
                     </div>
@@ -334,7 +342,7 @@ export default function LoanDetailsModal({ isOpen, loan, onClose }: LoanDetailsM
                     </div>
 
                     {/* Repayment History Section */}
-                    <div>
+                    <div style={{ marginBottom: '24px' }}>
                         <h3 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <History size={16} />
                             Repayment History
@@ -350,53 +358,171 @@ export default function LoanDetailsModal({ isOpen, loan, onClose }: LoanDetailsM
                                 <p style={{ margin: 0, fontSize: '0.85rem' }}>No repayment history found.</p>
                             </div>
                         ) : (
-                            <div style={{ background: 'var(--bg-tertiary)', borderRadius: '12px', overflow: 'hidden' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                                    <thead>
-                                        <tr style={{ borderBottom: '1px solid var(--border-secondary)', textAlign: 'left' }}>
-                                            <th style={{ padding: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>Date</th>
-                                            <th style={{ padding: '12px', color: 'var(--text-muted)', fontWeight: 500, textAlign: 'right' }}>Principal</th>
-                                            <th style={{ padding: '12px', color: 'var(--text-muted)', fontWeight: 500, textAlign: 'right' }}>Interest</th>
-                                            <th style={{ padding: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>Notes</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {repayments.map((r) => (
-                                            <tr key={r.id} style={{ borderBottom: '1px solid var(--border-secondary)' }}>
-                                                <td style={{ padding: '12px', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
-                                                    {new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                                </td>
-                                                <td style={{ padding: '12px', color: 'var(--text-primary)', textAlign: 'right' }}>
-                                                    {formatCurrency(r.amount_principal)}
-                                                </td>
-                                                <td style={{ padding: '12px', color: 'var(--accent-primary)', textAlign: 'right', fontWeight: 500 }}>
-                                                    {formatCurrency(r.amount_interest)}
-                                                </td>
-                                                <td style={{ padding: '12px', color: 'var(--text-muted)', fontSize: '0.8rem', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.notes || ''}>
-                                                    {r.notes || '-'}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                    <tfoot>
-                                        <tr style={{ background: 'rgba(var(--accent-rgb), 0.05)' }}>
-                                            <td style={{ padding: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>Total Paid</td>
-                                            <td style={{ padding: '12px', fontWeight: 700, color: '#10b981', textAlign: 'right' }}>
-                                                {formatCurrency(repayments.reduce((sum, r) => sum + Number(r.amount_principal), 0))}
-                                            </td>
-                                            <td style={{ padding: '12px', fontWeight: 700, color: 'var(--accent-primary)', textAlign: 'right' }}>
-                                                {formatCurrency(repayments.reduce((sum, r) => sum + Number(r.amount_interest), 0))}
-                                            </td>
-                                            <td></td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
+                            <DataTable
+                                columns={[
+                                    {
+                                        key: 'created_at',
+                                        label: 'Date',
+                                        render: (val) => new Date(val).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                                    },
+                                    {
+                                        key: 'amount_principal',
+                                        label: 'Principal',
+                                        render: (val) => <div style={{ textAlign: 'right' }}>{formatCurrency(val)}</div>
+                                    },
+                                    {
+                                        key: 'amount_interest',
+                                        label: 'Interest',
+                                        render: (val) => <div style={{ textAlign: 'right', color: 'var(--accent-primary)', fontWeight: 500 }}>{formatCurrency(val)}</div>
+                                    },
+                                    {
+                                        key: 'notes',
+                                        label: 'Notes',
+                                        render: (val) => <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }} title={val}>{val || '-'}</div>
+                                    }
+                                ]}
+                                data={repayments}
+                                emptyMessage="No repayment history found."
+                            />
+                        )}
+                    </div>
+
+                    {/* Repayment Schedule Section */}
+                    <div style={{ marginBottom: '24px' }}>
+                        <h3 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <List size={16} />
+                            Repayment Schedule
+                        </h3>
+
+                        {loadingSchedule ? (
+                            <div style={{ textAlign: 'center', padding: '16px' }}><MStreetLoader size={24} /></div>
+                        ) : schedule.length === 0 ? (
+                            <div style={{ padding: '16px', background: 'var(--bg-tertiary)', borderRadius: '12px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                                No schedule generated for this loan.
+                            </div>
+                        ) : (
+                            <DataTable
+                                columns={[
+                                    { key: 'installment_no', label: 'Inst.' },
+                                    { key: 'due_date', label: 'Due Date' },
+                                    {
+                                        key: 'total_amount',
+                                        label: 'Amount',
+                                        render: (val) => <div style={{ textAlign: 'right', fontWeight: 600 }}>{formatCurrency(val)}</div>
+                                    },
+                                    {
+                                        key: 'status',
+                                        label: 'Status',
+                                        render: (val) => (
+                                            <div style={{ textAlign: 'center' }}>
+                                                <span style={{
+                                                    padding: '2px 6px',
+                                                    borderRadius: '8px',
+                                                    fontSize: '0.65rem',
+                                                    fontWeight: 700,
+                                                    textTransform: 'uppercase',
+                                                    background:
+                                                        val === 'paid' ? 'rgba(16, 185, 129, 0.1)' :
+                                                            val === 'overdue' ? 'rgba(239, 68, 68, 0.1)' :
+                                                                val === 'partial' ? 'rgba(245, 158, 11, 0.1)' :
+                                                                    'rgba(107, 114, 128, 0.05)',
+                                                    color:
+                                                        val === 'paid' ? '#10b981' :
+                                                            val === 'overdue' ? '#ef4444' :
+                                                                val === 'partial' ? '#f59e0b' :
+                                                                    'var(--text-muted)'
+                                                }}>
+                                                    {val}
+                                                </span>
+                                            </div>
+                                        )
+                                    }
+                                ]}
+                                data={schedule}
+                                emptyMessage="No schedule generated for this loan."
+                            />
+                        )}
+                    </div>
+
+                    {/* Offer Letter Section */}
+                    <div style={{ marginBottom: '12px' }}>
+                        <h3 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <FileText size={16} />
+                            Offer Letter
+                        </h3>
+
+                        {loadingDocs ? (
+                            <div style={{ textAlign: 'center', padding: '16px' }}><MStreetLoader size={24} /></div>
+                        ) : documents.length === 0 ? (
+                            <div style={{ padding: '16px', background: 'var(--bg-tertiary)', borderRadius: '12px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                                No documents uploaded.
+                            </div>
+                        ) : (
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
+                                {documents.map((doc) => (
+                                    <div
+                                        key={doc.id}
+                                        onClick={() => setViewingPdf({ url: doc.signed_file_url || doc.file_url, name: doc.file_name })}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            padding: '12px 16px',
+                                            background: 'var(--bg-tertiary)',
+                                            borderRadius: '8px',
+                                            border: '1px solid var(--border-secondary)',
+                                            textDecoration: 'none',
+                                            color: 'inherit',
+                                            transition: 'transform 0.2s',
+                                            cursor: 'pointer'
+                                        }}
+                                        onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                        onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <FileText size={20} style={{ color: 'var(--accent-primary)' }} />
+                                            <div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>{doc.file_name}</div>
+                                                    {doc.is_signed && (
+                                                        <span style={{
+                                                            fontSize: '0.6rem',
+                                                            background: '#10b981',
+                                                            color: 'white',
+                                                            padding: '2px 6px',
+                                                            borderRadius: '8px',
+                                                            fontWeight: 700,
+                                                            textTransform: 'uppercase',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '3px'
+                                                        }}>
+                                                            <CheckCircle size={10} /> Signed
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                    Uploaded on {formatDate(doc.created_at)}
+                                                    {doc.is_signed && doc.signed_at && ` • Signed on ${new Date(doc.signed_at).toLocaleDateString()}`}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <ExternalLink size={16} style={{ color: 'var(--text-muted)' }} />
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </div>
 
                 </div>
             </div>
+
+            <PdfViewerModal
+                isOpen={!!viewingPdf}
+                pdfUrl={viewingPdf?.url || ''}
+                title={viewingPdf?.name || 'Document'}
+                onClose={() => setViewingPdf(null)}
+            />
         </div>
     );
 }

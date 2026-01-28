@@ -179,7 +179,7 @@ export default function EditCreditModal({ isOpen, credit, onClose, onSuccess }: 
 
                     <div className={styles.formGroup}>
                         <label htmlFor="interest_rate" className={styles.label}>
-                            Interest Rate (% p.a.) *
+                            Interest Rate (%) *
                         </label>
                         <input
                             id="interest_rate"

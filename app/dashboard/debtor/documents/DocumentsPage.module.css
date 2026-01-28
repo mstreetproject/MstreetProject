@@ -1,0 +1,299 @@
+.container {
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.pageHeader {
+    margin-bottom: 32px;
+}
+
+.pageTitle {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 8px;
+}
+
+.pageSubtitle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 60vh;
+    color: var(--text-secondary);
+}
+
+.loanList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.loanCard {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.2s;
+}
+
+.loanCard:hover {
+    border-color: var(--accent-primary);
+}
+
+.loanHeader {
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    background: var(--bg-tertiary);
+}
+
+.loanInfoMain {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.iconBox {
+    width: 48px;
+    height: 48px;
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--accent-primary);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.loanTitle {
+    margin: 0 0 4px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.loanDate {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.loanStatusRow {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.statusBadge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.signed {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.pending {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.loanDetails {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-secondary);
+}
+
+.detailsGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 24px;
+}
+
+@media (min-width: 900px) {
+    .detailsGrid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.sectionHeading {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin: 0 0 16px;
+}
+
+.docActions {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-secondary);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.docInfo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.docIcon {
+    color: var(--accent-primary);
+}
+
+.buttonGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.viewBtn,
+.signBtn,
+.uploadBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.viewBtn {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-secondary);
+    color: var(--text-primary);
+}
+
+.signBtn {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border: none;
+    color: white;
+}
+
+.uploadWrapper {
+    position: relative;
+    overflow: hidden;
+}
+
+.uploadBtn {
+    width: 100%;
+    background: var(--bg-secondary);
+    border: 1px dashed var(--border-primary);
+    color: var(--text-secondary);
+}
+
+.hiddenInput {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.uploadBtn:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.tableWrapper {
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-secondary);
+}
+
+.scheduleStatus {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.paid {
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.pending {
+    color: var(--text-muted);
+    background: rgba(107, 114, 128, 0.1);
+}
+
+.overdue {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.infoBox {
+    margin-top: 40px;
+    background: rgba(var(--accent-rgb), 0.05);
+    border: 1px solid rgba(var(--accent-rgb), 0.1);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    gap: 16px;
+}
+
+.infoIcon {
+    color: var(--accent-primary);
+    flex-shrink: 0;
+}
+
+.infoTitle {
+    margin: 0 0 4px;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.infoText {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.emptyState {
+    padding: 60px;
+    text-align: center;
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    border: 1px dashed var(--border-primary);
+    color: var(--text-muted);
+}
+
+.emptyIcon {
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.errorText {
+    color: #ef4444;
+    font-size: 0.85rem;
+    margin-top: 8px;
+}

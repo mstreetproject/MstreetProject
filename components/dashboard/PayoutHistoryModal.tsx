@@ -5,6 +5,7 @@ import { useCreditorPayouts } from '@/hooks/dashboard/useCreditorPayouts';
 import { useCurrency } from '@/hooks/useCurrency';
 import { X, Calendar, FileText } from 'lucide-react';
 import MStreetLoader from '@/components/ui/MStreetLoader';
+import DataTable from './DataTable';
 
 interface PayoutHistoryModalProps {
     isOpen: boolean;
@@ -88,54 +89,58 @@ export default function PayoutHistoryModal({ isOpen, creditId, onClose }: Payout
                             <p>No payouts recorded for this credit.</p>
                         </div>
                     ) : (
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.95rem' }}>
-                            <thead>
-                                <tr style={{ borderBottom: '1px solid var(--border-secondary)', textAlign: 'left' }}>
-                                    <th style={{ padding: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>Date</th>
-                                    <th style={{ padding: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>Type</th>
-                                    <th style={{ padding: '12px', color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'right' }}>Principal</th>
-                                    <th style={{ padding: '12px', color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'right' }}>Interest</th>
-                                    <th style={{ padding: '12px', color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'right' }}>Total</th>
-                                    <th style={{ padding: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>By</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {payouts.map((payout) => (
-                                    <tr key={payout.id} style={{ borderBottom: '1px solid var(--border-tertiary)' }}>
-                                        <td style={{ padding: '12px', color: 'var(--text-primary)' }}>
-                                            {formatDate(payout.created_at)}
-                                        </td>
-                                        <td style={{ padding: '12px', color: 'var(--text-primary)' }}>
+                        <DataTable
+                            columns={[
+                                {
+                                    key: 'created_at',
+                                    label: 'Date',
+                                    render: (val) => formatDate(val)
+                                },
+                                {
+                                    key: 'payout_type',
+                                    label: 'Type',
+                                    render: (val, row) => (
+                                        <div>
                                             <span style={{
                                                 padding: '4px 8px',
                                                 borderRadius: '12px',
                                                 background: 'var(--bg-tertiary)',
                                                 fontSize: '0.85rem'
                                             }}>
-                                                {getTypeLabel(payout.payout_type)}
+                                                {getTypeLabel(val)}
                                             </span>
-                                            {payout.notes && (
+                                            {row.notes && (
                                                 <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                                                    {payout.notes}
+                                                    {row.notes}
                                                 </div>
                                             )}
-                                        </td>
-                                        <td style={{ padding: '12px', color: 'var(--text-primary)', textAlign: 'right' }}>
-                                            {formatCurrency(payout.principal_amount)}
-                                        </td>
-                                        <td style={{ padding: '12px', color: 'var(--success)', textAlign: 'right' }}>
-                                            {formatCurrency(payout.interest_amount)}
-                                        </td>
-                                        <td style={{ padding: '12px', color: 'var(--text-primary)', fontWeight: 600, textAlign: 'right' }}>
-                                            {formatCurrency(payout.total_amount)}
-                                        </td>
-                                        <td style={{ padding: '12px', color: 'var(--text-muted)' }}>
-                                            {payout.processor?.full_name || 'System'}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                        </div>
+                                    )
+                                },
+                                {
+                                    key: 'principal_amount',
+                                    label: 'Principal',
+                                    render: (val) => <div style={{ textAlign: 'right' }}>{formatCurrency(val)}</div>
+                                },
+                                {
+                                    key: 'interest_amount',
+                                    label: 'Interest',
+                                    render: (val) => <div style={{ textAlign: 'right', color: 'var(--success)' }}>{formatCurrency(val)}</div>
+                                },
+                                {
+                                    key: 'total_amount',
+                                    label: 'Total',
+                                    render: (val) => <div style={{ textAlign: 'right', fontWeight: 600 }}>{formatCurrency(val)}</div>
+                                },
+                                {
+                                    key: 'processor',
+                                    label: 'By',
+                                    render: (val) => val?.full_name || 'System'
+                                }
+                            ]}
+                            data={payouts}
+                            emptyMessage="No payouts recorded for this credit."
+                        />
                     )}
                 </div>
             </div>

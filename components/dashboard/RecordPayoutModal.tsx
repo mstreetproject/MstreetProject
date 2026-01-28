@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCreditorPayouts } from '@/hooks/dashboard/useCreditorPayouts';
 import { useCurrency } from '@/hooks/useCurrency';
-import { X, DollarSign, AlertCircle, CheckCircle } from 'lucide-react';
+import { X, Banknote, AlertCircle, CheckCircle } from 'lucide-react';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 
 interface Credit {
@@ -113,7 +113,7 @@ export default function RecordPayoutModal({ isOpen, credit, onClose, onSuccess }
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <h2 style={{ color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.25rem' }}>
-                        <DollarSign size={22} />
+                        <Banknote size={22} />
                         Record Full Payout
                     </h2>
                     <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
@@ -247,7 +247,7 @@ export default function RecordPayoutModal({ isOpen, credit, onClose, onSuccess }
                                 gap: '8px',
                             }}
                         >
-                            {(loading || isSubmitting) ? <MStreetLoader size={18} color="#ffffff" /> : <DollarSign size={18} />}
+                            {(loading || isSubmitting) ? <MStreetLoader size={18} color="#ffffff" /> : <Banknote size={18} />}
                             {(loading || isSubmitting) ? 'Processing...' : `Pay ${formatCurrency(totalPayout)}`}
                         </button>
                     </form>
