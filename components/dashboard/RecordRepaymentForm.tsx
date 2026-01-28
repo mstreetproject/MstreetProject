@@ -121,6 +121,9 @@ export default function RecordRepaymentForm() {
             }
         }
         fetchLoans();
+
+        // Expose refetch for use after submission
+        (window as any).refetchRepaymentLoans = fetchLoans;
     }, []);
 
     const loan = useMemo(() =>
@@ -338,6 +341,11 @@ export default function RecordRepaymentForm() {
             setSelectedScheduleIndex(null); // Reset selection after successful payment
             setPrincipalAmount('');
             setInterestAmount('');
+
+            // Refresh the loan list to update statuses and dropdown
+            if ((window as any).refetchRepaymentLoans) {
+                (window as any).refetchRepaymentLoans();
+            }
         } catch (err: any) {
             console.error('Repayment error:', err);
             setError(err.message);
@@ -729,16 +737,23 @@ export default function RecordRepaymentForm() {
                 <button
                     type="submit"
                     className={styles.submitBtn}
-                    disabled={submitting || !loan || totalPayment <= 0 || loan.status === 'preliquidated' || loan.status === 'repaid' || selectedScheduleIndex === null}
+                    disabled={
+                        submitting ||
+                        !loan ||
+                        totalPayment <= 0 ||
+                        loan.status === 'preliquidated' ||
+                        loan.status === 'repaid' ||
+                        (schedule.length > 0 && selectedScheduleIndex === null && !loadingSchedule)
+                    }
                     style={{
                         height: '52px',
                         fontSize: '1.1rem',
                         background: (loan?.status === 'preliquidated' || loan?.status === 'repaid')
                             ? 'var(--bg-tertiary)'
-                            : selectedScheduleIndex === null
+                            : (schedule.length > 0 && selectedScheduleIndex === null && !loadingSchedule)
                                 ? 'var(--bg-tertiary)'
                                 : 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
-                        color: (loan?.status === 'preliquidated' || loan?.status === 'repaid' || selectedScheduleIndex === null) ? 'var(--text-muted)' : 'white'
+                        color: (loan?.status === 'preliquidated' || loan?.status === 'repaid' || (schedule.length > 0 && selectedScheduleIndex === null)) ? 'var(--text-muted)' : 'white'
                     }}
                 >
                     {submitting ? <MStreetLoader size={20} color="#ffffff" /> : <Banknote size={20} />}
@@ -746,9 +761,11 @@ export default function RecordRepaymentForm() {
                         ? 'Recording...'
                         : (loan?.status === 'preliquidated' || loan?.status === 'repaid')
                             ? 'Loan Fully Repaid'
-                            : selectedScheduleIndex === null
+                            : (schedule.length > 0 && selectedScheduleIndex === null && !loadingSchedule)
                                 ? 'Select an Installment'
-                                : `Confirm Payment Receipt`}
+                                : schedule.length === 0 && !loadingSchedule
+                                    ? 'Confirm Full Repayment'
+                                    : `Confirm Payment Receipt`}
                 </button>
             </div>
 
