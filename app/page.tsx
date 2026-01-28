@@ -10,7 +10,7 @@ export default function Home() {
           <img src="/secondary logo2.png" alt="MStreet Financial" style={styles.logo} />
         </div>
 
-        <h1 style={styles.title}>Welcome to MStreet Finance</h1>
+        <h1 style={styles.title}>Welcome to MStreets Finance</h1>
         <p style={styles.tagline}>
           Secure Financial Asset & Credit Management Platform
         </p>
