@@ -29,7 +29,7 @@ interface DataTableProps {
     data: any[];
     loading?: boolean;
     emptyMessage?: string;
-    onRowClick?: (row: any) => void;
+    onRowClick?: (row: any, index: number) => void;
     actions?: RowAction[];
     actionsLabel?: string;
     // Search
@@ -43,6 +43,8 @@ interface DataTableProps {
     // Date Filter
     dateFilterable?: boolean;
     dateFilterKey?: string;
+    // Row Selection
+    selectedRowIndex?: number | null;
 }
 
 export default function DataTable({
@@ -61,6 +63,7 @@ export default function DataTable({
     pageSizeOptions = [10, 25, 50],
     dateFilterable = false,
     dateFilterKey = 'created_at',
+    selectedRowIndex = null,
 }: DataTableProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -323,8 +326,8 @@ export default function DataTable({
                             {paginatedData.map((row, index) => (
                                 <tr
                                     key={index}
-                                    className={`${styles.tr} ${onRowClick ? styles.clickable : ''}`}
-                                    onClick={() => onRowClick?.(row)}
+                                    className={`${styles.tr} ${onRowClick ? styles.clickable : ''} ${selectedRowIndex === index ? styles.selected : ''}`}
+                                    onClick={() => onRowClick?.(row, index)}
                                 >
                                     {columns.map((column) => (
                                         <td

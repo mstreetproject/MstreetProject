@@ -241,6 +241,15 @@
     cursor: pointer;
 }
 
+.tr.selected {
+    background: rgba(2, 179, 255, 0.12);
+    border-left: 3px solid var(--accent-primary);
+}
+
+.tr.selected:hover {
+    background: rgba(2, 179, 255, 0.18);
+}
+
 .td {
     padding: 14px 16px;
     color: var(--text-secondary);

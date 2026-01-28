@@ -77,6 +77,7 @@ export default function RecordRepaymentForm() {
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [loanForDetails, setLoanForDetails] = useState<any>(null);
     const [viewingPdf, setViewingPdf] = useState<{ url: string, name: string } | null>(null);
+    const [selectedScheduleIndex, setSelectedScheduleIndex] = useState<number | null>(null);
 
     const {
         schedule,
@@ -84,10 +85,13 @@ export default function RecordRepaymentForm() {
         updateInstallmentStatus
     } = useRepaymentSchedule(selectedLoanId);
 
-    // Reset success/error when changing selection
+    // Reset success/error and selection when changing loan
     useEffect(() => {
         setSuccess(false);
         setError(null);
+        setSelectedScheduleIndex(null);
+        setPrincipalAmount('');
+        setInterestAmount('');
     }, [selectedLoanId]);
 
     // Fetch active loans
@@ -331,8 +335,9 @@ export default function RecordRepaymentForm() {
 
             setSuccess(true);
             setNotes('');
-            // Optional: reset selected loan or refresh list
-            // setSelectedLoanId('');
+            setSelectedScheduleIndex(null); // Reset selection after successful payment
+            setPrincipalAmount('');
+            setInterestAmount('');
         } catch (err: any) {
             console.error('Repayment error:', err);
             setError(err.message);
@@ -702,13 +707,15 @@ export default function RecordRepaymentForm() {
                                             }
                                         ]}
                                         data={schedule}
-                                        onRowClick={(row) => {
+                                        onRowClick={(row, index) => {
                                             if (row.status !== 'paid') {
                                                 setPrincipalAmount(row.principal_amount.toString());
                                                 setInterestAmount(row.interest_amount.toString());
                                                 setIsPartialPayment(true);
+                                                setSelectedScheduleIndex(index);
                                             }
                                         }}
+                                        selectedRowIndex={selectedScheduleIndex}
                                         emptyMessage="No schedule available"
                                     />
                                 </div>
@@ -722,18 +729,26 @@ export default function RecordRepaymentForm() {
                 <button
                     type="submit"
                     className={styles.submitBtn}
-                    disabled={submitting || !loan || totalPayment <= 0 || loan.status === 'preliquidated' || loan.status === 'repaid'}
+                    disabled={submitting || !loan || totalPayment <= 0 || loan.status === 'preliquidated' || loan.status === 'repaid' || selectedScheduleIndex === null}
                     style={{
                         height: '52px',
                         fontSize: '1.1rem',
                         background: (loan?.status === 'preliquidated' || loan?.status === 'repaid')
                             ? 'var(--bg-tertiary)'
-                            : 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
-                        color: (loan?.status === 'preliquidated' || loan?.status === 'repaid') ? 'var(--text-muted)' : 'white'
+                            : selectedScheduleIndex === null
+                                ? 'var(--bg-tertiary)'
+                                : 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+                        color: (loan?.status === 'preliquidated' || loan?.status === 'repaid' || selectedScheduleIndex === null) ? 'var(--text-muted)' : 'white'
                     }}
                 >
                     {submitting ? <MStreetLoader size={20} color="#ffffff" /> : <Banknote size={20} />}
-                    {submitting ? 'Recording...' : (loan?.status === 'preliquidated' || loan?.status === 'repaid') ? 'Loan Fully Repaid' : `Confirm Payment Receipt`}
+                    {submitting
+                        ? 'Recording...'
+                        : (loan?.status === 'preliquidated' || loan?.status === 'repaid')
+                            ? 'Loan Fully Repaid'
+                            : selectedScheduleIndex === null
+                                ? 'Select an Installment'
+                                : `Confirm Payment Receipt`}
                 </button>
             </div>
 
