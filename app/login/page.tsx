@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import MStreetLoader from "@/components/ui/MStreetLoader";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -20,7 +21,8 @@ export default function LoginPage() {
         setLoading(true);
         setStatus(null);
 
-        const { error } = await supabase.auth.signInWithPassword({
+        const supabase = createClient();
+        const { data, error } = await supabase.auth.signInWithPassword({
             email: formData.email,
             password: formData.password,
         });
@@ -30,8 +32,50 @@ export default function LoginPage() {
             setLoading(false);
         } else {
             setStatus({ type: "success", message: "Login successful! Redirecting..." });
-            // Redirect to dashboard or profile
-            router.push("/");
+
+            // Check if user is internal and redirect accordingly
+            if (data.user) {
+                const { data: userData } = await supabase
+                    .from('users')
+                    .select('is_internal, is_creditor, is_debtor')
+                    .eq('id', data.user.id)
+                    .single();
+
+                // Check for redirectTo parameter
+                const params = new URLSearchParams(window.location.search);
+                const redirectTo = params.get('redirectTo');
+
+                // Small delay to ensure session is set
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Refresh router to pick up new session
+                router.refresh();
+
+                if (redirectTo) {
+                    router.push(redirectTo);
+                    return;
+                }
+
+                const roleCount = [
+                    userData?.is_internal,
+                    userData?.is_creditor,
+                    userData?.is_debtor
+                ].filter(Boolean).length;
+
+                if (roleCount > 1) {
+                    router.push('/portal');
+                } else if (userData?.is_internal) {
+                    router.push('/dashboard/internal');
+                } else if (userData?.is_creditor) {
+                    router.push('/dashboard/creditor');
+                } else if (userData?.is_debtor) {
+                    router.push('/dashboard/debtor');
+                } else {
+                    router.push('/profile');
+                }
+            } else {
+                router.push('/');
+            }
         }
     };
 
@@ -48,7 +92,7 @@ export default function LoginPage() {
                 </div>
                 <div style={styles.header}>
                     <h1 style={styles.title}>Welcome Back</h1>
-                    <p style={styles.subtitle}>Log in to your MStreet account</p>
+                    <p style={styles.subtitle}>Log in to your MStreets account</p>
                 </div>
 
                 <form onSubmit={handleSubmit} style={styles.form}>
@@ -87,9 +131,14 @@ export default function LoginPage() {
                         style={{
                             ...styles.button,
                             opacity: loading ? 0.7 : 1,
-                            cursor: loading ? "not-allowed" : "pointer"
+                            cursor: loading ? "not-allowed" : "pointer",
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px'
                         }}
                     >
+                        {loading && <MStreetLoader size={20} color="#070757" />}
                         {loading ? "Logging in..." : "Log In"}
                     </button>
                 </form>

@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import MStreetLoader from "@/components/ui/MStreetLoader";
 
 export default function SignUpPage() {
     const [formData, setFormData] = useState({
@@ -14,6 +16,7 @@ export default function SignUpPage() {
     const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
     const [loading, setLoading] = useState(false);
 
+    const router = useRouter();
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -21,21 +24,41 @@ export default function SignUpPage() {
 
         // 1. Sign up user via Supabase Auth
         // Note: The trigger we added to the database will automatically 
-        // create the row in our custom 'public.users' table.
-        const { error } = await supabase.auth.signUp({
+        // create the row in our custom 'public.users' table with is_debtor = TRUE
+        const { data, error } = await supabase.auth.signUp({
             email: formData.email,
             password: formData.password,
             options: {
                 data: {
                     full_name: formData.full_name,
                 },
-                emailRedirectTo: `${window.location.origin}/welcome`,
+                emailRedirectTo: `${window.location.origin}/dashboard/debtor`,
             },
         });
 
         if (error) {
             setStatus({ type: "error", message: error.message });
+        } else if (data.user && (!data.user.identities || data.user.identities.length === 0)) {
+            setStatus({
+                type: "error",
+                message: "An account with this email already exists. Please log in or use forgot password."
+            });
         } else {
+            // SUCCESS
+            setStatus({
+                type: "success",
+                message: "Sign up successful!"
+            });
+
+            // If we have a session (email confirmation off or auto-sign-in enabled), redirect immediately
+            if (data.session) {
+                // Double ensure the user is marked as a debtor locally if needed, 
+                // but mainly just redirect.
+                router.push("/dashboard/debtor");
+                return;
+            }
+
+            // Otherwise show verification message
             setStatus({
                 type: "success",
                 message: "Sign up successful! Please check your email for a verification link."
@@ -57,7 +80,7 @@ export default function SignUpPage() {
                     <img src="/secondary logo2.png" alt="MStreet Financial" style={styles.logo} />
                 </div>
                 <div style={styles.header}>
-                    <h1 style={styles.title}>Join MStreet</h1>
+                    <h1 style={styles.title}>Join MStreets</h1>
                     <p style={styles.subtitle}>Create your secure account today</p>
                 </div>
 
@@ -107,9 +130,14 @@ export default function SignUpPage() {
                         style={{
                             ...styles.button,
                             opacity: loading ? 0.7 : 1,
-                            cursor: loading ? "not-allowed" : "pointer"
+                            cursor: loading ? "not-allowed" : "pointer",
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px'
                         }}
                     >
+                        {loading && <MStreetLoader size={20} color="#070757" />}
                         {loading ? "Signing up..." : "Create Account"}
                     </button>
                 </form>
