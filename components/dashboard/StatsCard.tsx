@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Info } from 'lucide-react';
 import styles from './StatsCard.module.css';
 
 interface StatsCardProps {
@@ -10,6 +11,7 @@ interface StatsCardProps {
     changeType?: 'positive' | 'negative' | 'neutral';
     icon?: React.ComponentType<{ className?: string }>;
     loading?: boolean;
+    tooltip?: string;  // Tooltip explanation
 }
 
 export default function StatsCard({
@@ -19,11 +21,20 @@ export default function StatsCard({
     changeType = 'neutral',
     icon: Icon,
     loading = false,
+    tooltip,
 }: StatsCardProps) {
     return (
         <div className={styles.card}>
             <div className={styles.header}>
-                <h3 className={styles.title}>{title}</h3>
+                <div className={styles.titleRow}>
+                    <h3 className={styles.title}>{title}</h3>
+                    {tooltip && (
+                        <div className={styles.tooltipWrapper}>
+                            <Info size={14} className={styles.infoIcon} />
+                            <div className={styles.tooltip}>{tooltip}</div>
+                        </div>
+                    )}
+                </div>
                 {Icon && <Icon className={styles.icon} />}
             </div>
 

@@ -56,7 +56,7 @@ export type ActivityAction =
     | 'SIGN_DOCUMENT'
     | 'UPLOAD_DOCUMENT';
 
-export type EntityType = 'user' | 'loan' | 'credit' | 'payout' | 'system' | 'expense' | 'loan_request' | 'payment_upload' | 'loan_document';
+export type EntityType = 'user' | 'loan' | 'credit' | 'investment' | 'payout' | 'system' | 'expense' | 'loan_request' | 'payment_upload' | 'loan_document';
 
 export function useActivityLog() {
     const logActivity = useCallback(async (

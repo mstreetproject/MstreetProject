@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import DataTable, { Column, RowAction } from '@/components/dashboard/DataTable';
 import { useDebtorStats } from '@/hooks/dashboard/useDebtorStats';
 import { useCurrency } from '@/hooks/useCurrency';
-import { Banknote, FileText, Edit, Trash2, CheckCircle } from 'lucide-react';
+import { Banknote, FileText, Edit, Trash2, CheckCircle, Link } from 'lucide-react';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 import styles from '@/app/dashboard/internal/creditors/page.module.css';
 import EditLoanModal from '@/components/dashboard/EditLoanModal';
@@ -101,6 +101,17 @@ export default function RepaymentTable({
         }
     };
 
+    const handleCopySigningLink = (row: any) => {
+        const unsignedDoc = row.loan_documents?.find((d: any) => !d.is_signed);
+        if (unsignedDoc) {
+            const link = `${window.location.origin}/sign/${unsignedDoc.id}`;
+            navigator.clipboard.writeText(link);
+            alert('Signing link copied to clipboard!\n\nShare this with the debtor so they can sign their agreement.');
+        } else {
+            alert('No unsigned documents found for this loan.');
+        }
+    };
+
     // Table columns
     const columns: Column[] = [
         {
@@ -170,6 +181,12 @@ export default function RepaymentTable({
 
     // Row Actions
     const rowActions: RowAction[] = [
+        {
+            label: '🔗 Copy Signing Link',
+            icon: <Link size={16} />,
+            onClick: handleCopySigningLink,
+            hidden: (row) => !row.loan_documents?.some((d: any) => !d.is_signed),
+        },
         {
             label: '💰 Record Repayment',
             icon: <Banknote size={16} />,

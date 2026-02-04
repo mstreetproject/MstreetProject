@@ -161,6 +161,7 @@ export default function DebtorsPage() {
                         value={formatCurrency(stats.totalValue)}
                         icon={Wallet}
                         loading={loansLoading}
+                        tooltip="The current outstanding loan exposure, representing the sum of principal yet to be recovered from Performing, Non-Performing, and Full Provision loans."
                     />
                     <StatsCard
                         title="Interest Accrued"
@@ -168,6 +169,7 @@ export default function DebtorsPage() {
                         changeType="positive"
                         icon={PiggyBank}
                         loading={loansLoading}
+                        tooltip="Total interest earned but not yet collected across all outstanding loans."
                     />
                     <StatsCard
                         title="Performing"
@@ -176,6 +178,7 @@ export default function DebtorsPage() {
                         changeType="neutral"
                         icon={TrendingUp}
                         loading={loansLoading}
+                        tooltip="Loans where borrowers are making payments on time according to the schedule."
                     />
                     <StatsCard
                         title="Preliquidated"
@@ -184,6 +187,7 @@ export default function DebtorsPage() {
                         changeType="positive"
                         icon={CheckCircle}
                         loading={loansLoading}
+                        tooltip="Total historical value of loans that have been fully repaid (early or at maturity)."
                     />
                     <StatsCard
                         title="Non-performing"
@@ -192,6 +196,7 @@ export default function DebtorsPage() {
                         changeType="negative"
                         icon={AlertCircle}
                         loading={loansLoading}
+                        tooltip="Loans with overdue payments or where the borrower is significantly behind schedule."
                     />
                     <StatsCard
                         title="Full Provision"
@@ -200,6 +205,7 @@ export default function DebtorsPage() {
                         changeType="negative"
                         icon={AlertCircle}
                         loading={loansLoading}
+                        tooltip="Bad debt where collection is deemed unlikely and the full principal is provisioned as a loss."
                     />
                 </div>
 

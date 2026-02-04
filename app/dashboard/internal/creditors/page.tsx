@@ -320,6 +320,7 @@ export default function CreditorsPage() {
                         changeType="neutral"
                         icon={Wallet}
                         loading={creditsLoading}
+                        tooltip="The current total obligation to creditors, calculated as outstanding principal plus all interest accrued to date."
                     />
                     <StatsCard
                         title="Interest Accrued"
@@ -327,6 +328,7 @@ export default function CreditorsPage() {
                         changeType="positive"
                         icon={PiggyBank}
                         loading={creditsLoading}
+                        tooltip="Total interest earned by creditors on their current active investments up to this moment."
                     />
                     <StatsCard
                         title="Active Credits"
@@ -335,6 +337,7 @@ export default function CreditorsPage() {
                         changeType="neutral"
                         icon={DollarSign}
                         loading={creditsLoading}
+                        tooltip="Total number of ongoing investments and the sum of their remaining principal balances."
                     />
                     <StatsCard
                         title="Maturity Value"
@@ -343,6 +346,7 @@ export default function CreditorsPage() {
                         changeType="positive"
                         icon={TrendingUp}
                         loading={creditsLoading}
+                        tooltip="The total amount expected to be paid out at the end of all investment cycles (Principal + Total Tenure Interest)."
                     />
                     <StatsCard
                         title="Paid Out"
@@ -351,6 +355,7 @@ export default function CreditorsPage() {
                         changeType="positive"
                         icon={CheckCircle}
                         loading={creditsLoading}
+                        tooltip="Cumulative number of payout transactions and the total amount successfully returned to creditors."
                     />
                 </div>
 

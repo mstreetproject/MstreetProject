@@ -54,7 +54,7 @@ export default function CreditPlacementPage() {
                             onClick={() => setShowCreateModal(true)}
                         >
                             <UserPlus size={20} />
-                            <span>Add Placement</span>
+                            <span>Create Placement</span>
                         </button>
                     </div>
                 </div>

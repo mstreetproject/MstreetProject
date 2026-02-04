@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/dashboard/useUser';
 import { useActivityLog } from '@/hooks/useActivityLog';
-import { User, Banknote, Percent, Calendar, Clock } from 'lucide-react';
+import { User, Banknote, Percent, Calendar, Clock, Upload, FileText } from 'lucide-react';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 import styles from './CreateCreditForm.module.css';
 
@@ -35,6 +35,9 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
         start_date: new Date().toISOString().split('T')[0],
     });
 
+    const [placementDocs, setPlacementDocs] = useState<File[]>([]);
+    const [uploadingDocs, setUploadingDocs] = useState(false);
+
     // Fetch creditors on mount
     useEffect(() => {
         async function fetchCreditors() {
@@ -61,6 +64,12 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
         const date = new Date(startDate);
         date.setMonth(date.getMonth() + tenureMonths);
         return date.toISOString().split('T')[0];
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            setPlacementDocs(Array.from(e.target.files));
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -94,13 +103,41 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
 
             if (insertError) throw insertError;
 
+            const creditId = insertedData.id;
+
+            // Upload Placement Documents if any
+            if (placementDocs.length > 0) {
+                setUploadingDocs(true);
+                for (const file of placementDocs) {
+                    const fileName = `${formData.creditor_id}/${creditId}/${Date.now()}_${file.name}`;
+
+                    const { error: uploadError } = await supabase.storage
+                        .from('mstreetstorage')
+                        .upload(`placement-documents/${fileName}`, file);
+
+                    if (uploadError) throw uploadError;
+
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('mstreetstorage')
+                        .getPublicUrl(`placement-documents/${fileName}`);
+
+                    await supabase.from('placement_documents').insert({
+                        credit_id: creditId,
+                        creditor_id: formData.creditor_id,
+                        file_url: publicUrl,
+                        file_name: file.name
+                    });
+                }
+            }
+
             // Log the credit creation
             const selectedCreditor = creditors.find(c => c.id === formData.creditor_id);
-            await logActivity('CREATE_CREDIT', 'credit', insertedData?.id || '', {
+            await logActivity('CREATE_CREDIT', 'credit', creditId, {
                 creditor_name: selectedCreditor?.full_name,
                 principal: parseFloat(formData.principal),
                 interest_rate: parseFloat(formData.interest_rate),
                 tenure_months: tenure,
+                docs_count: placementDocs.length
             });
 
             setSuccess(true);
@@ -111,11 +148,13 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
                 tenure_months: '',
                 start_date: new Date().toISOString().split('T')[0],
             });
+            setPlacementDocs([]);
             onSuccess?.();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to record credit');
         } finally {
             setLoading(false);
+            setUploadingDocs(false);
         }
     };
 
@@ -219,6 +258,54 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
                         className={styles.input}
                         required
                     />
+                </div>
+            </div>
+
+            {/* Placement Letter Upload */}
+            <div style={{ gridColumn: '1 / -1', marginTop: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: 'var(--text-primary)' }}>
+                    <Upload size={18} />
+                    <span style={{ fontWeight: 600 }}>Placement Letter</span>
+                </div>
+                <div style={{
+                    border: '2px dashed var(--border-secondary)',
+                    borderRadius: '12px',
+                    padding: '24px',
+                    textAlign: 'center',
+                    background: 'var(--bg-tertiary)',
+                    cursor: 'pointer'
+                }} onClick={() => document.getElementById('placement-doc-upload')?.click()}>
+                    <input
+                        id="placement-doc-upload"
+                        type="file"
+                        multiple
+                        onChange={handleFileChange}
+                        style={{ display: 'none' }}
+                    />
+                    {placementDocs.length > 0 ? (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+                            {placementDocs.map((file, i) => (
+                                <div key={i} style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    background: 'var(--bg-card)',
+                                    padding: '6px 12px',
+                                    borderRadius: '8px',
+                                    fontSize: '0.85rem'
+                                }}>
+                                    <FileText size={14} />
+                                    <span>{file.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div>
+                            <Upload size={32} style={{ color: 'var(--text-muted)', marginBottom: '12px' }} />
+                            <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Click or drag files to upload the placement letter</p>
+                            <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>PDF, PNG, JPG accepted</p>
+                        </div>
+                    )}
                 </div>
             </div>
 

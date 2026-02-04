@@ -6,12 +6,14 @@ import CreateCreditForm from '@/components/dashboard/CreateCreditForm';
 import CreateLoanForm from '@/components/dashboard/CreateLoanForm';
 import RecordRepaymentForm from '@/components/dashboard/RecordRepaymentForm';
 import RecordInvestmentForm from '@/components/dashboard/RecordInvestmentForm';
+import ManageInvestments from '@/components/dashboard/ManageInvestments';
+import DocumentsManager from '@/components/dashboard/DocumentsManager';
 import { useUser } from '@/hooks/dashboard/useUser';
-import { Coins, CreditCard, Banknote, TrendingUp, Settings } from 'lucide-react';
+import { Coins, CreditCard, Banknote, TrendingUp, FileText, List } from 'lucide-react';
 import styles from '../creditors/page.module.css';
 import opStyles from './page.module.css';
 
-type TabType = 'credit' | 'loan' | 'repayment' | 'investment';
+type TabType = 'credit' | 'loan' | 'repayment' | 'investment' | 'documents';
 
 export default function OperationsPage() {
     const { user, loading: userLoading } = useUser();
@@ -44,7 +46,8 @@ export default function OperationsPage() {
         { id: 'credit' as TabType, label: 'Record Placement', icon: Coins, description: 'Receive funds from creditors' },
         { id: 'loan' as TabType, label: 'Disburse Loan', icon: CreditCard, description: 'Lend funds to debtors' },
         { id: 'repayment' as TabType, label: 'Repayments', icon: Banknote, description: 'Record loan repayments' },
-        { id: 'investment' as TabType, label: 'Record Investment', icon: TrendingUp, description: 'Record creditor investments' },
+        { id: 'investment' as TabType, label: 'Record Investment', icon: TrendingUp, description: 'Record investments made by MStreet in other companies' },
+        { id: 'documents' as TabType, label: 'Documents', icon: FileText, description: 'Manage all documents' },
     ];
 
     return (
@@ -65,7 +68,7 @@ export default function OperationsPage() {
                             <button
                                 key={tab.id}
                                 className={`${opStyles.tab} ${activeTab === tab.id ? opStyles.tabActive : ''}`}
-                                onClick={() => setActiveTab(tab.id)}
+                                onClick={() => setActiveTab(tab.id as TabType)}
                             >
                                 <tab.icon size={20} />
                                 <span className={opStyles.tabLabel}>{tab.label}</span>
@@ -74,12 +77,12 @@ export default function OperationsPage() {
                     </div>
                 </div>
 
-                {/* Content */}
                 <div className={opStyles.content}>
                     {activeTab === 'credit' && <CreateCreditForm />}
                     {activeTab === 'loan' && <CreateLoanForm />}
                     {activeTab === 'repayment' && <RecordRepaymentForm />}
                     {activeTab === 'investment' && <RecordInvestmentForm />}
+                    {activeTab === 'documents' && <DocumentsManager />}
                 </div>
             </div>
         </DashboardLayout>

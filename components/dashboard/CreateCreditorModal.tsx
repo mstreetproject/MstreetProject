@@ -92,7 +92,7 @@ export default function CreateCreditorModal({ isOpen, onClose, onSuccess }: Crea
                 is_creditor: true,
             });
 
-            setSuccess(`Creditor "${formData.fullName}" created successfully!`);
+            setSuccess(`Placement Portfolio "${formData.fullName}" created successfully!`);
 
             // Auto close after success
             setTimeout(() => {
@@ -102,7 +102,7 @@ export default function CreateCreditorModal({ isOpen, onClose, onSuccess }: Crea
             }, 1500);
 
         } catch (err: any) {
-            setError(err.message || 'Failed to create creditor');
+            setError(err.message || 'Failed to create placement portfoilo');
         } finally {
             setLoading(false);
         }
@@ -113,8 +113,8 @@ export default function CreateCreditorModal({ isOpen, onClose, onSuccess }: Crea
             <div className={styles.modal}>
                 <div className={styles.header}>
                     <div>
-                        <h2 className={styles.title}>Add New Creditor</h2>
-                        <p className={styles.subtitle}>Create a new creditor account with login access</p>
+                        <h2 className={styles.title}>Add New Placement Portfolio</h2>
+                        <p className={styles.subtitle}>Create a new placement portfolio for a creditor</p>
                     </div>
                     <button onClick={handleClose} className={styles.closeBtn} type="button">
                         <X size={24} />
@@ -229,7 +229,7 @@ export default function CreateCreditorModal({ isOpen, onClose, onSuccess }: Crea
                         disabled={loading || !!success}
                     >
                         {loading && <MStreetLoader size={18} color="#ffffff" />}
-                        {loading ? 'Creating...' : 'Create Creditor'}
+                        {loading ? 'Creating...' : 'Create Placement'}
                     </button>
                 </div>
             </div>

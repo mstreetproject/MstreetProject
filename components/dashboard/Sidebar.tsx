@@ -19,7 +19,8 @@ import {
     ChevronDown,
     ChevronRight,
     Coins,
-    CreditCard
+    CreditCard,
+    ArrowUpRight
 } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
@@ -48,6 +49,12 @@ const menuItems = [
         icon: TrendingUp,
         roles: ['super_admin', 'finance_manager', 'ops_officer', 'risk_officer']
     },
+    {
+        label: 'Investments',
+        href: '/dashboard/internal/investments',
+        icon: ArrowUpRight,
+        roles: ['super_admin', 'finance_manager', 'ops_officer', 'risk_officer']
+    },
 
     {
         label: 'Staff',
@@ -63,7 +70,8 @@ const menuItems = [
             { label: 'Record Placement', href: '/dashboard/internal/operations/record-placement', icon: Coins },
             { label: 'Disburse Loan', href: '/dashboard/internal/operations/disburse-loan', icon: CreditCard },
             { label: 'Repayments', href: '/dashboard/internal/operations/repayments', icon: Banknote },
-            { label: 'Record Investment', href: '/dashboard/internal/operations/record-investment', icon: TrendingUp }
+            { label: 'Record Investment', href: '/dashboard/internal/operations/record-investment', icon: TrendingUp },
+            { label: 'Documents', href: '/dashboard/internal/operations/documents', icon: FileText }
         ]
     },
     {

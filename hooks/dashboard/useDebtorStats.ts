@@ -70,7 +70,7 @@ export function useDebtorStats(initialPeriod: TimePeriod = 'month'): UseDebtorSt
                         full_name,
                         email
                     ),
-                    loan_documents(is_signed)
+                    loan_documents(id, is_signed)
                 `)
                 .order('created_at', { ascending: false });
 
@@ -151,7 +151,9 @@ export function useDebtorStats(initialPeriod: TimePeriod = 'month'): UseDebtorSt
             return sum + Math.max(0, outstanding);
         }, 0);
         const fullProvisionValue = fullProvision.reduce((sum, l) => sum + Number(l.principal), 0);
-        const totalValue = performingValue + preliquidatedValue + nonPerformingValue + fullProvisionValue;
+
+        // Total Value = only outstanding exposure (exclude preliquidated since those are fully repaid)
+        const totalValue = performingValue + nonPerformingValue + fullProvisionValue;
 
         // Calculate interest accrued (for performing loans, based on outstanding principal)
         const interestAccrued = performing.reduce((sum, l) => {

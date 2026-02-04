@@ -337,21 +337,23 @@ export default function InternalDashboard() {
                     {user?.roles?.some(role => ['super_admin', 'finance_manager'].includes(role.name)) && (
                         <>
                             <StatsCard
-                                title="Revenue Earned"
-                                value={stats ? formatCurrency(stats.totalRevenueEarned || 0) : '$0'}
-                                change="Inflow"
+                                title="Interest Income"
+                                value={stats ? formatCurrency(stats.interestIncome || 0) : '$0'}
+                                change="From Debtors"
                                 changeType="positive"
                                 icon={Wallet}
                                 loading={statsLoading}
+                                tooltip="Interest collected from loan repayments. This is the revenue from lending operations."
                             />
 
                             <StatsCard
-                                title="Credit Cost"
-                                value={formatCurrency(totalCreditCost)}
-                                change="Outflow"
+                                title="Interest Expense"
+                                value={stats ? formatCurrency(stats.interestExpense || 0) : '$0'}
+                                change="To Creditors"
                                 changeType="negative"
                                 icon={TrendingDown}
-                                loading={statsLoading || creditorStatsLoading}
+                                loading={statsLoading}
+                                tooltip="Interest accrued and owed to creditors/investors. This is the cost of capital."
                             />
 
                             <StatsCard
@@ -360,6 +362,17 @@ export default function InternalDashboard() {
                                 changeType="negative"
                                 icon={Receipt}
                                 loading={statsLoading}
+                                tooltip="Staff salaries, rent, utilities, and other operational costs."
+                            />
+
+                            <StatsCard
+                                title="Net Profit"
+                                value={stats ? formatCurrency(stats.netProfit || 0) : '$0'}
+                                change={stats && stats.netProfit >= 0 ? "Profitable" : "Loss"}
+                                changeType={stats && stats.netProfit >= 0 ? "positive" : "negative"}
+                                icon={TrendingUp}
+                                loading={statsLoading}
+                                tooltip="Net Profit = Interest Income − Interest Expense − Operating Expenses"
                             />
                         </>
                     )}

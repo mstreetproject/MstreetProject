@@ -88,6 +88,11 @@ export interface DashboardStats {
         count: number;
         sum: number;
     };
+    // New accounting fields (IFRS compliant)
+    interestIncome: number;     // Interest collected from debtors
+    interestExpense: number;    // Interest owed to creditors
+    netInterestIncome: number;  // Interest Income - Interest Expense
+    netProfit: number;          // NII - Operating Expenses
 }
 
 export interface AuditLog {

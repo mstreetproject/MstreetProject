@@ -1,18 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import CreateCreditForm from '@/components/dashboard/CreateCreditForm';
-import CreateCreditorModal from '@/components/dashboard/CreateCreditorModal';
+import DocumentsManager from '@/components/dashboard/DocumentsManager';
 import { useUser } from '@/hooks/dashboard/useUser';
-import { UserPlus } from 'lucide-react';
 import styles from '../../creditors/page.module.css';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 
-export default function RecordCreditPage() {
+export default function DocumentsPage() {
     const { user, loading: userLoading } = useUser();
-    const [showCreateModal, setShowCreateModal] = useState(false);
-    const [refreshKey, setRefreshKey] = useState(0);
 
     // RBAC Guard
     const hasAccess = user?.roles?.some(
@@ -45,35 +41,16 @@ export default function RecordCreditPage() {
                 {/* Header */}
                 <div className={styles.pageHeader}>
                     <div className={styles.headerLeft}>
-                        <h1 className={styles.pageTitle}>Record Credit</h1>
-                        <p className={styles.pageSubtitle}>Receive funds from creditors</p>
-                    </div>
-                    <div className={styles.headerRight}>
-                        <button
-                            className={styles.createBtn}
-                            onClick={() => setShowCreateModal(true)}
-                        >
-                            <UserPlus size={20} />
-                            <span>Create Placement</span>
-                        </button>
+                        <h1 className={styles.pageTitle}>Documents</h1>
+                        <p className={styles.pageSubtitle}>View and manage all offer letters and placement letters</p>
                     </div>
                 </div>
 
                 {/* Content */}
                 <div style={{ marginTop: '24px' }}>
-                    <CreateCreditForm key={refreshKey} />
+                    <DocumentsManager />
                 </div>
             </div>
-
-            {/* Create Creditor Modal */}
-            <CreateCreditorModal
-                isOpen={showCreateModal}
-                onClose={() => setShowCreateModal(false)}
-                onSuccess={() => {
-                    setRefreshKey(prev => prev + 1);
-                    setShowCreateModal(false);
-                }}
-            />
         </DashboardLayout>
     );
 }

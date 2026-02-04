@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { DashboardStats } from '@/types/dashboard';
+import { calculateSimpleInterest } from '@/lib/interest';
 
 export function useDashboardStats(startDate?: Date | null, endDate?: Date | null) {
     const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -21,11 +22,9 @@ export function useDashboardStats(startDate?: Date | null, endDate?: Date | null
             let expensesQuery = supabase.from('operating_expenses').select('amount');
             let payoutsQuery = supabase.from('creditor_payouts').select('total_amount');
 
-            // For revenue (collections), we sum repayment amounts from loans table
-            // Note: Ideally we'd query the 'loan_repayments' table for time-based filtering, 
-            // but for now we aggregate loan totals as requested or if time filter is minimal.
-            // If strict time filtering is needed for revenue, we should query 'loan_repayments'.
-            // Let's use 'loan_repayments' for accuracy with date filters.
+            // Query loan_repayments for interest income (separate from principal)
+            let interestIncomeQuery = supabase.from('loan_repayments').select('amount_interest');
+            // Also keep total for backward compatibility
             let revenueQuery = supabase.from('loan_repayments').select('total_amount');
 
             if (startDate) {
@@ -33,12 +32,14 @@ export function useDashboardStats(startDate?: Date | null, endDate?: Date | null
                 expensesQuery = expensesQuery.gte('expense_month', startDate.toISOString());
                 payoutsQuery = payoutsQuery.gte('created_at', startDate.toISOString());
                 revenueQuery = revenueQuery.gte('created_at', startDate.toISOString());
+                interestIncomeQuery = interestIncomeQuery.gte('created_at', startDate.toISOString());
             }
             if (endDate) {
                 interestQuery = interestQuery.lte('created_at', endDate.toISOString());
                 expensesQuery = expensesQuery.lte('expense_month', endDate.toISOString());
                 payoutsQuery = payoutsQuery.lte('created_at', endDate.toISOString());
                 revenueQuery = revenueQuery.lte('created_at', endDate.toISOString());
+                interestIncomeQuery = interestIncomeQuery.lte('created_at', endDate.toISOString());
             }
 
             // Fetch all stats in parallel
@@ -50,7 +51,9 @@ export function useDashboardStats(startDate?: Date | null, endDate?: Date | null
                 interestRevenue,
                 operatingExpenses,
                 creditorPayouts,
-                loanRepayments
+                loanRepayments,
+                interestIncomeData,
+                creditsForInterest
             ] = await Promise.all([
                 // Total users (Snapshot)
                 supabase
@@ -86,7 +89,17 @@ export function useDashboardStats(startDate?: Date | null, endDate?: Date | null
                 payoutsQuery,
 
                 // Loan Repayments (Revenue/Collections) (Filtered)
-                revenueQuery
+                revenueQuery,
+
+                // Interest Income from loan repayments (Filtered)
+                interestIncomeQuery,
+
+                // Credits for interest expense calculation (Snapshot)
+                supabase
+                    .from('credits')
+                    .select('principal, remaining_principal, interest_rate, start_date')
+                    .in('status', ['active', 'matured'])
+                    .is('archived_at', null)
             ]);
 
             // Calculate totals
@@ -130,6 +143,28 @@ export function useDashboardStats(startDate?: Date | null, endDate?: Date | null
                 0
             );
 
+            // NEW ACCOUNTING CALCULATIONS (IFRS Compliant)
+            // Interest Income: Sum of interest collected from loan repayments
+            const interestIncome = (interestIncomeData.data || []).reduce(
+                (sum, repayment: any) => sum + Number(repayment.amount_interest || 0),
+                0
+            );
+
+            // Interest Expense: Accrued interest owed to creditors
+            const creditsForInterestData = creditsForInterest.data || [];
+            const interestExpense = creditsForInterestData.reduce((sum, credit: any) => {
+                const principal = Number(credit.remaining_principal ?? credit.principal);
+                const rate = Number(credit.interest_rate);
+                const startDate = credit.start_date;
+                return sum + calculateSimpleInterest(principal, rate, startDate);
+            }, 0);
+
+            // Net Interest Income: Interest earned minus interest owed
+            const netInterestIncome = interestIncome - interestExpense;
+
+            // Net Profit: NII minus operating expenses
+            const netProfit = netInterestIncome - totalOperatingExpenseSum;
+
             setStats({
                 totalUsers,
                 totalActiveCredits: {
@@ -140,14 +175,19 @@ export function useDashboardStats(startDate?: Date | null, endDate?: Date | null
                     count: activeLoansData.length,
                     sum: totalActiveLoansSum,
                 },
-                totalInterestEarned,      // Kept for backward compat, though potentially replaced in UI
-                totalRevenueEarned,       // New: Gross collections
+                totalInterestEarned,      // Kept for backward compat
+                totalRevenueEarned,       // Gross collections
                 totalOperatingExpenses: totalOperatingExpenseSum,
-                totalCreditCost,          // New: Total payouts
+                totalCreditCost,          // Total payouts (legacy)
                 totalBadDebt: {
                     count: badDebtLoansData.length,
                     sum: totalBadDebtSum,
                 },
+                // New accounting fields
+                interestIncome,
+                interestExpense,
+                netInterestIncome,
+                netProfit,
             });
         } catch (err) {
             console.error('Error fetching dashboard stats:', err);
