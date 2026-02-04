@@ -80,6 +80,8 @@ export default function RecordInvestmentPage() {
                 <div style={{
                     display: 'flex',
                     width: '100%',
+                    maxWidth: '100%',
+                    boxSizing: 'border-box',
                     background: 'var(--bg-tertiary)',
                     borderRadius: '12px',
                     padding: '6px',
@@ -87,7 +89,8 @@ export default function RecordInvestmentPage() {
                     marginTop: '12px',
                     border: '1px solid var(--border-secondary)',
                     overflowX: 'auto',
-                    scrollbarWidth: 'none'
+                    scrollbarWidth: 'none',
+                    WebkitOverflowScrolling: 'touch'
                 }} className="tab-navigation-container">
                     {[
                         { id: 'record', label: 'Record Investment', icon: <Wallet size={18} /> },
@@ -112,7 +115,8 @@ export default function RecordInvestmentPage() {
                                 transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                                 boxShadow: activeTab === tab.id ? '0 4px 12px rgba(0, 0, 0, 0.1)' : 'none',
                                 whiteSpace: 'nowrap',
-                                minWidth: '140px'
+                                minWidth: 'max-content',
+                                flexShrink: 0
                             }}
                         >
                             {tab.icon}
@@ -135,6 +139,18 @@ export default function RecordInvestmentPage() {
                             font-size: 0.85rem;
                             gap: 6px;
                             min-width: 120px;
+                        }
+                    }
+                    @media (max-width: 400px) {
+                        .tab-navigation-container {
+                            padding: 3px;
+                            gap: 2px;
+                        }
+                        .tab-navigation-container button {
+                            padding: 8px 6px;
+                            font-size: 0.75rem;
+                            gap: 4px;
+                            min-width: 100px;
                         }
                     }
                 `}</style>

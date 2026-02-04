@@ -28,7 +28,7 @@ export default function InvestmentsDashboard() {
     const { investments, loading, stats, refresh } = useAllInvestments();
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
-    const [activeTab, setActiveTab] = useState<'portfolio' | 'record'>('portfolio');
+
     const [selectedDoc, setSelectedDoc] = useState<any>(null);
     const [showModal, setShowModal] = useState(false);
 

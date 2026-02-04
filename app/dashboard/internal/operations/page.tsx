@@ -6,7 +6,7 @@ import CreateCreditForm from '@/components/dashboard/CreateCreditForm';
 import CreateLoanForm from '@/components/dashboard/CreateLoanForm';
 import RecordRepaymentForm from '@/components/dashboard/RecordRepaymentForm';
 import RecordInvestmentForm from '@/components/dashboard/RecordInvestmentForm';
-import ManageInvestments from '@/components/dashboard/ManageInvestments';
+
 import DocumentsManager from '@/components/dashboard/DocumentsManager';
 import { useUser } from '@/hooks/dashboard/useUser';
 import { Coins, CreditCard, Banknote, TrendingUp, FileText, List } from 'lucide-react';
