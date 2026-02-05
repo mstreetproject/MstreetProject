@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Bell, Trash2, Info, Coins, UserPlus, CreditCard, Receipt } from 'lucide-react';
 import { useNotifications, Notification } from '@/hooks/dashboard/useNotifications';
 import styles from './NotificationCenter.module.css';

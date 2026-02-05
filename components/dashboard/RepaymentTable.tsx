@@ -6,7 +6,7 @@ import { useDebtorStats } from '@/hooks/dashboard/useDebtorStats';
 import { useCurrency } from '@/hooks/useCurrency';
 import { Banknote, FileText, Edit, Trash2, CheckCircle, Link } from 'lucide-react';
 import MStreetLoader from '@/components/ui/MStreetLoader';
-import styles from '@/app/dashboard/internal/creditors/page.module.css';
+
 import EditLoanModal from '@/components/dashboard/EditLoanModal';
 import RecordRepaymentModal from '@/components/dashboard/RecordRepaymentModal';
 import LoanHistoryModal from '@/components/dashboard/LoanHistoryModal';
@@ -24,9 +24,7 @@ interface RepaymentTableProps {
 export default function RepaymentTable({
     initialLoans,
     isLoading,
-    onRefresh,
-    initialDebtorId = null
-}: RepaymentTableProps) {
+    onRefresh }: RepaymentTableProps) {
     const {
         loans: hookedLoans,
         loading: hookedLoading,

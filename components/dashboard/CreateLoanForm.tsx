@@ -4,12 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/dashboard/useUser';
 import { useActivityLog } from '@/hooks/useActivityLog';
-import DataTable, { Column } from '@/components/dashboard/DataTable';
+import DataTable from '@/components/dashboard/DataTable';
 import { User, Percent, Calendar, Clock, RefreshCcw } from 'lucide-react';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 import styles from './CreateCreditForm.module.css'; // Reuse same styles
 import { calculateLoanDates, RepaymentCycle, LoanDates, generateRepaymentSchedule } from '@/lib/loan-utils';
-import { Upload, FileText, CheckCircle2, List, Banknote } from 'lucide-react';
+import { Upload, FileText, List, Banknote } from 'lucide-react';
 import { useCurrency } from '@/hooks/useCurrency';
 
 interface Debtor {
@@ -23,7 +23,7 @@ interface CreateLoanFormProps {
 }
 
 export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
-    const { user } = useUser();
+    useUser();
     const { formatCurrency } = useCurrency();
     const { logActivity } = useActivityLog();
     const [debtors, setDebtors] = useState<Debtor[]>([]);
@@ -44,7 +44,7 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
 
     const [calculatedDates, setCalculatedDates] = useState<LoanDates | null>(null);
     const [loanDocs, setLoanDocs] = useState<File[]>([]);
-    const [uploadingDocs, setUploadingDocs] = useState(false);
+    const [, setUploadingDocs] = useState(false);
 
     // Update calculated dates whenever relevant fields change
     useEffect(() => {
@@ -150,7 +150,6 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
             if (loanDocs.length > 0) {
                 setUploadingDocs(true);
                 for (const file of loanDocs) {
-                    const fileExt = file.name.split('.').pop();
                     const fileName = `${formData.debtor_id}/${loanId}/${Date.now()}_${file.name}`;
 
                     const { error: uploadError } = await supabase.storage

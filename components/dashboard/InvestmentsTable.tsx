@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+
 import DataTable, { Column } from '@/components/dashboard/DataTable';
 import { useCurrency } from '@/hooks/useCurrency';
 import styles from '@/app/dashboard/creditor/investments/page.module.css'; // Reuse status styles

@@ -70,7 +70,7 @@ export default function RecordInvestmentPage() {
                                 onClick={() => setShowCreateModal(true)}
                             >
                                 <Building2 size={20} />
-                                <span>Add Investee</span>
+                                <span>Add Investment</span>
                             </button>
                         </div>
                     )}

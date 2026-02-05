@@ -94,7 +94,7 @@ export default function CreateInvesteeModal({ isOpen, onClose, onSuccess }: Crea
             }, 1500);
 
         } catch (err: any) {
-            setError(err.message || 'Failed to add investee company');
+            setError(err.message || 'Failed to add investment');
         } finally {
             setLoading(false);
         }
@@ -109,8 +109,8 @@ export default function CreateInvesteeModal({ isOpen, onClose, onSuccess }: Crea
                             <Building2 size={24} />
                         </div>
                         <div>
-                            <h2 className={styles.title}>Add Investee Company</h2>
-                            <p className={styles.subtitle}>Create a new partner for outward investments</p>
+                            <h2 className={styles.title}>Add Investment</h2>
+                            <p className={styles.subtitle}>Create a new investment entity</p>
                         </div>
                     </div>
                     <button onClick={handleClose} className={styles.closeBtn} type="button">
@@ -225,7 +225,7 @@ export default function CreateInvesteeModal({ isOpen, onClose, onSuccess }: Crea
                         disabled={loading || !!success}
                     >
                         {loading && <MStreetLoader size={18} color="#ffffff" />}
-                        {loading ? 'Adding...' : 'Add Company'}
+                        {loading ? 'Adding...' : 'Add Investment'}
                     </button>
                 </div>
             </div>

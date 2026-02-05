@@ -13,8 +13,6 @@ import {
     DollarSign,
     Building2,
     Calendar,
-    AlertCircle,
-    CheckCircle,
     Trash2,
     Clock,
     FileText
@@ -96,7 +94,7 @@ export default function ManageInvestments({ hideHeader = false }: ManageInvestme
     const columns: Column[] = [
         {
             key: 'investee_name',
-            label: 'Investee Company',
+            label: 'Investment',
             render: (val) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{
@@ -141,7 +139,6 @@ export default function ManageInvestments({ hideHeader = false }: ManageInvestme
             key: 'status',
             label: 'Status',
             render: (val) => {
-                const isMaturing = filterStatus === 'maturing' || (val === 'active' && new Date(filteredInvestments.find(i => i.status === val)?.end_date || '') <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
 
                 return (
                     <span style={{

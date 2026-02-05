@@ -1,13 +1,10 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, Suspense } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
 function ResetPasswordForm() {
-    const searchParams = useSearchParams();
-    const token = searchParams.get("token");
 
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");

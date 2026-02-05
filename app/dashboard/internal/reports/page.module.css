@@ -1,50 +1,19 @@
 .container {
-    padding: 24px;
-    max-width: 1400px;
-    margin: 0 auto;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
 }
 
-.loadingContainer,
-.errorContainer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 60vh;
-    color: var(--text-muted);
-}
-
-.errorContainer h1 {
-    color: var(--danger);
-    margin-bottom: 8px;
-}
-
-.spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid var(--border-primary);
-    border-top-color: var(--accent-primary);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 16px;
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-/* Page Header */
 .pageHeader {
-    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
 }
 
-.headerContent {
+.headerLeft {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
     gap: 16px;
 }
 
@@ -55,61 +24,72 @@
 }
 
 .headerIcon {
-    color: var(--accent-primary);
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #070757;
 }
 
 .pageTitle {
-    margin: 0;
     font-size: 1.75rem;
-    font-weight: 700;
+    font-weight: 800;
     color: var(--text-primary);
+    margin: 0;
 }
 
 .pageSubtitle {
-    margin: 4px 0 0;
-    color: var(--text-muted);
-    font-size: 0.95rem;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 4px 0 0 0;
 }
 
 /* Tabs */
 .tabsContainer {
+    margin-bottom: 24px;
+}
+
+.tabs {
     display: flex;
     gap: 8px;
-    margin-bottom: 24px;
-    background: var(--bg-secondary);
-    padding: 6px;
-    border-radius: 12px;
-    border: 1px solid var(--border-primary);
-    width: fit-content;
+    background: var(--bg-card);
+    padding: 8px;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
 }
 
 .tab {
+    flex: 1;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px 24px;
-    border-radius: 8px;
-    border: none;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 20px;
     background: transparent;
-    color: var(--text-muted);
+    border: none;
+    border-radius: 12px;
     font-size: 0.95rem;
-    font-weight: 500;
+    font-weight: 600;
+    color: var(--text-secondary);
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .tab:hover {
+    background: var(--bg-hover);
     color: var(--text-primary);
-    background: var(--bg-tertiary);
 }
 
-.activeTab {
+.tab.activeTab {
     background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-    color: white !important;
-    box-shadow: 0 2px 8px rgba(var(--accent-primary-rgb), 0.3);
+    color: #070757;
+    box-shadow: 0 4px 15px rgba(2, 179, 255, 0.3);
 }
 
-/* Report Content */
+/* Content */
 .reportContent {
     animation: fadeIn 0.3s ease;
 }
@@ -117,7 +97,7 @@
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(8px);
     }
 
     to {
@@ -126,44 +106,34 @@
     }
 }
 
+/* Loading & Error */
+.loadingContainer,
+.errorContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 400px;
+    /* Ensure visibility */
+    gap: 16px;
+    color: var(--text-secondary);
+    text-align: center;
+    width: 100%;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
-    .container {
-        padding: 16px;
-    }
-
-    .pageTitle {
-        font-size: 1.4rem;
-    }
-
-    .tabsContainer {
-        width: 100%;
+    .tabs {
+        flex-direction: column;
     }
 
     .tab {
-        flex: 1;
-        justify-content: center;
-        padding: 10px 16px;
-    }
-
-    .tab span {
-        display: none;
-    }
-}
-
-@media (min-width: 769px) {
-    .tab span {
-        display: inline;
-    }
-}
-
-/* Print */
-@media print {
-    .tabsContainer {
-        display: none;
+        justify-content: flex-start;
     }
 
     .pageHeader {
-        margin-bottom: 16px;
+        flex-direction: column;
+        align-items: flex-start;
     }
 }

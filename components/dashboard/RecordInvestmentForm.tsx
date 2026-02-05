@@ -10,24 +10,19 @@ import MStreetLoader from '@/components/ui/MStreetLoader';
 import { useInvesteeCompanies } from '@/hooks/dashboard/useInvesteeCompanies';
 import styles from './RecordInvestmentForm.module.css';
 
-interface Creditor {
-    id: string;
-    full_name: string;
-    email: string;
-}
 
 interface Props {
     onSuccess?: () => void;
 }
 
 export default function RecordInvestmentForm({ onSuccess }: Props) {
-    const { user } = useUser();
-    const { formatCurrency } = useCurrency();
+    useUser();
+    useCurrency();
     const { logActivity } = useActivityLog();
-    const { companies, loading: loadingCompanies, refresh: refreshCompanies } = useInvesteeCompanies();
+    const { companies, loading: loadingCompanies } = useInvesteeCompanies();
     const [loading, setLoading] = useState(false);
-    const [refreshCount, setRefreshCount] = useState(0);
-    const [loadingCreditors, setLoadingCreditors] = useState(true);
+    const [, setRefreshCount] = useState(0);
+    const [, setLoadingCreditors] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
 
@@ -40,7 +35,7 @@ export default function RecordInvestmentForm({ onSuccess }: Props) {
     });
 
     const [investmentDocs, setInvestmentDocs] = useState<File[]>([]);
-    const [uploadingDocs, setUploadingDocs] = useState(false);
+    const [, setUploadingDocs] = useState(false);
 
     // No need to fetch creditors for outward investments
     useEffect(() => {
@@ -160,7 +155,7 @@ export default function RecordInvestmentForm({ onSuccess }: Props) {
                 <div className={styles.formGroup}>
                     <label htmlFor="investee_id" className={styles.label}>
                         <User size={16} />
-                        Investee Company *
+                        Investment Company *
                     </label>
                     <select
                         id="investee_id"

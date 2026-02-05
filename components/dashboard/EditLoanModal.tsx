@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, RefreshCcw, Calendar } from 'lucide-react';
+import { X } from 'lucide-react';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 import { createClient } from '@/lib/supabase/client';
 import { useActivityLog } from '@/hooks/useActivityLog';

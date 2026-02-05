@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import DataTable, { Column, RowAction } from '@/components/dashboard/DataTable';
 import DocumentViewerModal from '@/components/dashboard/DocumentViewerModal';
 import { FileText, Eye, Trash2, Filter } from 'lucide-react';
-import MStreetLoader from '@/components/ui/MStreetLoader';
+
 import styles from './CreateCreditForm.module.css';
 
 interface Document {

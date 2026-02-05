@@ -3,8 +3,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useCurrency } from '@/hooks/useCurrency';
-import DateRangeFilter from './DateRangeFilter';
-import { FileText, Download, Share2, Copy, Check, Building2, Wallet, TrendingUp, Calendar } from 'lucide-react';
+
+import { Download, Share2, Check, Building2, Wallet, TrendingUp } from 'lucide-react';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 import styles from './BalanceSheetSection.module.css';
 
 interface BalanceSheetData {
@@ -35,7 +36,7 @@ export default function BalanceSheetSection({ onShare }: Props) {
     const { formatCurrency } = useCurrency();
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<BalanceSheetData | null>(null);
-    const [asOfDate, setAsOfDate] = useState(new Date());
+    const [asOfDate,] = useState(new Date());
     const [copied, setCopied] = useState(false);
     const [shareLoading, setShareLoading] = useState(false);
     const printRef = useRef<HTMLDivElement>(null);
@@ -169,8 +170,14 @@ export default function BalanceSheetSection({ onShare }: Props) {
 
     if (loading) {
         return (
-            <div className={styles.container}>
-                <div className={styles.loading}>Loading balance sheet...</div>
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '400px',
+                width: '100%'
+            }}>
+                <MStreetLoader size={80} />
             </div>
         );
     }

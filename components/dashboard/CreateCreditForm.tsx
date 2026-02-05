@@ -36,7 +36,7 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
     });
 
     const [placementDocs, setPlacementDocs] = useState<File[]>([]);
-    const [uploadingDocs, setUploadingDocs] = useState(false);
+    const [, setUploadingDocs] = useState(false);
 
     // Fetch creditors on mount
     useEffect(() => {

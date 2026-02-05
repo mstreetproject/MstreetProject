@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useCurrency } from '@/hooks/useCurrency';
-import { FileText, Calendar, Eye, AlertCircle, Building2, Wallet, TrendingUp } from 'lucide-react';
+import { Calendar, Eye, AlertCircle, Building2, Wallet, TrendingUp } from 'lucide-react';
 
 interface PageProps {
     params: { token: string };

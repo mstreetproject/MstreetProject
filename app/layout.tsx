@@ -17,6 +17,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "MStreets Finance",
   description: "Secure & Accessible Finance Management System",
+  icons: {
+    icon: {
+      url: "/secondary logo 2.svg",
+      sizes: "any",
+    },
+  },
 };
 
 export default function RootLayout({

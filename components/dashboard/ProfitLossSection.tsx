@@ -6,6 +6,7 @@ import StatsCard from './StatsCard';
 import DateRangeFilter from './DateRangeFilter';
 import { useCurrency } from '@/hooks/useCurrency';
 import { TrendingUp, TrendingDown, Banknote, Wallet, AlertOctagon, Download, Share2, Check } from 'lucide-react';
+import MStreetLoader from '@/components/ui/MStreetLoader';
 import styles from './ProfitLossSection.module.css';
 
 interface PnLSummary {
@@ -100,6 +101,20 @@ export default function ProfitLossSection() {
     };
 
     const isProfitPositive = data.net_profit >= 0;
+
+    if (loading) {
+        return (
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '400px',
+                width: '100%'
+            }}>
+                <MStreetLoader size={80} />
+            </div>
+        );
+    }
 
     return (
         <div className={styles.container}>

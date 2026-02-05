@@ -20,7 +20,9 @@ import {
     ChevronRight,
     Coins,
     CreditCard,
-    ArrowUpRight
+    ArrowUpRight,
+    Scale,
+    Building2
 } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
@@ -94,9 +96,13 @@ const menuItems = [
     },
     {
         label: 'Reports',
-        href: '/dashboard/internal/reports',
         icon: FileText,
-        roles: ['super_admin', 'finance_manager', 'risk_officer']
+        roles: ['super_admin', 'finance_manager', 'risk_officer'],
+        subItems: [
+            { label: 'Profit & Loss', href: '/dashboard/internal/reports?tab=pnl', icon: TrendingUp },
+            { label: 'Balance Sheet', href: '/dashboard/internal/reports?tab=balance', icon: Building2 },
+            { label: 'Fund Pool Analysis', href: '/dashboard/internal/reports?tab=fundpool', icon: Scale }
+        ]
     },
     {
         label: 'User Management',
