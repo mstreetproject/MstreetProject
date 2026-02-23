@@ -22,7 +22,8 @@ import {
     CreditCard,
     ArrowUpRight,
     Scale,
-    Building2
+    Building2,
+    AlertOctagon
 } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
@@ -40,13 +41,13 @@ const menuItems = [
         roles: ['super_admin', 'finance_manager', 'ops_officer', 'risk_officer']
     },
     {
-        label: 'Creditors',
+        label: 'Placements',
         href: '/dashboard/internal/creditors',
         icon: Banknote,
         roles: ['super_admin', 'finance_manager', 'ops_officer']
     },
     {
-        label: 'Debtors',
+        label: 'Loans & Advancements',
         href: '/dashboard/internal/debtors',
         icon: TrendingUp,
         roles: ['super_admin', 'finance_manager', 'ops_officer', 'risk_officer']
@@ -73,7 +74,8 @@ const menuItems = [
             { label: 'Disburse Loan', href: '/dashboard/internal/operations/disburse-loan', icon: CreditCard },
             { label: 'Repayments', href: '/dashboard/internal/operations/repayments', icon: Banknote },
             { label: 'Record Investment', href: '/dashboard/internal/operations/record-investment', icon: TrendingUp },
-            { label: 'Documents', href: '/dashboard/internal/operations/documents', icon: FileText }
+            { label: 'Documents', href: '/dashboard/internal/operations/documents', icon: FileText },
+            { label: 'Bad Debt Recovery', href: '/dashboard/internal/operations/bad-debt-recovery', icon: AlertOctagon }
         ]
     },
     {

@@ -69,7 +69,7 @@ export default function CreditorFilter({ creditors, value, onChange }: CreditorF
             >
                 <User size={16} className={styles.icon} />
                 <span className={`${styles.label} ${!value ? styles.placeholder : ''}`}>
-                    {selectedCreditor ? selectedCreditor.full_name : 'All Creditors'}
+                    {selectedCreditor ? selectedCreditor.full_name : 'All Placements'}
                 </span>
                 {value && (
                     <button className={styles.clearBtn} onClick={handleClear} title="Clear">
@@ -95,13 +95,13 @@ export default function CreditorFilter({ creditors, value, onChange }: CreditorF
                         />
                     </div>
                     <div className={styles.optionsList}>
-                        {/* All Creditors option */}
+                        {/* All Placements option */}
                         <button
                             className={`${styles.option} ${styles.allOption} ${!value ? styles.optionActive : ''}`}
                             onClick={() => handleSelect(null)}
                         >
                             <div className={styles.optionContent}>
-                                <div className={styles.optionName}>All Creditors</div>
+                                <div className={styles.optionName}>All Placements</div>
                                 <div className={styles.optionEmail}>Show all creditor data</div>
                             </div>
                             {!value && <Check size={16} className={styles.checkmark} />}

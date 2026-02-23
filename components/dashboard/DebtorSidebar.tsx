@@ -82,7 +82,7 @@ export default function DebtorSidebar({ userName }: DebtorSidebarProps) {
                         {!collapsed && (
                             <>
                                 <img src="/secondary logo2.png" alt="MStreet" className={styles.logoImage} />
-                                <span className={styles.logoText}>Debtor Portal</span>
+                                <span className={styles.logoText}>Loans & Advancements Portal</span>
                             </>
                         )}
                         {collapsed && <img src="/secondary logo2.png" alt="MStreet" className={styles.logoImageSmall} />}
@@ -120,7 +120,7 @@ export default function DebtorSidebar({ userName }: DebtorSidebarProps) {
                     {!collapsed && userName && (
                         <div className={styles.userInfo}>
                             <div className={styles.userName}>{userName}</div>
-                            <div className={styles.userRole}>Debtor</div>
+                            <div className={styles.userRole}>Loans & Advancements</div>
                         </div>
                     )}
                     <button className={styles.logoutBtn} onClick={handleLogout}>

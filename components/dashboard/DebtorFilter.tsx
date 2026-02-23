@@ -69,7 +69,7 @@ export default function DebtorFilter({ debtors, value, onChange }: DebtorFilterP
             >
                 <User size={16} className={styles.icon} />
                 <span className={`${styles.label} ${!value ? styles.placeholder : ''}`}>
-                    {selectedDebtor ? selectedDebtor.full_name : 'All Debtors'}
+                    {selectedDebtor ? selectedDebtor.full_name : 'All Loans & Adv.'}
                 </span>
                 {value && (
                     <button className={styles.clearBtn} onClick={handleClear} title="Clear">
@@ -89,7 +89,7 @@ export default function DebtorFilter({ debtors, value, onChange }: DebtorFilterP
                             ref={searchInputRef}
                             type="text"
                             className={styles.searchInput}
-                            placeholder="Search debtors..."
+                            placeholder="Search loans..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -101,14 +101,14 @@ export default function DebtorFilter({ debtors, value, onChange }: DebtorFilterP
                             onClick={() => handleSelect(null)}
                         >
                             <div className={styles.optionContent}>
-                                <div className={styles.optionName}>All Debtors</div>
+                                <div className={styles.optionName}>All Loans & Adv.</div>
                                 <div className={styles.optionEmail}>Show all debtor data</div>
                             </div>
                             {!value && <Check size={16} className={styles.checkmark} />}
                         </button>
 
                         {filteredDebtors.length === 0 ? (
-                            <div className={styles.noResults}>No debtors found</div>
+                            <div className={styles.noResults}>No results found</div>
                         ) : (
                             filteredDebtors.map((debtor) => (
                                 <button

@@ -60,7 +60,7 @@ export default function DebtorsPage() {
             <div className={styles.loading}>
                 <MStreetLoader size={120} />
                 <p style={{ marginTop: '16px', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                    Loading debtors...
+                    Loading loans & advancements...
                 </p>
             </div>
         );
@@ -70,7 +70,7 @@ export default function DebtorsPage() {
         return (
             <div className={styles.error}>
                 <h1>Access Denied</h1>
-                <p>You do not have permission to view debtors.</p>
+                <p>You do not have permission to view loans & advancements.</p>
             </div>
         );
     }
@@ -87,11 +87,11 @@ export default function DebtorsPage() {
                 {/* Page Header with Expected Revenue Card */}
                 <div className={styles.pageHeader} style={{ alignItems: 'flex-start' }}>
                     <div className={styles.headerLeft}>
-                        <h1 className={styles.pageTitle}>Debtors Management</h1>
+                        <h1 className={styles.pageTitle}>Loans & Advancements Management</h1>
                         <p className={styles.pageSubtitle}>
                             {selectedDebtorInfo
                                 ? `Viewing: ${selectedDebtorInfo.full_name}`
-                                : 'Manage all debtors and their loans'}
+                                : 'Manage all loans and advancements'}
                         </p>
                     </div>
                     <div className={styles.headerRight} style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
@@ -101,14 +101,14 @@ export default function DebtorsPage() {
                             onClick={() => setShowCreateModal(true)}
                         >
                             <UserPlus size={20} />
-                            <span>Add Debtor</span>
+                            <span>Add Loan & Advancement</span>
                         </button>
 
                         {/* Debtors Count Badge */}
                         <div className={styles.creditorsCount}>
                             <Users size={20} />
                             <span className={styles.countValue}>{userCounts.debtorCount}</span>
-                            <span className={styles.countLabel}>Debtors</span>
+                            <span className={styles.countLabel}>Loans & Advancements</span>
                         </div>
 
                         {/* Expected Revenue Card - Compact & Responsive */}

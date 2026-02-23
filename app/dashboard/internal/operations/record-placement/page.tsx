@@ -46,7 +46,7 @@ export default function CreditPlacementPage() {
                 <div className={styles.pageHeader}>
                     <div className={styles.headerLeft}>
                         <h1 className={styles.pageTitle}>Record Placement</h1>
-                        <p className={styles.pageSubtitle}>Receive funds from creditors</p>
+                        <p className={styles.pageSubtitle}>Record funds received from a placement</p>
                     </div>
                     <div className={styles.headerRight}>
                         <button

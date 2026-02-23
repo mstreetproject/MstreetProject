@@ -111,7 +111,7 @@ export default function PaymentReviewsPage() {
 
     // Handle archive
     const handleArchive = async (row: any) => {
-        const reason = prompt(`Archive this payment upload from ${row.debtor?.full_name}?\n\nEnter reason (optional):`);
+        const reason = prompt(`Archive this payment upload for ${row.debtor?.full_name}?\n\nEnter reason (optional):`);
         if (reason !== null) {
             setArchivingId(row.id);
             try {
@@ -134,7 +134,7 @@ export default function PaymentReviewsPage() {
     const columns: Column[] = [
         {
             key: 'debtor',
-            label: 'Debtor',
+            label: 'Account',
             render: (_, row) => (
                 <div>
                     <strong>{row.debtor?.full_name || 'Unknown'}</strong>
@@ -221,7 +221,7 @@ export default function PaymentReviewsPage() {
                 <div className={styles.pageHeader}>
                     <div className={styles.headerLeft}>
                         <h1 className={styles.pageTitle}>Payment Evidence Review</h1>
-                        <p className={styles.pageSubtitle}>Review and approve payment proofs from debtors</p>
+                        <p className={styles.pageSubtitle}>Review and approve payment proofs</p>
                     </div>
                 </div>
 

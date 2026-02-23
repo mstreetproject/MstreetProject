@@ -10,6 +10,7 @@
   --charcoal-gray: #4A4A4A;
   --muted-coral: #F26A63;
   --cool-lilac: #B3A6FF;
+  --gradient-primary: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
 }
 
 /* Default/Fallback to Dark Theme - Enterprise palette with subtle brand navy hints */

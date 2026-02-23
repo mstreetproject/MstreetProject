@@ -2,12 +2,12 @@
 
 import React from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import RecordRepaymentForm from '@/components/dashboard/RecordRepaymentForm';
+import BadDebtRecoveryForm from '@/components/dashboard/BadDebtRecoveryForm';
 import { useUser } from '@/hooks/dashboard/useUser';
 import styles from '../../creditors/page.module.css';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 
-export default function RepaymentsPage() {
+export default function BadDebtRecoveryPage() {
     const { user, loading: userLoading } = useUser();
 
     // RBAC Guard
@@ -41,14 +41,14 @@ export default function RepaymentsPage() {
                 {/* Header */}
                 <div className={styles.pageHeader}>
                     <div className={styles.headerLeft}>
-                        <h1 className={styles.pageTitle}>Repayments</h1>
-                        <p className={styles.pageSubtitle}>Record repayments from loans & advancements accounts</p>
+                        <h1 className={styles.pageTitle}>Bad Debt Recovery</h1>
+                        <p className={styles.pageSubtitle}>Record and manage recoveries on written-off debts</p>
                     </div>
                 </div>
 
                 {/* Content */}
                 <div style={{ marginTop: '24px' }}>
-                    <RecordRepaymentForm />
+                    <BadDebtRecoveryForm />
                 </div>
             </div>
         </DashboardLayout>

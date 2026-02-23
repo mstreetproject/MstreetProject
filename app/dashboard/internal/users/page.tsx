@@ -101,8 +101,8 @@ export default function UsersPage() {
             render: (_, row) => (
                 <div>
                     {row.is_internal && <span className={`${styles.roleBadge} ${styles.roleInternal}`}>Staff</span>}
-                    {row.is_creditor && <span className={`${styles.roleBadge} ${styles.roleCreditor}`}>Creditor</span>}
-                    {row.is_debtor && <span className={`${styles.roleBadge} ${styles.roleDebtor}`}>Debtor</span>}
+                    {row.is_creditor && <span className={`${styles.roleBadge} ${styles.roleCreditor}`}>Placement</span>}
+                    {row.is_debtor && <span className={`${styles.roleBadge} ${styles.roleDebtor}`}>Loan & Advancement</span>}
                 </div>
             )
         },
@@ -163,8 +163,8 @@ export default function UsersPage() {
                 <div className={styles.statsGrid}>
                     <StatsCard title="Total Users" value={stats.total} icon={Users} loading={dataLoading} />
                     <StatsCard title="Internal Staff" value={stats.internal} icon={Briefcase} loading={dataLoading} />
-                    <StatsCard title="Creditors" value={stats.creditors} icon={DollarSign} loading={dataLoading} />
-                    <StatsCard title="Debtors" value={stats.debtors} icon={TrendingUp} loading={dataLoading} />
+                    <StatsCard title="Placements" value={stats.creditors} icon={DollarSign} loading={dataLoading} />
+                    <StatsCard title="Loans & Advancements" value={stats.debtors} icon={TrendingUp} loading={dataLoading} />
                 </div>
 
                 {/* Simple Filters */}
@@ -185,7 +185,7 @@ export default function UsersPage() {
                                 transition: 'all 0.2s'
                             }}
                         >
-                            {type}
+                            {type === 'creditor' ? 'Placements' : type === 'debtor' ? 'Loans & Advancements' : type}
                         </button>
                     ))}
                 </div>

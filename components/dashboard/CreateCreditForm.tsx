@@ -161,7 +161,7 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
     return (
         <form onSubmit={handleSubmit} className={styles.form}>
             <h3 className={styles.formTitle}>Record Placement</h3>
-            <p className={styles.formSubtitle}>Record funds received from a creditor</p>
+            <p className={styles.formSubtitle}>Record funds received from a placement</p>
 
             {error && <div className={styles.errorMessage}>{error}</div>}
             {success && <div className={styles.successMessage}>Placement recorded successfully!</div>}
@@ -170,7 +170,7 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
                 <div className={styles.formGroup}>
                     <label htmlFor="creditor_id" className={styles.label}>
                         <User size={16} />
-                        Creditor *
+                        Placement *
                     </label>
                     <select
                         id="creditor_id"
@@ -181,7 +181,7 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
                         disabled={loadingCreditors}
                     >
                         <option value="">
-                            {loadingCreditors ? 'Loading...' : 'Select a creditor'}
+                            {loadingCreditors ? 'Loading...' : 'Select a placement'}
                         </option>
                         {creditors.map(c => (
                             <option key={c.id} value={c.id}>

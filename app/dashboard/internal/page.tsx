@@ -179,7 +179,7 @@ export default function InternalDashboard() {
     const creditColumns: Column[] = [
         {
             key: 'creditor',
-            label: 'Creditor',
+            label: 'Placement',
             render: (_, row) => (
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <span style={{ fontWeight: 500 }}>{row.creditor?.full_name || 'N/A'}</span>
@@ -207,7 +207,7 @@ export default function InternalDashboard() {
     const loanColumns: Column[] = [
         {
             key: 'debtor',
-            label: 'Debtor',
+            label: 'Loans & Advancements',
             render: (_, row) => (
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <span style={{ fontWeight: 500 }}>{row.debtor?.full_name || 'N/A'}</span>
@@ -257,8 +257,8 @@ export default function InternalDashboard() {
             label: 'Type',
             render: (_, row) => {
                 const types = [];
-                if (row.is_creditor) types.push('Creditor');
-                if (row.is_debtor) types.push('Debtor');
+                if (row.is_creditor) types.push('Placement');
+                if (row.is_debtor) types.push('Loans & Advancements');
                 if (row.is_internal) types.push('Internal');
                 return <span style={{ fontSize: '0.85rem' }}>{types.join(', ') || 'User'}</span>;
             }
@@ -318,7 +318,7 @@ export default function InternalDashboard() {
                 {/* Stats Grid */}
                 <div className={styles.statsGrid}>
                     <StatsCard
-                        title="Active Credits"
+                        title="Active Placements"
                         value={creditorStats?.activeCount || 0}
                         change={formatCurrency(creditorStats?.activeValue || 0)}
                         changeType="neutral"
@@ -326,7 +326,7 @@ export default function InternalDashboard() {
                         loading={statsLoading || creditorStatsLoading}
                     />
                     <StatsCard
-                        title="Performing Loans"
+                        title="Active Loans & Advancements"
                         value={stats ? stats.totalActiveLoans.count : 0}
                         change={stats ? formatCurrency(stats.totalActiveLoans.sum) : '$0'}
                         changeType="neutral"
@@ -339,7 +339,7 @@ export default function InternalDashboard() {
                             <StatsCard
                                 title="Interest Income"
                                 value={stats ? formatCurrency(stats.interestIncome || 0) : '$0'}
-                                change="From Debtors"
+                                change="From Loans & Advancements"
                                 changeType="positive"
                                 icon={Wallet}
                                 loading={statsLoading}
@@ -349,11 +349,11 @@ export default function InternalDashboard() {
                             <StatsCard
                                 title="Interest Expense"
                                 value={stats ? formatCurrency(stats.interestExpense || 0) : '$0'}
-                                change="To Creditors"
+                                change="To Placements"
                                 changeType="negative"
                                 icon={TrendingDown}
                                 loading={statsLoading}
-                                tooltip="Interest accrued and owed to creditors/investors. This is the cost of capital."
+                                tooltip="Interest accrued and owed to placements/investors. This is the cost of capital."
                             />
 
                             <StatsCard
@@ -381,7 +381,7 @@ export default function InternalDashboard() {
                 {/* Recent Activity Grid - Optimized Layout */}
                 <div className={styles.activityGrid}>
                     <div className={styles.section}>
-                        <h2 className={styles.sectionTitle}>Recent Loans</h2>
+                        <h2 className={styles.sectionTitle}>Recent Loans & Advancements</h2>
                         <DataTable
                             columns={loanColumns}
                             data={loans}
@@ -391,7 +391,7 @@ export default function InternalDashboard() {
                     </div>
 
                     <div className={styles.section}>
-                        <h2 className={styles.sectionTitle}>Recent Credits</h2>
+                        <h2 className={styles.sectionTitle}>Recent Placements</h2>
                         <DataTable
                             columns={creditColumns}
                             data={credits}

@@ -28,7 +28,7 @@ const menuItems = [
         icon: LayoutDashboard,
     },
     {
-        name: 'My Investments',
+        name: 'My Placements',
         href: '/dashboard/creditor/investments',
         icon: TrendingUp,
     },
@@ -94,7 +94,7 @@ export default function CreditorSidebar({ userName }: CreditorSidebarProps) {
                                     height={40}
                                     priority
                                 />
-                                <span className={styles.logoText}>Creditor Portal</span>
+                                <span className={styles.logoText}>Placements Portal</span>
                             </>
                         )}
                         {collapsed && (
@@ -141,7 +141,7 @@ export default function CreditorSidebar({ userName }: CreditorSidebarProps) {
                     {!collapsed && userName && (
                         <div className={styles.userInfo}>
                             <div className={styles.userName}>{userName}</div>
-                            <div className={styles.userRole}>Creditor</div>
+                            <div className={styles.userRole}>Placements</div>
                         </div>
                     )}
                     <button className={styles.logoutBtn} onClick={handleLogout}>

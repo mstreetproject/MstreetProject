@@ -50,8 +50,8 @@ export default function DisburseLoanPage() {
                         <h1 className={styles.pageTitle}>Operations</h1>
                         <p className={styles.pageSubtitle}>
                             {activeTab === 'disburse'
-                                ? 'Lend funds to debtors and manage new disbursements'
-                                : 'Track and record loan repayments across all debtors'}
+                                ? 'Disburse funds to loans & advancements and manage new disbursements'
+                                : 'Track and record repayments across all loans & advancements'}
                         </p>
                     </div>
                     {activeTab === 'disburse' && (
@@ -61,7 +61,7 @@ export default function DisburseLoanPage() {
                                 onClick={() => setShowCreateModal(true)}
                             >
                                 <UserPlus size={20} />
-                                <span>Add Debtor</span>
+                                <span>Add Account</span>
                             </button>
                         </div>
                     )}

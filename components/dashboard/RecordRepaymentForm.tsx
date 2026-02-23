@@ -357,7 +357,7 @@ export default function RecordRepaymentForm() {
     return (
         <form onSubmit={handleSubmit} className={styles.form}>
             <h3 className={styles.formTitle}>Record Loan Repayment</h3>
-            <p className={styles.formSubtitle}>Record principal and interest payments from debtors</p>
+            <p className={styles.formSubtitle}>Record principal and interest payments from borrowers</p>
 
             {error && <div className={styles.errorMessage}>{error}</div>}
             {success && (

@@ -54,9 +54,13 @@ export type ActivityAction =
     | 'DELETE_PAYMENT_UPLOAD'
     // Document actions
     | 'SIGN_DOCUMENT'
-    | 'UPLOAD_DOCUMENT';
+    | 'UPLOAD_DOCUMENT'
+    // Bad Debt actions
+    | 'RECORD_BAD_DEBT_RECOVERY'
+    | 'UPDATE_BAD_DEBT'
+    | 'DELETE_BAD_DEBT';
 
-export type EntityType = 'user' | 'loan' | 'credit' | 'investment' | 'payout' | 'system' | 'expense' | 'loan_request' | 'payment_upload' | 'loan_document';
+export type EntityType = 'user' | 'loan' | 'credit' | 'investment' | 'payout' | 'system' | 'expense' | 'loan_request' | 'payment_upload' | 'loan_document' | 'bad_debt';
 
 export function useActivityLog() {
     const logActivity = useCallback(async (

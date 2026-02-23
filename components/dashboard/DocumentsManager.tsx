@@ -307,7 +307,7 @@ export default function DocumentsManager() {
                     }}
                 >
                     <option value="all">All Documents</option>
-                    <option value="offer_letter">Offer Letters (Debtors)</option>
+                    <option value="offer_letter">Offer Letters (Loans & Adv.)</option>
                     <option value="placement_letter">Placement Letters (Creditors)</option>
                     <option value="investment_letter">Investment Letters (Companies)</option>
                 </select>

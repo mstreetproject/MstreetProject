@@ -108,7 +108,7 @@ export default function LoanRequestsPage() {
     };
 
     const handleArchive = async (row: any) => {
-        const reason = prompt(`Archive this loan request from ${row.debtor?.full_name}?\n\nEnter reason (optional):`);
+        const reason = prompt(`Archive this application from ${row.debtor?.full_name}?\n\nEnter reason (optional):`);
         if (reason !== null) { // User clicked OK (even if empty)
             setArchivingId(row.id);
             try {
@@ -132,7 +132,7 @@ export default function LoanRequestsPage() {
     const columns: Column[] = [
         {
             key: 'debtor',
-            label: 'Debtor',
+            label: 'Applicant',
             render: (_, row) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{
@@ -227,7 +227,7 @@ export default function LoanRequestsPage() {
                 <div className={styles.pageHeader}>
                     <div className={styles.headerLeft}>
                         <h1 className={styles.pageTitle}>Loan Requests</h1>
-                        <p className={styles.pageSubtitle}>Review and process loan applications</p>
+                        <p className={styles.pageSubtitle}>Review and process loan & advancement applications</p>
                     </div>
                 </div>
 
@@ -277,7 +277,7 @@ export default function LoanRequestsPage() {
 
                             {/* Debtor Info */}
                             <div style={{ background: 'var(--bg-tertiary)', borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
-                                <h3 style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '0.9rem' }}>DEBTOR INFORMATION</h3>
+                                <h3 style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '0.9rem' }}>APPLICANT INFORMATION</h3>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                                     <div style={{
                                         width: '80px',
@@ -305,7 +305,7 @@ export default function LoanRequestsPage() {
 
                             {/* Loan Details */}
                             <div style={{ background: 'var(--bg-tertiary)', borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
-                                <h3 style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '0.9rem' }}>LOAN DETAILS</h3>
+                                <h3 style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '0.9rem' }}>APPLICATION DETAILS</h3>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                                     <div>
                                         <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0 }}>Amount Requested</p>
@@ -423,7 +423,7 @@ export default function LoanRequestsPage() {
                                         onClick={() => { handleApprove(selectedRequest); setSelectedRequest(null); }}
                                         style={{ flex: 1, padding: '14px', borderRadius: '10px', border: 'none', background: 'var(--success)', color: 'white', fontWeight: 600, cursor: 'pointer' }}
                                     >
-                                        Approve Loan
+                                        Approve Application
                                     </button>
                                     <button
                                         onClick={() => { handleReject(selectedRequest); setSelectedRequest(null); }}

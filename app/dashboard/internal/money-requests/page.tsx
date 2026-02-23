@@ -69,7 +69,7 @@ export default function MoneyRequestsPage() {
 
     // --- LOAN REQUESTS LOGIC ---
     const handleApproveLoan = async (row: any) => {
-        if (confirm(`Approve loan request for ${row.debtor.full_name}?`)) {
+        if (confirm(`Approve loan/advancement request for ${row.debtor.full_name}?`)) {
             try {
                 await updateStatus(row.id, 'approved');
                 alert('Loan approved!');
@@ -106,7 +106,7 @@ export default function MoneyRequestsPage() {
     const loanColumns: Column[] = [
         {
             key: 'debtor',
-            label: 'Debtor',
+            label: 'Recipient',
             render: (_, row) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div className={styles.avatar}>
@@ -187,7 +187,7 @@ export default function MoneyRequestsPage() {
     const payoutColumns: Column[] = [
         {
             key: 'creditor',
-            label: 'Creditor',
+            label: 'Placement Provider',
             render: (_, row) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div className={styles.avatar} style={{ background: 'var(--success)' }}>

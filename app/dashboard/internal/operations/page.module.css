@@ -77,9 +77,9 @@
 }
 
 .tab.tabActive {
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-    color: #070757;
-    box-shadow: 0 4px 15px rgba(2, 179, 255, 0.3);
+    background: var(--accent-primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(2, 179, 255, 0.25);
 }
 
 .tabLabel {

@@ -114,7 +114,7 @@ export default function CreateCreditorModal({ isOpen, onClose, onSuccess }: Crea
                 <div className={styles.header}>
                     <div>
                         <h2 className={styles.title}>Add New Placement Portfolio</h2>
-                        <p className={styles.subtitle}>Create a new placement portfolio for a creditor</p>
+                        <p className={styles.subtitle}>Create a new placement portfolio</p>
                     </div>
                     <button onClick={handleClose} className={styles.closeBtn} type="button">
                         <X size={24} />

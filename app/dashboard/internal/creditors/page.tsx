@@ -101,7 +101,7 @@ export default function CreditorsPage() {
 
     // Handle Archive (soft delete)
     const handleArchive = async (row: any) => {
-        const reason = prompt(`Archive this credit for ${row.creditor?.full_name}?\n\nEnter reason (optional):`);
+        const reason = prompt(`Archive this placement for ${row.creditor?.full_name}?\n\nEnter reason (optional):`);
         if (reason !== null) {
             setArchivingId(row.id);
             try {
@@ -141,7 +141,7 @@ export default function CreditorsPage() {
             <div className={styles.loading}>
                 <MStreetLoader size={120} />
                 <p style={{ marginTop: '16px', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                    Loading creditors...
+                    Loading placements...
                 </p>
             </div>
         );
@@ -151,7 +151,7 @@ export default function CreditorsPage() {
         return (
             <div className={styles.error}>
                 <h1>Access Denied</h1>
-                <p>You do not have permission to view creditors.</p>
+                <p>You do not have permission to view placements.</p>
             </div>
         );
     }
@@ -165,7 +165,7 @@ export default function CreditorsPage() {
     const columns: Column[] = [
         {
             key: 'creditor_name',
-            label: 'Creditor',
+            label: 'Placement Provider',
             render: (_, row) => row.creditor?.full_name || 'N/A'
         },
         {
@@ -268,11 +268,11 @@ export default function CreditorsPage() {
                 {/* Page Header */}
                 <div className={styles.pageHeader}>
                     <div className={styles.headerLeft}>
-                        <h1 className={styles.pageTitle}>Creditors Management</h1>
+                        <h1 className={styles.pageTitle}>Placements Management</h1>
                         <p className={styles.pageSubtitle}>
                             {selectedCreditorInfo
                                 ? `Viewing: ${selectedCreditorInfo.full_name}`
-                                : 'Manage all creditors and their credits'}
+                                : 'Manage all placements and their entries'}
                         </p>
                     </div>
                     <div className={styles.headerRight}>
@@ -282,14 +282,14 @@ export default function CreditorsPage() {
                             onClick={() => setShowCreateModal(true)}
                         >
                             <UserPlus size={20} />
-                            <span>Add Creditor</span>
+                            <span>Add Placement</span>
                         </button>
 
                         {/* Creditors Count Badge */}
                         <div className={styles.creditorsCount}>
                             <Users size={20} />
                             <span className={styles.countValue}>{userCounts.creditorCount}</span>
-                            <span className={styles.countLabel}>Creditors</span>
+                            <span className={styles.countLabel}>Placements</span>
                         </div>
                     </div>
                 </div>
@@ -320,18 +320,18 @@ export default function CreditorsPage() {
                         changeType="neutral"
                         icon={Wallet}
                         loading={creditsLoading}
-                        tooltip="The current total obligation to creditors, calculated as outstanding principal plus all interest accrued to date."
+                        tooltip="The current total obligation to placement providers, calculated as outstanding principal plus all interest accrued to date."
                     />
                     <StatsCard
-                        title="Interest Accrued"
+                        title="Interest Owed"
                         value={formatCurrency(stats.interestAccrued)}
                         changeType="positive"
                         icon={PiggyBank}
                         loading={creditsLoading}
-                        tooltip="Total interest earned by creditors on their current active investments up to this moment."
+                        tooltip="Total interest earned by placement providers on their current active investments up to this moment."
                     />
                     <StatsCard
-                        title="Active Credits"
+                        title="Active Placements"
                         value={stats.activeCount}
                         change={formatCurrency(stats.activeValue)} // Keeping active principal here
                         changeType="neutral"
@@ -355,7 +355,7 @@ export default function CreditorsPage() {
                         changeType="positive"
                         icon={CheckCircle}
                         loading={creditsLoading}
-                        tooltip="Cumulative number of payout transactions and the total amount successfully returned to creditors."
+                        tooltip="Cumulative number of payout transactions and the total amount successfully returned to placement providers."
                     />
                 </div>
 
@@ -363,16 +363,16 @@ export default function CreditorsPage() {
                 <div className={styles.section}>
                     <h2 className={styles.sectionTitle}>
                         {selectedCreditorInfo
-                            ? `Credits for ${selectedCreditorInfo.full_name}`
-                            : 'All Credits'}
+                            ? `Placements for ${selectedCreditorInfo.full_name}`
+                            : 'All Placements'}
                     </h2>
                     <DataTable
                         columns={columns}
                         data={credits}
                         loading={creditsLoading}
-                        emptyMessage="No credits found"
+                        emptyMessage="No placements found"
                         searchable
-                        searchPlaceholder="Search credits..."
+                        searchPlaceholder="Search placements..."
                         searchKeys={['creditor.full_name', 'creditor.email', 'status']}
                         paginated
                         defaultPageSize={10}

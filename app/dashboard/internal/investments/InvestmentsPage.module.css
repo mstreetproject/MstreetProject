@@ -33,13 +33,13 @@
     align-items: center;
     gap: 8px;
     text-decoration: none;
-    transition: all 0.2s;
-    box-shadow: 0 4px 12px rgba(2, 179, 255, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 14px rgba(88, 166, 255, 0.4);
 }
 
 .addBtn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(2, 179, 255, 0.4);
+    box-shadow: 0 6px 20px rgba(88, 166, 255, 0.6);
 }
 
 .statsGrid {
