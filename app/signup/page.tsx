@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import MStreetLoader from "@/components/ui/MStreetLoader";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function SignUpPage() {
+    const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
         full_name: "",
         email: "",
@@ -112,16 +114,37 @@ export default function SignUpPage() {
 
                     <div style={styles.inputGroup}>
                         <label style={styles.label}>Password</label>
-                        <input
-                            style={styles.input}
-                            type="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            placeholder="Create a strong password"
-                            required
-                            minLength={6}
-                        />
+                        <div style={{ position: 'relative' }}>
+                            <input
+                                style={{ ...styles.input, width: '100%', paddingRight: '45px' }}
+                                type={showPassword ? "text" : "password"}
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                placeholder="Create a strong password"
+                                required
+                                minLength={6}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                style={{
+                                    position: 'absolute',
+                                    right: '12px',
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#94a3b8',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: '4px'
+                                }}
+                            >
+                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            </button>
+                        </div>
                     </div>
 
                     <button

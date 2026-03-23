@@ -7,9 +7,10 @@ export async function POST(request: Request) {
     // Sign out from Supabase
     await supabase.auth.signOut();
 
-    // Redirect to login page using the request origin
+    // Redirect to the root (admin.mstreetsfinance.com)
+    // Status 303 changes the HTTP method from POST back to GET to prevent 405 errors
     const requestUrl = new URL(request.url);
-    return NextResponse.redirect(new URL('/login', requestUrl.origin));
+    return NextResponse.redirect(new URL('/', requestUrl.origin), { status: 303 });
 }
 
 export async function GET(request: Request) {
@@ -18,7 +19,8 @@ export async function GET(request: Request) {
     // Sign out from Supabase
     await supabase.auth.signOut();
 
-    // Redirect to login page using the request origin
+    // Redirect to the root (admin.mstreetsfinance.com)
+    // Status 303 changes the HTTP method to GET to prevent 405 errors
     const requestUrl = new URL(request.url);
-    return NextResponse.redirect(new URL('/login', requestUrl.origin));
+    return NextResponse.redirect(new URL('/', requestUrl.origin), { status: 303 });
 }
