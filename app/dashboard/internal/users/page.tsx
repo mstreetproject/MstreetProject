@@ -211,6 +211,7 @@ export default function UsersPage() {
                     refetch();
                     setIsModalOpen(false);
                 }}
+                onRefresh={refetch}
                 initialData={editingUser}
             />
         </DashboardLayout>

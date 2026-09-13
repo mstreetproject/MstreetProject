@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, User, Briefcase, Banknote, TrendingUp } from 'lucide-react';
+import { X, User, Briefcase, Banknote, TrendingUp, Key, Mail, Check, Copy } from 'lucide-react';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 import { createClient } from '@/lib/supabase/client';
 import { useActivityLog } from '@/hooks/useActivityLog';
@@ -11,6 +11,7 @@ interface UserManagementModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    onRefresh?: () => void;
     // user to edit (optional)
     initialData?: {
         id: string;
@@ -33,10 +34,18 @@ const INTERNAL_ROLES = [
     { value: 'risk_officer', label: 'Risk Officer' }
 ];
 
-export default function UserManagementModal({ isOpen, onClose, onSuccess, initialData }: UserManagementModalProps) {
+export default function UserManagementModal({ isOpen, onClose, onSuccess, onRefresh, initialData }: UserManagementModalProps) {
     const { logActivity } = useActivityLog();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // Portal Access state
+    const [accessLoading, setAccessLoading] = useState(false);
+    const [accessMsg, setAccessMsg] = useState<string | null>(null);
+    const [actionLink, setActionLink] = useState<string | null>(null);
+    const [showSetPassword, setShowSetPassword] = useState(false);
+    const [customPassword, setCustomPassword] = useState('');
+    const [copied, setCopied] = useState(false);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -53,6 +62,12 @@ export default function UserManagementModal({ isOpen, onClose, onSuccess, initia
 
     // Load initial data if editing
     useEffect(() => {
+        setAccessMsg(null);
+        setActionLink(null);
+        setShowSetPassword(false);
+        setCustomPassword('');
+        setError(null);
+
         if (initialData) {
             setFormData({
                 full_name: initialData.full_name || '',
@@ -82,6 +97,60 @@ export default function UserManagementModal({ isOpen, onClose, onSuccess, initia
     }, [initialData, isOpen]);
 
     if (!isOpen) return null;
+
+    const handleGrantAccess = async (action: 'send_invite' | 'set_password') => {
+        if (!initialData?.id) return;
+        const targetEmail = formData.email.trim();
+
+        if (!targetEmail) {
+            setError('Please enter a valid email address for the user in the Email field above before granting portal access.');
+            return;
+        }
+
+        setAccessLoading(true);
+        setAccessMsg(null);
+        setActionLink(null);
+        setError(null);
+
+        try {
+            // Sync updated email to public.users first
+            const supabase = createClient();
+            await supabase
+                .from('users')
+                .update({ email: targetEmail })
+                .eq('id', initialData.id);
+
+            const response = await fetch('/api/admin/users/grant-access', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: initialData.id,
+                    email: targetEmail,
+                    password: action === 'set_password' ? customPassword : undefined,
+                    action
+                })
+            });
+
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Failed to grant portal access.');
+
+            setAccessMsg(result.message);
+            if (result.actionLink) setActionLink(result.actionLink);
+            if (action === 'set_password') {
+                setShowSetPassword(false);
+                setCustomPassword('');
+                alert(`Password set successfully for ${targetEmail}! The user can now log in at /login.`);
+            } else {
+                alert(`Activation email sent successfully to ${targetEmail}!\n\nPlease advise the user to check their email inbox (and spam/junk folder) for the activation link. You can also copy the backup link from the green box below if needed.`);
+            }
+            onRefresh?.(); // Refresh background user lists without closing modal!
+        } catch (err: any) {
+            console.error('Grant access error:', err);
+            setError(err.message || 'Failed to grant portal access');
+        } finally {
+            setAccessLoading(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -249,21 +318,24 @@ export default function UserManagementModal({ isOpen, onClose, onSuccess, initia
                             </div>
                             <div className={styles.formGroup}>
                                 <label className={styles.label}>
-                                    Email {formData.is_internal ? '*' : <span style={{ fontWeight: 'normal', opacity: 0.7 }}>(Optional)</span>}
+                                    Email {formData.is_internal ? '*' : <span style={{ fontWeight: 'normal', opacity: 0.7 }}>(Optional - required for portal login)</span>}
                                 </label>
                                 <input
                                     type="email"
                                     value={formData.email}
                                     onChange={(e) => setFormData(d => ({ ...d, email: e.target.value }))}
                                     className={styles.input}
-                                    placeholder="jane@example.com"
+                                    placeholder="Type user email address here..."
                                     required={formData.is_internal}
-                                    disabled={!!initialData} // Disable email edit for now to avoid auth sync issues
+                                    style={{
+                                        border: !formData.email ? '1px solid rgba(2, 179, 255, 0.5)' : undefined,
+                                        background: !formData.email ? 'rgba(2, 179, 255, 0.05)' : undefined
+                                    }}
                                 />
                             </div>
                         </div>
 
-                        {!initialData && (
+                        {!initialData ? (
                             <div className={styles.formRow}>
                                 <div className={styles.formGroup}>
                                     <label className={styles.label}>
@@ -279,6 +351,107 @@ export default function UserManagementModal({ isOpen, onClose, onSuccess, initia
                                         minLength={6}
                                     />
                                 </div>
+                            </div>
+                        ) : (
+                            <div className={styles.accessBox}>
+                                <div className={styles.accessHeader}>
+                                    <Key size={18} />
+                                    <span>Grant Portal Access & Send Activation Link</span>
+                                </div>
+                                <p className={styles.accessDesc}>
+                                    {formData.email
+                                        ? `Send an activation link to "${formData.email}" so they can set their password, or set a password directly.`
+                                        : 'Enter an email address above to send an activation link or grant portal login access.'}
+                                </p>
+
+                                {accessMsg && (
+                                    <div className={styles.accessSuccess}>
+                                        {accessMsg}
+                                        {actionLink && (
+                                            <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <input
+                                                    type="text"
+                                                    readOnly
+                                                    value={actionLink}
+                                                    style={{
+                                                        flex: 1,
+                                                        padding: '6px 10px',
+                                                        background: 'rgba(0,0,0,0.25)',
+                                                        border: '1px solid rgba(16, 185, 129, 0.4)',
+                                                        borderRadius: '6px',
+                                                        color: '#ffffff',
+                                                        fontSize: '0.75rem'
+                                                    }}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(actionLink);
+                                                        setCopied(true);
+                                                        setTimeout(() => setCopied(false), 2000);
+                                                    }}
+                                                    style={{
+                                                        padding: '6px 12px',
+                                                        background: '#10b981',
+                                                        border: 'none',
+                                                        borderRadius: '6px',
+                                                        color: '#ffffff',
+                                                        fontSize: '0.75rem',
+                                                        fontWeight: 'bold',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    {copied ? 'Copied!' : 'Copy Link'}
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className={styles.accessActions}>
+                                    <button
+                                        type="button"
+                                        className={`${styles.actionBtn} ${styles.inviteBtn}`}
+                                        onClick={() => handleGrantAccess('send_invite')}
+                                        disabled={accessLoading}
+                                    >
+                                        <Mail size={16} />
+                                        <span>{accessLoading ? 'Processing...' : 'Send Activation Link'}</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className={`${styles.actionBtn} ${styles.passwordBtn}`}
+                                        onClick={() => setShowSetPassword(!showSetPassword)}
+                                        disabled={accessLoading}
+                                    >
+                                        <Key size={16} />
+                                        <span>{showSetPassword ? 'Cancel' : 'Set Password Directly'}</span>
+                                    </button>
+                                </div>
+
+                                {showSetPassword && (
+                                    <div style={{ marginTop: '10px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                        <input
+                                            type="password"
+                                            value={customPassword}
+                                            onChange={(e) => setCustomPassword(e.target.value)}
+                                            placeholder="Enter min. 6 char password"
+                                            className={styles.input}
+                                            style={{ flex: 1, fontSize: '0.85rem', padding: '8px 12px' }}
+                                            minLength={6}
+                                        />
+                                        <button
+                                            type="button"
+                                            className={`${styles.actionBtn} ${styles.inviteBtn}`}
+                                            onClick={() => handleGrantAccess('set_password')}
+                                            disabled={accessLoading || customPassword.length < 6}
+                                            style={{ whiteSpace: 'nowrap' }}
+                                        >
+                                            Save Password
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
 
