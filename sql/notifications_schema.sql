@@ -42,8 +42,8 @@ BEGIN
     IF TG_TABLE_NAME = 'users' THEN
         notif_type := 'user';
         notif_title := 'New User Registration';
-        notif_message := 'New user ' || NEW.email || ' has joined.';
-        notif_link := '/dashboard/internal/users?search=' || NEW.email;
+        notif_message := 'New user ' || COALESCE(NEW.full_name, NEW.email, 'User') || ' has joined.';
+        notif_link := '/dashboard/internal/users?search=' || COALESCE(NEW.email, NEW.full_name, '');
         
         -- Only notify for new signups, not updates
         IF TG_OP = 'INSERT' THEN

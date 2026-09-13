@@ -52,50 +52,85 @@ export async function POST(request: Request) {
             role
         } = body;
 
-        // 2. Create Auth User
-        const { data: authUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-            email,
-            password,
-            email_confirm: true, // Auto-confirm for admin-created users
-            user_metadata: { full_name }
-        });
+        const userEmail = email && typeof email === 'string' && email.trim() !== '' ? email.trim() : null;
+        const userPassword = password && typeof password === 'string' && password.trim() !== '' ? password.trim() : null;
 
-        if (createError) {
-            // Check for duplicate email error
-            if (createError.message?.includes('already been registered') ||
-                createError.message?.includes('already exists') ||
-                createError.code === 'email_exists') {
-                return NextResponse.json({
-                    error: `A user with email "${email}" already exists. Please use a different email or edit the existing user.`
-                }, { status: 409 });
-            }
-            throw createError;
+        if (is_internal && (!userEmail || !userPassword)) {
+            return NextResponse.json({ error: 'Email and password are required for internal staff accounts.' }, { status: 400 });
         }
-        if (!authUser.user) throw new Error('Failed to create user');
 
-        const userId = authUser.user.id;
+        let userId: string;
+        let createdAuthUser: any = null;
 
-        // 3. Create/Update Profile (public.users) - use upsert to ensure row exists
-        // The trigger may or may not have fired, so we use upsert to be safe
-        const { error: profileError } = await supabaseAdmin
-            .from('users')
-            .upsert({
-                id: userId,
-                full_name,
-                email,
-                phone: phone || null,
-                address: address || null,
-                is_internal: is_internal || false,
-                is_creditor: is_creditor || false,
-                is_debtor: is_debtor || false,
-                email_activated: true // Admin-created users are auto-confirmed
-            }, { onConflict: 'id' });
+        if (userEmail && userPassword) {
+            // 2. Create Auth User
+            const { data: authUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+                email: userEmail,
+                password: userPassword,
+                email_confirm: true, // Auto-confirm for admin-created users
+                user_metadata: { full_name }
+            });
 
-        if (profileError) {
-            console.error('Profile upsert error:', profileError);
-            // If profile creation fails, we should clean up the auth user
-            await supabaseAdmin.auth.admin.deleteUser(userId);
-            throw new Error(`Failed to create user profile: ${profileError.message}`);
+            if (createError) {
+                // Check for duplicate email error
+                if (createError.message?.includes('already been registered') ||
+                    createError.message?.includes('already exists') ||
+                    createError.code === 'email_exists') {
+                    return NextResponse.json({
+                        error: `A user with email "${userEmail}" already exists. Please use a different email or edit the existing user.`
+                    }, { status: 409 });
+                }
+                throw createError;
+            }
+            if (!authUser.user) throw new Error('Failed to create user');
+
+            userId = authUser.user.id;
+            createdAuthUser = authUser.user;
+
+            // 3. Create/Update Profile (public.users) - use upsert to ensure row exists
+            const { error: profileError } = await supabaseAdmin
+                .from('users')
+                .upsert({
+                    id: userId,
+                    full_name,
+                    email: userEmail,
+                    phone: phone || null,
+                    address: address || null,
+                    is_internal: is_internal || false,
+                    is_creditor: is_creditor || false,
+                    is_debtor: is_debtor || false,
+                    email_activated: true // Admin-created users are auto-confirmed
+                }, { onConflict: 'id' });
+
+            if (profileError) {
+                console.error('Profile upsert error:', profileError);
+                // If profile creation fails, clean up auth user
+                await supabaseAdmin.auth.admin.deleteUser(userId);
+                throw new Error(`Failed to create user profile: ${profileError.message}`);
+            }
+        } else {
+            // Profile-only creation (no auth user) for creditors/debtors without portal login details
+            const { data: profileUser, error: profileError } = await supabaseAdmin
+                .from('users')
+                .insert({
+                    full_name,
+                    email: userEmail,
+                    phone: phone || null,
+                    address: address || null,
+                    is_internal: false,
+                    is_creditor: is_creditor || false,
+                    is_debtor: is_debtor || false,
+                    email_activated: false
+                })
+                .select()
+                .single();
+
+            if (profileError) {
+                console.error('Profile insert error:', profileError);
+                throw new Error(`Failed to create user profile: ${profileError.message}`);
+            }
+
+            userId = profileUser.id;
         }
 
         // 4. Assign Role (if internal)
@@ -118,7 +153,7 @@ export async function POST(request: Request) {
             if (linkError) throw linkError;
         }
 
-        return NextResponse.json({ success: true, user: authUser.user });
+        return NextResponse.json({ success: true, user: createdAuthUser || { id: userId, full_name, email: userEmail } });
 
     } catch (err: any) {
         console.error('Create user error:', err);

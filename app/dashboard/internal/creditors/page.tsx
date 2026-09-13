@@ -13,12 +13,13 @@ import { useUserCounts } from '@/hooks/dashboard/useUserCounts';
 import { useCurrency } from '@/hooks/useCurrency';
 import { createClient } from '@/lib/supabase/client';
 import { calculateSimpleInterest } from '@/lib/interest';
-import { DollarSign, TrendingUp, Users, CheckCircle, Wallet, PiggyBank, Edit, Trash2, FileText, UserPlus } from 'lucide-react';
+import { DollarSign, TrendingUp, Users, CheckCircle, Wallet, PiggyBank, Edit, Trash2, FileText, UserPlus, Upload } from 'lucide-react';
 import EditCreditModal from '@/components/dashboard/EditCreditModal';
 import RecordPayoutModal from '@/components/dashboard/RecordPayoutModal';
 import PayoutHistoryModal from '@/components/dashboard/PayoutHistoryModal';
 import styles from './page.module.css';
 import CreateCreditorModal from '@/components/dashboard/CreateCreditorModal';
+import BulkImportModal from '@/components/dashboard/BulkImportModal';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 
 // Format date
@@ -80,6 +81,7 @@ export default function CreditorsPage() {
     const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [archivingId, setArchivingId] = useState<string | null>(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
 
     // Handle Edit
     const handleEdit = (row: any) => {
@@ -276,6 +278,15 @@ export default function CreditorsPage() {
                         </p>
                     </div>
                     <div className={styles.headerRight}>
+                        {/* Bulk Import Button */}
+                        <button
+                            className={styles.secondaryBtn}
+                            onClick={() => setShowImportModal(true)}
+                        >
+                            <Upload size={18} />
+                            <span>Bulk Import</span>
+                        </button>
+
                         {/* Create Creditor Button */}
                         <button
                             className={styles.createBtn}
@@ -427,6 +438,17 @@ export default function CreditorsPage() {
                     setShowCreateModal(false);
                 }}
             />
-        </DashboardLayout >
+
+            {/* Bulk Import Modal */}
+            <BulkImportModal
+                isOpen={showImportModal}
+                defaultTab="placements"
+                onClose={() => setShowImportModal(false)}
+                onSuccess={() => {
+                    refetch();
+                    setShowImportModal(false);
+                }}
+            />
+        </DashboardLayout>
     );
 }

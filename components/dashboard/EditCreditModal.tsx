@@ -154,9 +154,11 @@ export default function EditCreditModal({ isOpen, credit, onClose, onSuccess }: 
                         <label className={styles.label}>Creditor</label>
                         <div className={styles.readOnly}>
                             {credit.creditor?.full_name || 'N/A'}
-                            <span style={{ color: 'var(--text-muted)', marginLeft: 8 }}>
-                                ({credit.creditor?.email})
-                            </span>
+                            {credit.creditor?.email && (
+                                <span style={{ color: 'var(--text-muted)', marginLeft: 8 }}>
+                                    ({credit.creditor.email})
+                                </span>
+                            )}
                         </div>
                     </div>
 

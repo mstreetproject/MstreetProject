@@ -185,7 +185,7 @@ export default function CreateCreditForm({ onSuccess }: CreateCreditFormProps) {
                         </option>
                         {creditors.map(c => (
                             <option key={c.id} value={c.id}>
-                                {c.full_name} ({c.email})
+                                {c.full_name}{c.email ? ` (${c.email})` : ''}
                             </option>
                         ))}
                     </select>

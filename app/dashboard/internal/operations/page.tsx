@@ -6,10 +6,10 @@ import CreateCreditForm from '@/components/dashboard/CreateCreditForm';
 import CreateLoanForm from '@/components/dashboard/CreateLoanForm';
 import RecordRepaymentForm from '@/components/dashboard/RecordRepaymentForm';
 import RecordInvestmentForm from '@/components/dashboard/RecordInvestmentForm';
-
 import DocumentsManager from '@/components/dashboard/DocumentsManager';
+import BulkImportModal from '@/components/dashboard/BulkImportModal';
 import { useUser } from '@/hooks/dashboard/useUser';
-import { Coins, CreditCard, Banknote, TrendingUp, FileText, List, X } from 'lucide-react';
+import { Coins, CreditCard, Banknote, TrendingUp, FileText, List, X, Upload } from 'lucide-react';
 import styles from '../creditors/page.module.css';
 import opStyles from './page.module.css';
 import Modal from '@/components/ui/Modal';
@@ -20,6 +20,8 @@ export default function OperationsPage() {
     const { user, loading: userLoading } = useUser();
     const [activeTab, setActiveTab] = useState<TabType>('credit');
     const [showInvestmentModal, setShowInvestmentModal] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     // Handle initial tab from URL
     React.useEffect(() => {
@@ -73,6 +75,15 @@ export default function OperationsPage() {
                         <h1 className={styles.pageTitle}>Operations Center</h1>
                         <p className={styles.pageSubtitle}>Manage financial transactions</p>
                     </div>
+                    <div className={styles.headerRight}>
+                        <button
+                            className={styles.secondaryBtn}
+                            onClick={() => setShowImportModal(true)}
+                        >
+                            <Upload size={18} />
+                            <span>Bulk Import</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Tabs */}
@@ -112,6 +123,17 @@ export default function OperationsPage() {
                 >
                     <RecordInvestmentForm onSuccess={() => setShowInvestmentModal(false)} />
                 </Modal>
+
+                {/* Bulk Import Modal */}
+                <BulkImportModal
+                    isOpen={showImportModal}
+                    defaultTab={activeTab === 'loan' ? 'loans' : 'placements'}
+                    onClose={() => setShowImportModal(false)}
+                    onSuccess={() => {
+                        setRefreshKey(prev => prev + 1);
+                        setShowImportModal(false);
+                    }}
+                />
             </div>
         </DashboardLayout>
     );

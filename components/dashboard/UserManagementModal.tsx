@@ -89,12 +89,16 @@ export default function UserManagementModal({ isOpen, onClose, onSuccess, initia
         setLoading(true);
 
         try {
-            if (!formData.full_name || !formData.email) {
-                throw new Error('Name and Email are required');
+            if (!formData.full_name.trim()) {
+                throw new Error('Full Name is required');
             }
 
-            if (!initialData && !formData.password) {
-                throw new Error('Password is required for new users');
+            if (formData.is_internal && !formData.email) {
+                throw new Error('Email is required for Internal Staff accounts');
+            }
+
+            if (!initialData && formData.is_internal && !formData.password) {
+                throw new Error('Password is required for new Internal Staff accounts');
             }
 
             if (!formData.is_internal && !formData.is_creditor && !formData.is_debtor) {
@@ -106,14 +110,13 @@ export default function UserManagementModal({ isOpen, onClose, onSuccess, initia
 
             // 1. Upsert User in public.users
             const userPayload = {
-                full_name: formData.full_name,
-                email: formData.email,
-                phone: formData.phone || null,
-                address: formData.address || null,
+                full_name: formData.full_name.trim(),
+                email: formData.email.trim() || null,
+                phone: formData.phone.trim() || null,
+                address: formData.address.trim() || null,
                 is_internal: formData.is_internal,
                 is_creditor: formData.is_creditor,
                 is_debtor: formData.is_debtor,
-                // If new, it will generate ID. If editing, we need ID.
             };
 
             let returnedUser;
@@ -245,14 +248,16 @@ export default function UserManagementModal({ isOpen, onClose, onSuccess, initia
                                 />
                             </div>
                             <div className={styles.formGroup}>
-                                <label className={styles.label}>Email *</label>
+                                <label className={styles.label}>
+                                    Email {formData.is_internal ? '*' : <span style={{ fontWeight: 'normal', opacity: 0.7 }}>(Optional)</span>}
+                                </label>
                                 <input
                                     type="email"
                                     value={formData.email}
                                     onChange={(e) => setFormData(d => ({ ...d, email: e.target.value }))}
                                     className={styles.input}
-                                    placeholder="jane@mstreet.com"
-                                    required
+                                    placeholder="jane@example.com"
+                                    required={formData.is_internal}
                                     disabled={!!initialData} // Disable email edit for now to avoid auth sync issues
                                 />
                             </div>
@@ -261,14 +266,16 @@ export default function UserManagementModal({ isOpen, onClose, onSuccess, initia
                         {!initialData && (
                             <div className={styles.formRow}>
                                 <div className={styles.formGroup}>
-                                    <label className={styles.label}>Password *</label>
+                                    <label className={styles.label}>
+                                        Password {formData.is_internal ? '*' : <span style={{ fontWeight: 'normal', opacity: 0.7 }}>(Optional - for portal login)</span>}
+                                    </label>
                                     <input
                                         type="password"
                                         value={formData.password}
                                         onChange={(e) => setFormData(d => ({ ...d, password: e.target.value }))}
                                         className={styles.input}
                                         placeholder="Min. 6 characters"
-                                        required
+                                        required={formData.is_internal}
                                         minLength={6}
                                     />
                                 </div>

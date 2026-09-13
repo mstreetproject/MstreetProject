@@ -52,21 +52,21 @@ export default function CreateCreditorModal({ isOpen, onClose, onSuccess }: Crea
         setLoading(true);
 
         try {
-            if (!formData.fullName || !formData.email) {
-                throw new Error('Full Name and Email are required');
+            if (!formData.fullName.trim()) {
+                throw new Error('Full Name is required');
             }
 
-            if (!formData.password || formData.password.length < 6) {
-                throw new Error('Password is required (min. 6 characters)');
+            if (formData.password && formData.password.length < 6) {
+                throw new Error('Password must be at least 6 characters if provided');
             }
 
             // Use admin API to create user with auth
             const apiPayload = {
-                full_name: formData.fullName,
-                email: formData.email,
-                password: formData.password,
-                phone: formData.phone || null,
-                address: formData.address || null,
+                full_name: formData.fullName.trim(),
+                email: formData.email.trim() || null,
+                password: formData.password || null,
+                phone: formData.phone.trim() || null,
+                address: formData.address.trim() || null,
                 is_internal: false,
                 is_creditor: true,
                 is_debtor: false
@@ -88,7 +88,7 @@ export default function CreateCreditorModal({ isOpen, onClose, onSuccess }: Crea
             // Log the activity
             await logActivity('CREATE_USER', 'user', responseData.user?.id || '', {
                 full_name: formData.fullName,
-                email: formData.email,
+                email: formData.email || null,
                 is_creditor: true,
             });
 
@@ -114,7 +114,7 @@ export default function CreateCreditorModal({ isOpen, onClose, onSuccess }: Crea
                 <div className={styles.header}>
                     <div>
                         <h2 className={styles.title}>Add New Placement Portfolio</h2>
-                        <p className={styles.subtitle}>Create a new placement portfolio</p>
+                        <p className={styles.subtitle}>Create a new placement portfolio (login credentials optional)</p>
                     </div>
                     <button onClick={handleClose} className={styles.closeBtn} type="button">
                         <X size={24} />
@@ -156,7 +156,7 @@ export default function CreateCreditorModal({ isOpen, onClose, onSuccess }: Crea
 
                     <div className={styles.formGroup}>
                         <label htmlFor="email" className={styles.label}>
-                            Email Address *
+                            Email Address <span style={{ fontWeight: 'normal', opacity: 0.7 }}>(Optional)</span>
                         </label>
                         <input
                             id="email"
@@ -165,22 +165,20 @@ export default function CreateCreditorModal({ isOpen, onClose, onSuccess }: Crea
                             onChange={(e) => setFormData(d => ({ ...d, email: e.target.value }))}
                             placeholder="e.g. john@example.com"
                             className={styles.input}
-                            required
                         />
                     </div>
 
                     <div className={styles.formGroup}>
                         <label htmlFor="password" className={styles.label}>
-                            Password *
+                            Password <span style={{ fontWeight: 'normal', opacity: 0.7 }}>(Optional - for portal login)</span>
                         </label>
                         <input
                             id="password"
                             type="password"
                             value={formData.password}
                             onChange={(e) => setFormData(d => ({ ...d, password: e.target.value }))}
-                            placeholder="Min. 6 characters"
+                            placeholder="Min. 6 characters (optional)"
                             className={styles.input}
-                            required
                             minLength={6}
                         />
                     </div>

@@ -28,7 +28,13 @@ export async function proxy(request: NextRequest) {
     );
 
     // Refresh session if expired
-    const { data: { user } } = await supabase.auth.getUser();
+    let user = null;
+    try {
+        const { data } = await supabase.auth.getUser();
+        user = data.user;
+    } catch (err) {
+        console.warn('[proxy] Supabase auth check network issue:', err instanceof Error ? err.message : String(err));
+    }
 
     // Protect dashboard routes
     if (request.nextUrl.pathname.startsWith('/dashboard')) {

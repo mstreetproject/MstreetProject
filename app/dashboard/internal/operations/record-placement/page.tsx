@@ -4,14 +4,16 @@ import React, { useState } from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import CreateCreditForm from '@/components/dashboard/CreateCreditForm';
 import CreateCreditorModal from '@/components/dashboard/CreateCreditorModal';
+import BulkImportModal from '@/components/dashboard/BulkImportModal';
 import { useUser } from '@/hooks/dashboard/useUser';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Upload } from 'lucide-react';
 import styles from '../../creditors/page.module.css';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 
 export default function CreditPlacementPage() {
     const { user, loading: userLoading } = useUser();
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
 
     // RBAC Guard
@@ -50,6 +52,13 @@ export default function CreditPlacementPage() {
                     </div>
                     <div className={styles.headerRight}>
                         <button
+                            className={styles.secondaryBtn}
+                            onClick={() => setShowImportModal(true)}
+                        >
+                            <Upload size={18} />
+                            <span>Bulk Import</span>
+                        </button>
+                        <button
                             className={styles.createBtn}
                             onClick={() => setShowCreateModal(true)}
                         >
@@ -72,6 +81,17 @@ export default function CreditPlacementPage() {
                 onSuccess={() => {
                     setRefreshKey(prev => prev + 1);
                     setShowCreateModal(false);
+                }}
+            />
+
+            {/* Bulk Import Modal */}
+            <BulkImportModal
+                isOpen={showImportModal}
+                defaultTab="placements"
+                onClose={() => setShowImportModal(false)}
+                onSuccess={() => {
+                    setRefreshKey(prev => prev + 1);
+                    setShowImportModal(false);
                 }}
             />
         </DashboardLayout>

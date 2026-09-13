@@ -4,15 +4,17 @@ import React, { useState } from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import CreateLoanForm from '@/components/dashboard/CreateLoanForm';
 import CreateDebtorModal from '@/components/dashboard/CreateDebtorModal';
+import BulkImportModal from '@/components/dashboard/BulkImportModal';
 import RepaymentTable from '@/components/dashboard/RepaymentTable';
 import { useUser } from '@/hooks/dashboard/useUser';
-import { UserPlus, Wallet, History } from 'lucide-react';
+import { UserPlus, Wallet, History, Upload } from 'lucide-react';
 import styles from '../../creditors/page.module.css';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 
 export default function DisburseLoanPage() {
     const { user, loading: userLoading } = useUser();
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
     const [activeTab, setActiveTab] = useState<'disburse' | 'repayments'>('disburse');
 
@@ -54,8 +56,15 @@ export default function DisburseLoanPage() {
                                 : 'Track and record repayments across all loans & advancements'}
                         </p>
                     </div>
-                    {activeTab === 'disburse' && (
-                        <div className={styles.headerRight}>
+                    <div className={styles.headerRight}>
+                        <button
+                            className={styles.secondaryBtn}
+                            onClick={() => setShowImportModal(true)}
+                        >
+                            <Upload size={18} />
+                            <span>Bulk Import</span>
+                        </button>
+                        {activeTab === 'disburse' && (
                             <button
                                 className={styles.createBtn}
                                 onClick={() => setShowCreateModal(true)}
@@ -63,8 +72,8 @@ export default function DisburseLoanPage() {
                                 <UserPlus size={20} />
                                 <span>Add Account</span>
                             </button>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
 
                 {/* Tabs */}
@@ -149,6 +158,17 @@ export default function DisburseLoanPage() {
                 onSuccess={() => {
                     setRefreshKey(prev => prev + 1);
                     setShowCreateModal(false);
+                }}
+            />
+
+            {/* Bulk Import Modal */}
+            <BulkImportModal
+                isOpen={showImportModal}
+                defaultTab="loans"
+                onClose={() => setShowImportModal(false)}
+                onSuccess={() => {
+                    setRefreshKey(prev => prev + 1);
+                    setShowImportModal(false);
                 }}
             />
         </DashboardLayout>

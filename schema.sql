@@ -49,7 +49,7 @@ CREATE TABLE users (
 
     -- Identity
     full_name TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
+    email TEXT UNIQUE,
     phone TEXT,
     address TEXT,
 

@@ -1,8 +1,10 @@
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { CurrencyProvider } from "@/hooks/useCurrency";
 import SessionTimeoutWatcher from "@/components/auth/SessionTimeoutWatcher";
+import OfflineWatcher from "@/components/auth/OfflineWatcher";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -37,6 +39,7 @@ export default function RootLayout({
         <ThemeProvider>
           <CurrencyProvider>
             <SessionTimeoutWatcher />
+            <OfflineWatcher />
             {children}
           </CurrencyProvider>
         </ThemeProvider>

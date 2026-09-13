@@ -180,9 +180,11 @@ export default function EditLoanModal({ isOpen, loan, onClose, onSuccess }: Edit
                         <label className={styles.label}>Debtor</label>
                         <div className={styles.readOnly}>
                             {loan.debtor?.full_name || 'N/A'}
-                            <span style={{ color: 'var(--text-muted)', marginLeft: 8 }}>
-                                ({loan.debtor?.email})
-                            </span>
+                            {loan.debtor?.email && (
+                                <span style={{ color: 'var(--text-muted)', marginLeft: 8 }}>
+                                    ({loan.debtor.email})
+                                </span>
+                            )}
                         </div>
                     </div>
 

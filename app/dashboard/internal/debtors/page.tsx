@@ -11,10 +11,11 @@ import { useUser } from '@/hooks/dashboard/useUser';
 import { useDebtorStats } from '@/hooks/dashboard/useDebtorStats';
 import { useUserCounts } from '@/hooks/dashboard/useUserCounts';
 import { useCurrency } from '@/hooks/useCurrency';
-import { TrendingUp, Users, Wallet, PiggyBank, CheckCircle, AlertCircle, UserPlus } from 'lucide-react';
+import { TrendingUp, Users, Wallet, PiggyBank, CheckCircle, AlertCircle, UserPlus, Upload } from 'lucide-react';
 import styles from '../creditors/page.module.css';
 import { useActivityLog } from '@/hooks/useActivityLog';
 import CreateDebtorModal from '@/components/dashboard/CreateDebtorModal';
+import BulkImportModal from '@/components/dashboard/BulkImportModal';
 import { useState } from 'react';
 import RepaymentTable from '@/components/dashboard/RepaymentTable';
 import MStreetLoader from '@/components/ui/MStreetLoader';
@@ -49,6 +50,7 @@ export default function DebtorsPage() {
 
     // Details Modal State
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
 
     // RBAC Guard
     const hasAccess = user?.roles?.some(
@@ -95,6 +97,15 @@ export default function DebtorsPage() {
                         </p>
                     </div>
                     <div className={styles.headerRight} style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                        {/* Bulk Import Button */}
+                        <button
+                            className={styles.secondaryBtn}
+                            onClick={() => setShowImportModal(true)}
+                        >
+                            <Upload size={18} />
+                            <span>Bulk Import</span>
+                        </button>
+
                         {/* Create Debtor Button */}
                         <button
                             className={styles.createBtn}
@@ -231,6 +242,17 @@ export default function DebtorsPage() {
                 onSuccess={() => {
                     refetch();
                     setShowCreateModal(false);
+                }}
+            />
+
+            {/* Bulk Import Modal */}
+            <BulkImportModal
+                isOpen={showImportModal}
+                defaultTab="loans"
+                onClose={() => setShowImportModal(false)}
+                onSuccess={() => {
+                    refetch();
+                    setShowImportModal(false);
                 }}
             />
         </DashboardLayout>

@@ -295,11 +295,13 @@ export default function InternalDashboard() {
                         </p>
                     </div>
                     <div className={styles.headerRight}>
-                        <div className={styles.usersCount}>
-                            <Users size={20} />
-                            <span className={styles.countValue}>{stats?.totalUsers || 0}</span>
-                            <span className={styles.countLabel}>Users</span>
-                        </div>
+                        {user?.roles?.some(role => ['super_admin', 'ops_officer'].includes(role.name)) && (
+                            <div className={styles.usersCount}>
+                                <Users size={20} />
+                                <span className={styles.countValue}>{stats?.totalUsers || 0}</span>
+                                <span className={styles.countLabel}>Users</span>
+                            </div>
+                        )}
                     </div>
                 </div>
 

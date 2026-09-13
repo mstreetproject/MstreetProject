@@ -229,7 +229,7 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
                         </option>
                         {debtors.map(d => (
                             <option key={d.id} value={d.id}>
-                                {d.full_name} ({d.email})
+                                {d.full_name}{d.email ? ` (${d.email})` : ''}
                             </option>
                         ))}
                     </select>
