@@ -1,20 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-        auth: {
-            autoRefreshToken: false,
-            persistSession: false
-        }
-    }
-);
-
 export async function POST(request: Request) {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
         // 1. Verify Requesting User is Admin
         const cookieSupabase = await createServerClient();
         const { data: { user: currentUser }, error: authError } = await cookieSupabase.auth.getUser();

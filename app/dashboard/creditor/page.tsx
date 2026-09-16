@@ -12,6 +12,8 @@ import DateRangeFilter from '@/components/dashboard/DateRangeFilter';
 import { TimePeriod, DateRange, TIME_PERIODS } from '@/hooks/dashboard/useCreditorStats';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 
+import StatsCard from '@/components/dashboard/StatsCard';
+
 export default function CreditorDashboard() {
     const { user } = useUser();
     const { formatCurrency } = useCurrency();
@@ -169,77 +171,46 @@ export default function CreditorDashboard() {
                 gap: '12px',
                 marginBottom: '32px'
             }}>
-                {/* 1. Total Invested */}
-                <div style={styles.card}>
-                    <div style={styles.cardHeader}>
-                        <h3 style={styles.cardTitle}>Total Invested</h3>
-                        <div style={{ ...styles.iconWrapper, background: 'rgba(2, 179, 255, 0.1)', color: '#02B3FF' }}>
-                            <Wallet size={20} />
-                        </div>
-                    </div>
-                    <div style={styles.cardValue}>{formatCurrency(stats.totalInvested)}</div>
-                    <div style={styles.cardChange}>
-                        Principal Amount
-                    </div>
-                </div>
-
-                {/* 2. Total Gross Returns (Earnings + Interest) */}
-                <div style={styles.card}>
-                    <div style={styles.cardHeader}>
-                        <h3 style={styles.cardTitle}>Total Returns</h3>
-                        <div style={{ ...styles.iconWrapper, background: 'rgba(184, 219, 15, 0.1)', color: '#B8DB0F' }}>
-                            <TrendingUp size={20} />
-                        </div>
-                    </div>
-                    <div style={styles.cardValue}>{formatCurrency(stats.totalReturns)}</div>
-                    <div style={styles.cardChange}>
-                        <span style={{ color: 'var(--success)' }}>Total Withdrawn</span> (Principal + Interest)
-                    </div>
-                </div>
-
-                {/* 3. Net Profit */}
-                <div style={styles.card}>
-                    <div style={styles.cardHeader}>
-                        <h3 style={styles.cardTitle}>Net Profit</h3>
-                        <div style={{ ...styles.iconWrapper, background: 'rgba(46, 204, 113, 0.1)', color: '#2ecc71' }}>
-                            <DollarSign size={20} />
-                        </div>
-                    </div>
-                    <div style={styles.cardValue}>{formatCurrency(stats.netProfit)}</div>
-                    <div style={styles.cardChange}>
-                        <span style={{ color: 'var(--success)' }}>
-                            {stats.totalInvested > 0 ? `+${((stats.netProfit / stats.totalInvested) * 100).toFixed(1)}%` : '0%'}
-                        </span> Realized Profit
-                    </div>
-                </div>
-
-                {/* 4. Active Portfolio Value */}
-                <div style={styles.card}>
-                    <div style={styles.cardHeader}>
-                        <h3 style={styles.cardTitle}>Active Portfolio</h3>
-                        <div style={{ ...styles.iconWrapper, background: 'rgba(155, 89, 182, 0.1)', color: '#9b59b6' }}>
-                            <PieChart size={20} />
-                        </div>
-                    </div>
-                    <div style={styles.cardValue}>{formatCurrency(stats.activePortfolioValue)}</div>
-                    <div style={styles.cardChange}>
-                        Current Value (Active & Matured)
-                    </div>
-                </div>
-
-                {/* 5. Loans Funded */}
-                <div style={styles.card}>
-                    <div style={styles.cardHeader}>
-                        <h3 style={styles.cardTitle}>Loans Funded</h3>
-                        <div style={{ ...styles.iconWrapper, background: 'rgba(240, 240, 240, 0.1)', color: 'var(--text-secondary)' }}>
-                            <FileText size={20} />
-                        </div>
-                    </div>
-                    <div style={styles.cardValue}>{stats.loansFunded}</div>
-                    <div style={styles.cardChange}>
-                        In selected period
-                    </div>
-                </div>
+                <StatsCard
+                    title="Total Invested"
+                    value={formatCurrency(stats.totalInvested)}
+                    change="Principal Amount"
+                    changeType="neutral"
+                    icon={Wallet}
+                    loading={loading}
+                />
+                <StatsCard
+                    title="Total Returns"
+                    value={formatCurrency(stats.totalReturns)}
+                    change="Total Withdrawn"
+                    changeType="positive"
+                    icon={TrendingUp}
+                    loading={loading}
+                />
+                <StatsCard
+                    title="Net Profit"
+                    value={formatCurrency(stats.netProfit)}
+                    change={`${stats.totalInvested > 0 ? `+${((stats.netProfit / stats.totalInvested) * 100).toFixed(1)}%` : '0%'} Realized Profit`}
+                    changeType="positive"
+                    icon={DollarSign}
+                    loading={loading}
+                />
+                <StatsCard
+                    title="Active Portfolio"
+                    value={formatCurrency(stats.activePortfolioValue)}
+                    change="Current Value (Active & Matured)"
+                    changeType="neutral"
+                    icon={PieChart}
+                    loading={loading}
+                />
+                <StatsCard
+                    title="Loans Funded"
+                    value={stats.loansFunded}
+                    change="In selected period"
+                    changeType="neutral"
+                    icon={FileText}
+                    loading={loading}
+                />
             </div>
 
             <div style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '24px', border: '1px solid var(--border-primary)' }}>

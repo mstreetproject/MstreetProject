@@ -71,22 +71,46 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const formatCurrency = useCallback((amount: number): string => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: currency.code,
+        if (amount === undefined || amount === null || isNaN(amount)) amount = 0;
+        const isNegative = amount < 0;
+        const absVal = Math.abs(amount);
+        const formattedNum = new Intl.NumberFormat('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
-        }).format(amount);
+        }).format(absVal);
+        return `${isNegative ? '-' : ''}${currency.symbol}${formattedNum}`;
     }, [currency]);
 
     const formatCompact = useCallback((amount: number): string => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: currency.code,
-            notation: 'compact',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 1,
-        }).format(amount);
+        if (amount === undefined || amount === null || isNaN(amount)) amount = 0;
+        const isNegative = amount < 0;
+        const absVal = Math.abs(amount);
+
+        if (absVal < 1000) {
+            const formattedNum = new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            }).format(absVal);
+            return `${isNegative ? '-' : ''}${currency.symbol}${formattedNum}`;
+        }
+
+        const suffixes = [
+            { value: 1e12, symbol: 'T' },
+            { value: 1e9, symbol: 'B' },
+            { value: 1e6, symbol: 'M' },
+            { value: 1e3, symbol: 'K' },
+        ];
+
+        for (const { value, symbol: suffix } of suffixes) {
+            if (absVal >= value) {
+                const rawRatio = absVal / value;
+                const formatted = rawRatio >= 100 ? rawRatio.toFixed(1) : rawRatio.toFixed(2);
+                const cleaned = formatted.replace(/\.0+$/, '').replace(/(\.\d)0$/, '$1');
+                return `${isNegative ? '-' : ''}${currency.symbol}${cleaned}${suffix}`;
+            }
+        }
+
+        return `${isNegative ? '-' : ''}${currency.symbol}${absVal.toFixed(2)}`;
     }, [currency]);
 
     const value: CurrencyContextValue = {
