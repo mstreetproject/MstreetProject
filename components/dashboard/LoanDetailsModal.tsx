@@ -93,16 +93,17 @@ export default function LoanDetailsModal({ isOpen, loan, onClose }: LoanDetailsM
         const today = new Date();
 
         // 1. Expected Interest on Maturity (Total Interest)
-        // Formula: Principal * (Rate/100) * (Tenure in Years) -> Tenure/12
-        const expectedMaturityInterest = principal * (rate / 100) * (tenureMonths / 12);
+        // Formula: Principal * (Rate/100) * Tenure (Months)
+        const expectedMaturityInterest = principal * (rate / 100) * tenureMonths;
         const totalMaturityValue = principal + expectedMaturityInterest;
 
         // 2. Accrued Interest (Up to today)
-        // Formula: Principal * (Rate/100) * (Days Elapsed / 365)
+        // Formula: Principal * (Rate/100) * (Days Elapsed / 30.4167)
         const msPerDay = 1000 * 60 * 60 * 24;
         const daysElapsed = Math.max(0, Math.floor((today.getTime() - startDate.getTime()) / msPerDay));
         // Cap accrued interest at maturity interest to avoid infinite growth if overdue (standard practice, though penalty might apply)
-        const rawAccrued = principal * (rate / 100) * (daysElapsed / 365);
+        const avgDaysPerMonth = 30.4167;
+        const rawAccrued = principal * (rate / 100) * (daysElapsed / avgDaysPerMonth);
         const accruedInterest = Math.min(rawAccrued, expectedMaturityInterest);
 
         // 3. Expected Repayment (Current Settlement Value)
@@ -257,10 +258,10 @@ export default function LoanDetailsModal({ isOpen, loan, onClose }: LoanDetailsM
                         <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-secondary)', padding: '16px', borderRadius: '12px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: 'var(--text-muted)' }}>
                                 <Percent size={16} />
-                                <span style={{ fontSize: '0.85rem' }}>Interest Rate</span>
+                                <span style={{ fontSize: '0.85rem' }}>Interest Rate (Monthly)</span>
                             </div>
                             <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                                {loan.interest_rate}%
+                                {loan.interest_rate}% / mo
                             </div>
                         </div>
                     </div>

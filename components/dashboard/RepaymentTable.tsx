@@ -142,7 +142,7 @@ export default function RepaymentTable({
         {
             key: 'interest_rate',
             label: 'Rate',
-            render: (value) => `${value}%`
+            render: (value) => `${value}%/mo`
         },
         {
             key: 'status',

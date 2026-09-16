@@ -173,7 +173,7 @@ export function useCreditorStats(initialPeriod: TimePeriod = 'month'): UseCredit
         const totalCurrentValue = activeAndMatured.reduce((sum, c) => {
             const principal = Number(c.remaining_principal ?? c.principal);
             const rate = Number(c.interest_rate);
-            const accruedInterest = calculateSimpleInterest(principal, rate, c.start_date);
+            const accruedInterest = calculateSimpleInterest(principal, rate, c.start_date, null, 'annual');
             return sum + principal + accruedInterest;
         }, 0);
 
@@ -183,7 +183,9 @@ export function useCreditorStats(initialPeriod: TimePeriod = 'month'): UseCredit
             return sum + calculateSimpleInterest(
                 principal,
                 Number(c.interest_rate),
-                c.start_date
+                c.start_date,
+                null,
+                'annual'
             );
         }, 0);
 

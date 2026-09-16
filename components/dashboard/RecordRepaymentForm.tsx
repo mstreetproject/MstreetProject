@@ -41,20 +41,28 @@ interface Loan {
     }[];
 }
 
-// Calculate interest accrued based on simple interest formula
+// Calculate interest accrued based on monthly flat interest formula
 function calculateInterestDue(
     principal: number,
     interestRate: number,
     startDate: string,
-    interestAlreadyPaid: number = 0
+    interestAlreadyPaid: number = 0,
+    tenureMonths?: number
 ): number {
     const start = new Date(startDate);
     const now = new Date();
     const msPerDay = 1000 * 60 * 60 * 24;
     const daysElapsed = Math.max(0, (now.getTime() - start.getTime()) / msPerDay);
+    const avgDaysPerMonth = 30.4167;
+    const monthsElapsed = daysElapsed / avgDaysPerMonth;
 
-    // Simple interest on daily basis: P * (R/100) * (Days / 365)
-    const totalInterest = principal * (interestRate / 100) * (daysElapsed / 365);
+    // Monthly flat interest: P * (R_monthly / 100) * monthsElapsed
+    const rawInterest = principal * (interestRate / 100) * monthsElapsed;
+
+    // If tenureMonths is available, cap accrued interest at maturity interest
+    const maxInterest = tenureMonths ? principal * (interestRate / 100) * tenureMonths : rawInterest;
+    const totalInterest = Math.min(rawInterest, maxInterest);
+
     return Math.max(0, totalInterest - interestAlreadyPaid);
 }
 
@@ -212,7 +220,8 @@ export default function RecordRepaymentForm() {
             loan.principal,
             loan.interest_rate,
             loan.origination_date || loan.start_date,
-            loan.interest_repaid || 0
+            loan.interest_repaid || 0,
+            loan.tenure_months
         );
 
         return {
