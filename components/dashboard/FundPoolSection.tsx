@@ -4,6 +4,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useFundPoolData } from '@/hooks/dashboard/useFundPoolData';
 import { useCurrency } from '@/hooks/useCurrency';
 import MStreetLoader from '@/components/ui/MStreetLoader';
+import StatsCard from './StatsCard';
 import DateRangeFilter from './DateRangeFilter';
 import { DateRange } from '@/hooks/dashboard/useCreditorStats';
 import { TrendingUp, TrendingDown, Scale, DollarSign, ArrowRight, Search, List, ArrowLeftRight, Info, Download, Printer, ChevronDown, FileText } from 'lucide-react';
@@ -208,35 +209,23 @@ export default function FundPoolSection() {
 
             {/* Summary Cards */}
             <div className={styles.summaryGrid}>
-                <div className={styles.summaryCard}>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <span className={styles.cardTitle}>Total Source of Funds</span>
-                        <div className={styles.tooltipWrapper}>
-                            <Info size={14} className={styles.infoIcon} />
-                            <div className={styles.tooltip}>Total Liabilities (Credits) from all Creditors.</div>
-                        </div>
-                    </div>
-                    <span className={styles.cardValue}>{formatCurrency(summary.totalLiabilities)}</span>
-                    <div className={styles.cardTrend}>
-                        <TrendingDown size={14} className={styles.trendNeutral} />
-                        <span className={styles.trendNeutral}>Liabilities Pool</span>
-                    </div>
-                </div>
+                <StatsCard
+                    title="Total Source of Funds"
+                    value={formatCurrency(summary.totalLiabilities)}
+                    change="Liabilities Pool"
+                    changeType="neutral"
+                    icon={TrendingDown}
+                    tooltip="Total Liabilities (Credits) from all Creditors."
+                />
 
-                <div className={styles.summaryCard}>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <span className={styles.cardTitle}>Total Use of Funds</span>
-                        <div className={styles.tooltipWrapper}>
-                            <Info size={14} className={styles.infoIcon} />
-                            <div className={styles.tooltip}>Total Assets (Loans + Investments) currently deployed.</div>
-                        </div>
-                    </div>
-                    <span className={styles.cardValue}>{formatCurrency(summary.totalAssets)}</span>
-                    <div className={styles.cardTrend}>
-                        <TrendingUp size={14} className={styles.trendGood} />
-                        <span className={styles.trendGood}>Deployed Assets</span>
-                    </div>
-                </div>
+                <StatsCard
+                    title="Total Use of Funds"
+                    value={formatCurrency(summary.totalAssets)}
+                    change="Deployed Assets"
+                    changeType="positive"
+                    icon={TrendingUp}
+                    tooltip="Total Assets (Loans + Investments) currently deployed."
+                />
 
                 <div className={styles.summaryCard}>
                     <div style={{ display: 'flex', alignItems: 'center' }}>
