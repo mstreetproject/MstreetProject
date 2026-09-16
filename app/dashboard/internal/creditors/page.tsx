@@ -191,7 +191,7 @@ export default function CreditorsPage() {
             render: (_, row) => {
                 // Use remaining_principal from DB (updated after payouts), fallback to principal
                 const remaining = row.remaining_principal ?? row.principal;
-                const interest = calculateSimpleInterest(remaining, row.interest_rate || 0, row.start_date);
+                const interest = calculateSimpleInterest(remaining, row.interest_rate || 0, row.start_date, null, 'annual');
                 return formatCurrency(remaining + interest);
             }
         },

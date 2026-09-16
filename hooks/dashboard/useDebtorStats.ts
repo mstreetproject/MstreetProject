@@ -162,7 +162,9 @@ export function useDebtorStats(initialPeriod: TimePeriod = 'month'): UseDebtorSt
             return sum + calculateSimpleInterest(
                 outstanding, // Use outstanding balance for interest calculation
                 Number(l.interest_rate),
-                l.start_date
+                l.start_date,
+                null,
+                'monthly'
             ) - interestAlreadyPaid; // Subtract already paid interest
         }, 0);
 

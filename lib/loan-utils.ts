@@ -88,16 +88,16 @@ export interface RepaymentInstallment {
  */
 export function generateRepaymentSchedule(
     principal: number,
-    annualRate: number,
+    rate: number,
     tenureMonths: number,
     cycle: RepaymentCycle,
     startDateStr: string
 ): RepaymentInstallment[] {
     const installments: RepaymentInstallment[] = [];
     const start = parseISO(startDateStr);
-    const monthlyRate = annualRate / 100 / 12;
+    const monthlyRate = rate / 100;
 
-    // Total interest for simple interest: P * (R/12) * T
+    // Total interest for monthly flat interest: Principal * (Rate/100) * TenureMonths
     const totalInterest = principal * monthlyRate * tenureMonths;
 
     let numInstallments = 0;

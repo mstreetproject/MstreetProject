@@ -43,8 +43,10 @@ function calculateLoanRevenue(
     const AVG_DAYS_PER_MONTH = 30.4167; // 365 / 12
 
     // Revenue = Principal × Rate × (Days_Elapsed / AVG_DAYS_PER_MONTH)
-    // This ensures revenue grows daily rather than jumping to the maturity total.
-    return principal * monthlyRate * (daysElapsed / AVG_DAYS_PER_MONTH);
+    // Capped at total maturity revenue so overdue loans don't artificially overstate earnings
+    const rawRevenue = principal * monthlyRate * (daysElapsed / AVG_DAYS_PER_MONTH);
+    const maxRevenue = principal * monthlyRate * tenorMonths;
+    return Math.min(rawRevenue, maxRevenue);
 }
 
 /**
@@ -68,7 +70,9 @@ function calculateCreditCost(
     const monthlyRate = annualRate / 12;
     const AVG_DAYS_PER_MONTH = 30.4167;
 
-    return principal * monthlyRate * (daysElapsed / AVG_DAYS_PER_MONTH);
+    const rawCost = principal * monthlyRate * (daysElapsed / AVG_DAYS_PER_MONTH);
+    const maxCost = principal * monthlyRate * tenorMonths;
+    return Math.min(rawCost, maxCost);
 }
 
 export default function ProfitLossSection() {

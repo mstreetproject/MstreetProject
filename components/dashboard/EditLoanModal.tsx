@@ -207,7 +207,7 @@ export default function EditLoanModal({ isOpen, loan, onClose, onSuccess }: Edit
 
                     <div className={styles.formGroup}>
                         <label htmlFor="interest_rate" className={styles.label}>
-                            Interest Rate (%) *
+                            Monthly Interest Rate (%) *
                         </label>
                         <input
                             id="interest_rate"

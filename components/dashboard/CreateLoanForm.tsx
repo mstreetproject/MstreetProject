@@ -256,7 +256,7 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
                 <div className={styles.formGroup}>
                     <label htmlFor="interest_rate" className={styles.label}>
                         <Percent size={16} />
-                        Interest Rate (%) *
+                        Monthly Interest Rate (%) *
                     </label>
                     <input
                         id="interest_rate"
@@ -266,7 +266,7 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
                         max="100"
                         value={formData.interest_rate}
                         onChange={(e) => setFormData(d => ({ ...d, interest_rate: e.target.value }))}
-                        placeholder="12.5"
+                        placeholder="4.0"
                         className={styles.input}
                         required
                     />

@@ -72,7 +72,8 @@ export function useMyInvestments() {
                         principal,
                         rate,
                         credit.start_date,
-                        credit.end_date
+                        credit.end_date,
+                        'annual'
                     );
                     const currentValue = principal + accruedInterest;
 

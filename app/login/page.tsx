@@ -59,48 +59,45 @@ function LoginContent() {
         } else {
             setStatus({ type: "success", message: "Login successful! Redirecting..." });
 
-            // Check if user is internal and redirect accordingly
             if (data.user) {
-                const { data: userData } = await supabase
-                    .from('users')
-                    .select('is_internal, is_creditor, is_debtor')
-                    .eq('id', data.user.id)
-                    .single();
+                try {
+                    const { data: userData } = await supabase
+                        .from('users')
+                        .select('is_internal, is_creditor, is_debtor')
+                        .eq('id', data.user.id)
+                        .single();
 
-                // Check for redirectTo parameter
-                const params = new URLSearchParams(window.location.search);
-                const redirectTo = params.get('redirectTo');
+                    const params = new URLSearchParams(window.location.search);
+                    const redirectTo = params.get('redirectTo');
 
-                // Small delay to ensure session is set
-                await new Promise(resolve => setTimeout(resolve, 500));
+                    if (redirectTo) {
+                        window.location.href = redirectTo;
+                        return;
+                    }
 
-                // Refresh router to pick up new session
-                router.refresh();
+                    const roleCount = [
+                        userData?.is_internal,
+                        userData?.is_creditor,
+                        userData?.is_debtor
+                    ].filter(Boolean).length;
 
-                if (redirectTo) {
-                    router.push(redirectTo);
-                    return;
-                }
-
-                const roleCount = [
-                    userData?.is_internal,
-                    userData?.is_creditor,
-                    userData?.is_debtor
-                ].filter(Boolean).length;
-
-                if (roleCount > 1) {
-                    router.push('/portal');
-                } else if (userData?.is_internal) {
-                    router.push('/dashboard/internal');
-                } else if (userData?.is_creditor) {
-                    router.push('/dashboard/creditor');
-                } else if (userData?.is_debtor) {
-                    router.push('/dashboard/debtor');
-                } else {
-                    router.push('/profile');
+                    if (roleCount > 1) {
+                        window.location.href = '/portal';
+                    } else if (userData?.is_internal) {
+                        window.location.href = '/dashboard/internal';
+                    } else if (userData?.is_creditor) {
+                        window.location.href = '/dashboard/creditor';
+                    } else if (userData?.is_debtor) {
+                        window.location.href = '/dashboard/debtor';
+                    } else {
+                        window.location.href = '/portal';
+                    }
+                } catch (err) {
+                    console.error("Error determining redirect route:", err);
+                    window.location.href = '/portal';
                 }
             } else {
-                router.push('/');
+                window.location.href = '/portal';
             }
         }
     };

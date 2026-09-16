@@ -156,7 +156,7 @@ export function useDashboardStats(startDate?: Date | null, endDate?: Date | null
                 const principal = Number(credit.remaining_principal ?? credit.principal);
                 const rate = Number(credit.interest_rate);
                 const startDate = credit.start_date;
-                return sum + calculateSimpleInterest(principal, rate, startDate);
+                return sum + calculateSimpleInterest(principal, rate, startDate, null, 'annual');
             }, 0);
 
             // Net Interest Income: Interest earned minus interest owed

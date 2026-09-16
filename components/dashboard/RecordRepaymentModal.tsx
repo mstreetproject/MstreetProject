@@ -32,18 +32,27 @@ interface RecordRepaymentModalProps {
     onSuccess: () => void;
 }
 
-// Calculate interest accrued based on simple interest formula
+// Calculate interest accrued based on monthly flat interest formula
 function calculateInterestDue(
     principal: number,
     interestRate: number,
     startDate: string,
-    interestAlreadyPaid: number = 0
+    interestAlreadyPaid: number = 0,
+    tenureMonths?: number
 ): number {
     const start = new Date(startDate);
     const now = new Date();
-    const monthsElapsed = Math.max(0, (now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30));
-    // Simple interest: P * R * T / 12 (annualized rate)
-    const totalInterest = principal * (interestRate / 100) * (monthsElapsed / 12);
+    const daysElapsed = Math.max(0, (now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const avgDaysPerMonth = 30.4167;
+    const monthsElapsed = daysElapsed / avgDaysPerMonth;
+
+    // Monthly flat interest: P * (R_monthly / 100) * monthsElapsed
+    const rawInterest = principal * (interestRate / 100) * monthsElapsed;
+    
+    // If tenureMonths is available, cap accrued interest at maturity interest
+    const maxInterest = tenureMonths ? principal * (interestRate / 100) * tenureMonths : rawInterest;
+    const totalInterest = Math.min(rawInterest, maxInterest);
+
     return Math.max(0, totalInterest - interestAlreadyPaid);
 }
 
@@ -68,7 +77,8 @@ export default function RecordRepaymentModal({ isOpen, loan, onClose, onSuccess 
             loan.principal,
             loan.interest_rate,
             loan.start_date,
-            loan.interest_repaid || 0
+            loan.interest_repaid || 0,
+            loan.tenure_months
         );
 
         return {
