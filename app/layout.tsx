@@ -1,5 +1,10 @@
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ThemeProvider } from "@/context/ThemeContext";
+import { CurrencyProvider } from "@/hooks/useCurrency";
+import SessionTimeoutWatcher from "@/components/auth/SessionTimeoutWatcher";
+import OfflineWatcher from "@/components/auth/OfflineWatcher";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,8 +18,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MStreet Financial",
-  description: "Secure financial asset management system.",
+  title: "MStreets Finance",
+  description: "Secure & Accessible Finance Management System",
+  icons: {
+    icon: {
+      url: "/secondary logo 2.svg",
+      sizes: "any",
+    },
+  },
 };
 
 export default function RootLayout({
@@ -23,9 +34,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {children}
+        <ThemeProvider>
+          <CurrencyProvider>
+            <SessionTimeoutWatcher />
+            <OfflineWatcher />
+            {children}
+          </CurrencyProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -1,8 +1,27 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ShieldCheck, BarChart3, Zap } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 export default function Home() {
+  const [session, setSession] = useState<any>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   return (
     <div style={styles.container}>
       <div style={styles.heroSection}>
@@ -10,38 +29,51 @@ export default function Home() {
           <img src="/secondary logo2.png" alt="MStreet Financial" style={styles.logo} />
         </div>
 
-        <h1 style={styles.title}>Welcome to MStreet Financial</h1>
+        <h1 style={styles.title}>Welcome to MStreets Finance</h1>
         <p style={styles.tagline}>
           Secure Financial Asset & Credit Management Platform
         </p>
 
         <p style={styles.description}>
-          Empowering financial institutions with robust asset management,
-          comprehensive credit tracking, and role-based access control.
-        </p>
+          Helping people and businesses grow by giving
+          them the financial tools they need to grow.</p>
 
         <div style={styles.buttonGroup}>
-          <Link href="/login" style={styles.primaryButton}>
-            Sign In
-          </Link>
-          <Link href="/signup" style={styles.secondaryButton}>
-            Create Account
-          </Link>
+          {session ? (
+            <Link href="/portal" style={styles.primaryButton}>
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" style={styles.primaryButton}>
+                Sign In
+              </Link>
+              <Link href="/signup" style={styles.secondaryButton}>
+                Create Account
+              </Link>
+            </>
+          )}
         </div>
 
         <div style={styles.features}>
           <div style={styles.feature}>
-            <div style={styles.featureIcon}>🔒</div>
-            <h3 style={styles.featureTitle}>Secure Authentication</h3>
-            <p style={styles.featureText}>Enterprise-grade security with role-based access</p>
+            <div style={{ ...styles.featureIcon, display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+              <ShieldCheck size={40} color="#02B3FF" />
+            </div>
+            <h3 style={styles.featureTitle}>Accessibility</h3>
+            <p style={styles.featureText}>Flexibility</p>
           </div>
           <div style={styles.feature}>
-            <div style={styles.featureIcon}>📊</div>
+            <div style={{ ...styles.featureIcon, display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+              <BarChart3 size={40} color="#02B3FF" />
+            </div>
             <h3 style={styles.featureTitle}>Real-Time Analytics</h3>
             <p style={styles.featureText}>Track credits, loans, and financial operations</p>
           </div>
           <div style={styles.feature}>
-            <div style={styles.featureIcon}>⚡</div>
+            <div style={{ ...styles.featureIcon, display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+              <Zap size={40} color="#02B3FF" />
+            </div>
             <h3 style={styles.featureTitle}>Fast & Reliable</h3>
             <p style={styles.featureText}>Built on modern cloud infrastructure</p>
           </div>

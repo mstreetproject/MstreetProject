@@ -1,0 +1,389 @@
+.container {
+    padding: 24px 0;
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.summaryGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.summaryCard {
+    background: var(--bg-card, #1e1e1e);
+    border: 1px solid var(--border-secondary, #333);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.summaryCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.cardTitle {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #a0a0a0);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.cardValue {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary, #fff);
+}
+
+.cardTrend {
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.trendGood {
+    color: #22c55e;
+}
+
+.trendBad {
+    color: #fe4a49;
+}
+
+/* Using a vibrant red */
+.trendNeutral {
+    color: #3b82f6;
+}
+
+.tablesContainer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+@media (max-width: 1024px) {
+    .tablesContainer {
+        grid-template-columns: 1fr;
+    }
+}
+
+.tableSection {
+    background: var(--bg-card);
+    border: 1px solid var(--border-secondary);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.tableHeader {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-secondary);
+    background: var(--bg-tertiary, #252525);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sectionTitle {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tableWrapper {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.table th {
+    text-align: left;
+    padding: 12px 20px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.8rem;
+    border-bottom: 1px solid var(--border-secondary);
+}
+
+.table td {
+    padding: 12px 20px;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-secondary);
+}
+
+.table tr:last-child td {
+    border-bottom: none;
+}
+
+.table tr:hover {
+    background: var(--bg-hover, rgba(255, 255, 255, 0.02));
+}
+
+.currency {
+    font-family: 'Outfit', sans-serif;
+    /* Ensuring modern font for numbers */
+    font-variant-numeric: tabular-nums;
+}
+
+.rateTag {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.emptyState {
+    padding: 40px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* --- New Styles for View Toggle & Search --- */
+
+.filterSection {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.leftControls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.rightControls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Toggle Group */
+.toggleGroup {
+    display: flex;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-secondary);
+    border-radius: 8px;
+    padding: 4px;
+    gap: 4px;
+}
+
+.toggleBtn {
+    padding: 6px 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.toggleBtn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.toggleBtn.active {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Search Input */
+.searchContainer {
+    position: relative;
+    max-width: 300px;
+    width: 100%;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 8px 12px 8px 36px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-secondary);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.searchInput:focus {
+    border-color: var(--accent-primary, #3b82f6);
+}
+
+.searchIcon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    pointer-events: none;
+}
+
+/* Full Width Modification */
+.tablesContainer.fullWidth {
+    grid-template-columns: 1fr;
+}
+
+/* Tooltip Styles */
+.tooltipWrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: help;
+    margin-left: 6px;
+}
+
+.infoIcon {
+    color: var(--text-muted);
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+.tooltipWrapper:hover .infoIcon {
+    opacity: 1;
+    color: var(--accent-primary);
+}
+
+.tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-tooltip, rgba(0, 0, 0, 0.9));
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+    white-space: normal;
+    min-width: 180px;
+    max-width: 250px;
+    line-height: 1.4;
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--bg-tooltip, rgba(0, 0, 0, 0.9));
+}
+
+.tooltipWrapper:hover .tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Table Specific Tooltip Overrides */
+.table th .tooltip {
+    bottom: auto;
+    top: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.table th .tooltip::after {
+    bottom: 100%;
+    top: auto;
+    border-top-color: transparent;
+    border-bottom-color: var(--bg-tooltip, rgba(0, 0, 0, 0.9));
+}
+
+/* Align tooltip to the right for right-aligned columns (mostly last columns) */
+.table th:last-child .tooltip,
+.table th:nth-last-child(2) .tooltip {
+    left: auto;
+    right: 0;
+    transform: none;
+}
+
+.table th:last-child .tooltip::after,
+.table th:nth-last-child(2) .tooltip::after {
+    left: auto;
+    right: 10px;
+    transform: none;
+}
+
+/* Export Dropdown Menu */
+.exportDropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-secondary);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 50;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+}
+
+.menuItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.menuItem:hover {
+    background: var(--bg-tertiary);
+}

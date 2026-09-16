@@ -1,12 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import MStreetLoader from "@/components/ui/MStreetLoader";
 
-export default function LoginPage() {
+import { Eye, EyeOff } from "lucide-react";
+
+function LoginContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const [showPassword, setShowPassword] = useState(false);
+    const [sessionLoading, setSessionLoading] = useState(true);
+    const [existingSession, setExistingSession] = useState<any>(null);
     const [formData, setFormData] = useState({
         email: "",
         password: "",
@@ -15,12 +22,33 @@ export default function LoginPage() {
     const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
     const [loading, setLoading] = useState(false);
 
+    useEffect(() => {
+        const supabase = createClient();
+        
+        // Check for session expired message
+        if (searchParams.get('message') === 'session_expired') {
+            setStatus({ type: "error", message: "Your session has expired due to inactivity. Please log in again." });
+        }
+
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                setExistingSession(session);
+            }
+            setSessionLoading(false);
+        });
+    }, [searchParams]);
+
+    const handleGoToDashboard = () => {
+        router.push('/portal');
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setStatus(null);
 
-        const { error } = await supabase.auth.signInWithPassword({
+        const supabase = createClient();
+        const { data, error } = await supabase.auth.signInWithPassword({
             email: formData.email,
             password: formData.password,
         });
@@ -30,8 +58,47 @@ export default function LoginPage() {
             setLoading(false);
         } else {
             setStatus({ type: "success", message: "Login successful! Redirecting..." });
-            // Redirect to dashboard or profile
-            router.push("/");
+
+            if (data.user) {
+                try {
+                    const { data: userData } = await supabase
+                        .from('users')
+                        .select('is_internal, is_creditor, is_debtor')
+                        .eq('id', data.user.id)
+                        .single();
+
+                    const params = new URLSearchParams(window.location.search);
+                    const redirectTo = params.get('redirectTo');
+
+                    if (redirectTo) {
+                        window.location.href = redirectTo;
+                        return;
+                    }
+
+                    const roleCount = [
+                        userData?.is_internal,
+                        userData?.is_creditor,
+                        userData?.is_debtor
+                    ].filter(Boolean).length;
+
+                    if (roleCount > 1) {
+                        window.location.href = '/portal';
+                    } else if (userData?.is_internal) {
+                        window.location.href = '/dashboard/internal';
+                    } else if (userData?.is_creditor) {
+                        window.location.href = '/dashboard/creditor';
+                    } else if (userData?.is_debtor) {
+                        window.location.href = '/dashboard/debtor';
+                    } else {
+                        window.location.href = '/portal';
+                    }
+                } catch (err) {
+                    console.error("Error determining redirect route:", err);
+                    window.location.href = '/portal';
+                }
+            } else {
+                window.location.href = '/portal';
+            }
         }
     };
 
@@ -48,8 +115,62 @@ export default function LoginPage() {
                 </div>
                 <div style={styles.header}>
                     <h1 style={styles.title}>Welcome Back</h1>
-                    <p style={styles.subtitle}>Log in to your MStreet account</p>
+                    <p style={styles.subtitle}>Log in to your MStreets account</p>
                 </div>
+
+                {status && (
+                    <div
+                        style={{
+                            ...styles.status,
+                            marginBottom: '24px',
+                            padding: '16px 20px',
+                            background: status.type === "success" ? "rgba(184, 219, 15, 0.15)" : "rgba(255, 77, 77, 0.15)",
+                            borderColor: status.type === "success" ? "#B8DB0F" : "#ff4d4d",
+                            color: status.type === "success" ? "#fff" : "#ff9494",
+                            borderWidth: '1px',
+                            borderStyle: 'solid',
+                            borderRadius: '12px',
+                            fontSize: '0.9rem',
+                            textAlign: 'center',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '10px',
+                            fontWeight: '600',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                        }}
+                    >
+                        {status.type === 'error' ? '⚠️' : '✅'} {status.message}
+                    </div>
+                )}
+
+                {existingSession && !sessionLoading && (
+                    <div style={{
+                        marginBottom: '32px',
+                        padding: '20px',
+                        background: 'rgba(2, 179, 255, 0.1)',
+                        border: '1px solid rgba(2, 179, 255, 0.3)',
+                        borderRadius: '16px',
+                        textAlign: 'center'
+                    }}>
+                        <p style={{ color: '#e2e8f0', marginBottom: '16px', fontSize: '0.95rem' }}>
+                            You are already logged in as <strong style={{ color: '#02B3FF' }}>{existingSession.user.email}</strong>
+                        </p>
+                        <button
+                            onClick={handleGoToDashboard}
+                            style={{
+                                ...styles.button,
+                                marginTop: 0,
+                                width: '100%'
+                            }}
+                        >
+                            Go to Dashboard
+                        </button>
+                        <div style={{ marginTop: '12px' }}>
+                            <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>or sign in with another account below</span>
+                        </div>
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} style={styles.form}>
                     <div style={styles.inputGroup}>
@@ -70,15 +191,36 @@ export default function LoginPage() {
                             <label style={styles.label}>Password</label>
                             <Link href="/forgot-password" style={styles.forgotLink}>Forgot Password?</Link>
                         </div>
-                        <input
-                            style={styles.input}
-                            type="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            placeholder="••••••••"
-                            required
-                        />
+                        <div style={{ position: 'relative' }}>
+                            <input
+                                style={{ ...styles.input, width: '100%', paddingRight: '45px' }}
+                                type={showPassword ? "text" : "password"}
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                placeholder="••••••••"
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                style={{
+                                    position: 'absolute',
+                                    right: '12px',
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#94a3b8',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: '4px'
+                                }}
+                            >
+                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            </button>
+                        </div>
                     </div>
 
                     <button
@@ -87,31 +229,31 @@ export default function LoginPage() {
                         style={{
                             ...styles.button,
                             opacity: loading ? 0.7 : 1,
-                            cursor: loading ? "not-allowed" : "pointer"
+                            cursor: loading ? "not-allowed" : "pointer",
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px'
                         }}
                     >
+                        {loading && <MStreetLoader size={20} color="#070757" />}
                         {loading ? "Logging in..." : "Log In"}
                     </button>
                 </form>
-
-                {status && (
-                    <div
-                        style={{
-                            ...styles.status,
-                            backgroundColor: status.type === "success" ? "rgba(184, 219, 15, 0.1)" : "rgba(255, 77, 77, 0.1)",
-                            borderColor: status.type === "success" ? "#B8DB0F" : "#ff4d4d",
-                            color: status.type === "success" ? "#B8DB0F" : "#ff4d4d",
-                        }}
-                    >
-                        {status.message}
-                    </div>
-                )}
 
                 <div style={styles.footer}>
                     <p>Don't have an account? <Link href="/signup" style={styles.link}>Sign Up</Link></p>
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div style={styles.container}><MStreetLoader size={50} color="#02B3FF" /></div>}>
+            <LoginContent />
+        </Suspense>
     );
 }
 

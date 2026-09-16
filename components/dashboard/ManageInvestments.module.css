@@ -1,0 +1,152 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.header {
+    margin-bottom: 8px;
+}
+
+.title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.subtitle {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 4px 0 0;
+}
+
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.filterTabs {
+    display: flex;
+    flex-wrap: wrap;
+    /* Allow wrapping to stack tabs */
+    gap: 8px;
+    background: var(--bg-card);
+    padding: 8px;
+    border-radius: 12px;
+    border: 1px solid var(--border-secondary);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    /* Remove horizontal scroll */
+    overflow-x: visible;
+}
+
+.filterTabs::-webkit-scrollbar {
+    display: none;
+}
+
+.filterTabs::-webkit-scrollbar {
+    display: none;
+}
+
+.filterTab {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: normal;
+    /* Allow text to wrap if needed, or keep distinct */
+    flex-shrink: 0;
+    text-align: center;
+    flex-grow: 1;
+    /* Make tabs grow to fill lines */
+}
+
+.filterTab:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.filterTab.active {
+    background: var(--bg-main);
+    color: var(--accent-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tableCard {
+    background: var(--bg-card);
+    border: 1px solid var(--border-secondary);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 1024px) {
+    .statsGrid {
+        grid-template-columns: 1fr;
+        /* Force single column stack */
+        gap: 12px;
+    }
+
+    .filterTabs {
+        width: 100%;
+        overflow-x: visible;
+        /* Ensure visibility when wrapping */
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        gap: 16px;
+    }
+
+    .filterTab {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .container {
+        gap: 10px;
+    }
+
+    .statsGrid {
+        gap: 8px;
+    }
+
+    .filterTabs {
+        padding: 4px;
+        gap: 4px;
+    }
+
+    .filterTab {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+
+    .title {
+        font-size: 1rem;
+    }
+
+    .subtitle {
+        font-size: 0.8rem;
+    }
+
+    .tableCard {
+        border-radius: 12px;
+    }
+}

@@ -10,7 +10,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 {children}
             </main>
             <footer className="py-4 border-t text-center text-sm text-gray-500">
-                © 2025 Mstreet Financial LTD. All rights reserved.
+                © 2025 Mstreets Finance LTD. All rights reserved.
             </footer>
         </div>
     );
