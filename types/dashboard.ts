@@ -57,6 +57,7 @@ export interface Loan {
     archived_at?: string | null;
 
     // New fields
+    repayment_method?: 'interest_only' | 'capital_only' | 'both' | 'custom';
     repayment_cycle?: string;
     origination_date?: string;
     disbursed_date?: string;

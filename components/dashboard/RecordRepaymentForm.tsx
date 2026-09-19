@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCurrency } from '@/hooks/useCurrency';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 import { createClient } from '@/lib/supabase/client';
@@ -22,6 +22,7 @@ interface Loan {
     end_date: string;
     origination_date?: string;
     disbursed_date?: string;
+    repayment_method?: 'interest_only' | 'capital_only' | 'both' | 'custom';
     status: string;
     amount_repaid?: number;
     interest_repaid?: number;
@@ -95,7 +96,7 @@ export default function RecordRepaymentForm() {
     } = useRepaymentSchedule(selectedLoanId);
 
     // Apply payment mode presets to an item or default loan due
-    const applyPaymentPreset = (mode: 'both' | 'interest_only' | 'capital_only' | 'custom', pDue: number, iDue: number) => {
+    const applyPaymentPreset = useCallback((mode: 'both' | 'interest_only' | 'capital_only' | 'custom', pDue: number, iDue: number) => {
         setPaymentMode(mode);
         if (mode === 'both') {
             setPrincipalAmount(pDue.toFixed(2));
@@ -112,7 +113,7 @@ export default function RecordRepaymentForm() {
         } else if (mode === 'custom') {
             setIsPartialPayment(true);
         }
-    };
+    }, []);
 
     const handleSelectScheduleItem = (row: any, index: number, mode: 'both' | 'interest_only' | 'capital_only' | 'custom' = 'both') => {
         if (row.status === 'paid') return;
@@ -262,30 +263,28 @@ export default function RecordRepaymentForm() {
     // Auto-select first pending schedule item when loan selection or schedule changes
     useEffect(() => {
         if (loan) {
+            const defaultMode = loan.repayment_method || 'both';
+
             if (schedule.length > 0) {
                 const firstPendingIdx = schedule.findIndex(s => s.status !== 'paid');
                 const targetIdx = firstPendingIdx !== -1 ? firstPendingIdx : 0;
                 const item = schedule[targetIdx];
                 if (item && item.status !== 'paid') {
                     setSelectedScheduleIndex(targetIdx);
-                    setPrincipalAmount(item.principal_amount.toFixed(2));
-                    setInterestAmount(item.interest_amount.toFixed(2));
-                    setPaymentMode('both');
+                    applyPaymentPreset(defaultMode, item.principal_amount, item.interest_amount);
                     return;
                 }
             }
             if (!isPartialPayment) {
                 const defaultPrincipal = schedule.length > 0 ? (loan.principal / loan.tenure_months) : calculations.principalDue;
-                setPrincipalAmount(defaultPrincipal.toFixed(2));
-                setInterestAmount(calculations.interestDue.toFixed(2));
-                setPaymentMode('both');
+                applyPaymentPreset(defaultMode, defaultPrincipal, calculations.interestDue);
             }
         } else {
             setPrincipalAmount('');
             setInterestAmount('');
             setSelectedScheduleIndex(null);
         }
-    }, [loan, isPartialPayment, calculations, schedule]);
+    }, [loan, isPartialPayment, calculations, schedule, applyPaymentPreset]);
 
     const totalPayment = (parseFloat(principalAmount) || 0) + (parseFloat(interestAmount) || 0);
     const selectedScheduleItem = selectedScheduleIndex !== null ? schedule[selectedScheduleIndex] : null;
@@ -571,6 +570,25 @@ export default function RecordRepaymentForm() {
                                         }}>
                                             <AlertCircle size={10} />
                                             Awaiting Signature
+                                        </span>
+                                    )}
+                                    {loan.repayment_method && loan.repayment_method !== 'both' && (
+                                        <span style={{
+                                            marginLeft: '8px',
+                                            fontSize: '0.65rem',
+                                            background: loan.repayment_method === 'interest_only' ? 'rgba(245, 158, 11, 0.1)' : loan.repayment_method === 'capital_only' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(168, 85, 247, 0.1)',
+                                            color: loan.repayment_method === 'interest_only' ? '#d97706' : loan.repayment_method === 'capital_only' ? '#2563eb' : '#9333ea',
+                                            padding: '2px 8px',
+                                            borderRadius: '10px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            fontWeight: 700,
+                                            border: `1px solid ${loan.repayment_method === 'interest_only' ? 'rgba(245, 158, 11, 0.2)' : loan.repayment_method === 'capital_only' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(168, 85, 247, 0.2)'}`,
+                                            textTransform: 'uppercase'
+                                        }}>
+                                            <Info size={10} />
+                                            {loan.repayment_method === 'interest_only' ? 'Interest Only Plan' : loan.repayment_method === 'capital_only' ? 'Capital Only Plan' : 'Custom Plan'}
                                         </span>
                                     )}
                                 </div>

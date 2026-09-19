@@ -17,6 +17,7 @@ interface Loan {
     tenure_months: number;
     start_date: string;
     end_date: string;
+    repayment_method?: 'interest_only' | 'capital_only' | 'both' | 'custom';
     status: string;
     amount_repaid?: number;
     interest_repaid?: number;
@@ -101,7 +102,7 @@ export default function RecordRepaymentModal({ isOpen, loan, onClose, onSuccess 
     }, [loan]);
 
     // Apply payment mode presets to an item or default loan due
-    const applyPaymentPreset = (mode: PaymentMode, pDue: number, iDue: number) => {
+    const applyPaymentPreset = React.useCallback((mode: PaymentMode, pDue: number, iDue: number) => {
         setPaymentMode(mode);
         if (mode === 'both') {
             setPrincipalAmount(pDue.toFixed(2));
@@ -118,7 +119,7 @@ export default function RecordRepaymentModal({ isOpen, loan, onClose, onSuccess 
         } else if (mode === 'custom') {
             setIsPartialPayment(true);
         }
-    };
+    }, []);
 
     // Helper to select an installment from schedule
     const handleSelectScheduleItem = (row: RepaymentScheduleItem, index: number, mode: PaymentMode = 'both') => {
@@ -130,26 +131,23 @@ export default function RecordRepaymentModal({ isOpen, loan, onClose, onSuccess 
     // Auto-select first pending schedule item when modal opens or schedule loads
     useEffect(() => {
         if (loan && isOpen && selectedScheduleIndex === null) {
+            const defaultMode = loan.repayment_method || 'both';
             if (schedule.length > 0) {
                 const firstPendingIdx = schedule.findIndex(s => s.status !== 'paid');
                 const targetIdx = firstPendingIdx !== -1 ? firstPendingIdx : 0;
                 const item = schedule[targetIdx];
                 if (item && item.status !== 'paid') {
                     setSelectedScheduleIndex(targetIdx);
-                    setPrincipalAmount(item.principal_amount.toFixed(2));
-                    setInterestAmount(item.interest_amount.toFixed(2));
-                    setPaymentMode('both');
+                    applyPaymentPreset(defaultMode, item.principal_amount, item.interest_amount);
                     return;
                 }
             }
             if (!isPartialPayment) {
                 const defaultPrincipal = schedule.length > 0 ? (loan.principal / loan.tenure_months) : calculations.principalDue;
-                setPrincipalAmount(defaultPrincipal.toFixed(2));
-                setInterestAmount(calculations.interestDue.toFixed(2));
-                setPaymentMode('both');
+                applyPaymentPreset(defaultMode, defaultPrincipal, calculations.interestDue);
             }
         }
-    }, [loan, isOpen, isPartialPayment, calculations, selectedScheduleIndex, schedule]);
+    }, [loan, isOpen, isPartialPayment, calculations, selectedScheduleIndex, schedule, applyPaymentPreset]);
 
     // Reset form when modal closes
     useEffect(() => {
@@ -349,7 +347,29 @@ export default function RecordRepaymentModal({ isOpen, loan, onClose, onSuccess 
                         }}>
                             <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.85rem' }}>Receiving payment from:</p>
                             <p style={{ margin: '4px 0 0', color: 'var(--text-primary)', fontWeight: 600, fontSize: '1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                {loan.debtor?.full_name || 'Unknown Debtor'}
+                                <span>
+                                    {loan.debtor?.full_name || 'Unknown Debtor'}
+                                    {loan.repayment_method && loan.repayment_method !== 'both' && (
+                                        <span style={{
+                                            marginLeft: '8px',
+                                            fontSize: '0.65rem',
+                                            background: loan.repayment_method === 'interest_only' ? 'rgba(245, 158, 11, 0.1)' : loan.repayment_method === 'capital_only' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(168, 85, 247, 0.1)',
+                                            color: loan.repayment_method === 'interest_only' ? '#d97706' : loan.repayment_method === 'capital_only' ? '#2563eb' : '#9333ea',
+                                            padding: '2px 8px',
+                                            borderRadius: '10px',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            fontWeight: 700,
+                                            border: `1px solid ${loan.repayment_method === 'interest_only' ? 'rgba(245, 158, 11, 0.2)' : loan.repayment_method === 'capital_only' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(168, 85, 247, 0.2)'}`,
+                                            textTransform: 'uppercase',
+                                            verticalAlign: 'middle'
+                                        }}>
+                                            <Info size={10} />
+                                            {loan.repayment_method === 'interest_only' ? 'Interest Only Plan' : loan.repayment_method === 'capital_only' ? 'Capital Only Plan' : 'Custom Plan'}
+                                        </span>
+                                    )}
+                                </span>
                                 {loan.reference_no && (
                                     <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>#{loan.reference_no}</span>
                                 )}

@@ -40,6 +40,7 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
         origination_date: new Date().toISOString().split('T')[0],
         disbursed_date: new Date().toISOString().split('T')[0],
         repayment_cycle: 'monthly' as RepaymentCycle,
+        repayment_method: 'both' as 'interest_only' | 'capital_only' | 'both' | 'custom',
     });
 
     const [calculatedDates, setCalculatedDates] = useState<LoanDates | null>(null);
@@ -119,6 +120,7 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
                     disbursed_date: formData.disbursed_date,
                     first_repayment_date: calculatedDates.formattedFirstRepaymentDate,
                     repayment_cycle: formData.repayment_cycle,
+                    repayment_method: formData.repayment_method,
                     status: 'performing',
                 })
                 .select()
@@ -191,6 +193,7 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
                 origination_date: new Date().toISOString().split('T')[0],
                 disbursed_date: new Date().toISOString().split('T')[0],
                 repayment_cycle: 'monthly' as RepaymentCycle,
+                repayment_method: 'both' as 'interest_only' | 'capital_only' | 'both' | 'custom',
             });
             setLoanDocs([]);
             onSuccess?.();
@@ -347,6 +350,25 @@ export default function CreateLoanForm({ onSuccess }: CreateLoanFormProps) {
                         <option value="semiannual">Semiannual (6 months)</option>
                         <option value="annually">Annually</option>
                         <option value="bullet">Bullet (At Maturity)</option>
+                    </select>
+                </div>
+
+                <div className={styles.formGroup}>
+                    <label htmlFor="repayment_method" className={styles.label}>
+                        <RefreshCcw size={16} />
+                        Repayment Method *
+                    </label>
+                    <select
+                        id="repayment_method"
+                        value={formData.repayment_method}
+                        onChange={(e) => setFormData(d => ({ ...d, repayment_method: e.target.value as 'interest_only' | 'capital_only' | 'both' | 'custom' }))}
+                        className={styles.select}
+                        required
+                    >
+                        <option value="both">Both (Principal + Interest)</option>
+                        <option value="interest_only">Interest Only</option>
+                        <option value="capital_only">Capital Only</option>
+                        <option value="custom">Custom Structure</option>
                     </select>
                 </div>
 
