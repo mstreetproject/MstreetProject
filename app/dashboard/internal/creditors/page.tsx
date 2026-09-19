@@ -241,13 +241,13 @@ export default function CreditorsPage() {
     // Row Actions
     const rowActions: RowAction[] = [
         {
-            label: '💰 Record Payout',
+            label: 'Record Payout',
             icon: <DollarSign size={16} />,
             onClick: handlePayout,
             hidden: (row) => row.status === 'withdrawn',
         },
         {
-            label: '📜 History',
+            label: 'History',
             icon: <FileText size={16} />,
             onClick: handleViewHistory,
         },
@@ -257,7 +257,7 @@ export default function CreditorsPage() {
             onClick: handleEdit,
         },
         {
-            label: archivingId ? 'Archiving...' : '📦 Archive',
+            label: archivingId ? 'Archiving...' : 'Archive',
             icon: archivingId ? <MStreetLoader size={16} color="var(--danger)" /> : <Trash2 size={16} />,
             onClick: handleArchive,
             variant: 'danger',

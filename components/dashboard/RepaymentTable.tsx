@@ -180,19 +180,19 @@ export default function RepaymentTable({
     // Row Actions
     const rowActions: RowAction[] = [
         {
-            label: '🔗 Copy Signing Link',
+            label: 'Copy Signing Link',
             icon: <Link size={16} />,
             onClick: handleCopySigningLink,
             hidden: (row) => !row.loan_documents?.some((d: any) => !d.is_signed),
         },
         {
-            label: '💰 Record Repayment',
+            label: 'Record Repayment',
             icon: <Banknote size={16} />,
             onClick: handleRepayment,
             hidden: (row) => row.status === 'preliquidated' || row.status === 'archived',
         },
         {
-            label: '📜 History',
+            label: 'History',
             icon: <FileText size={16} />,
             onClick: handleViewHistory,
         },
@@ -203,7 +203,7 @@ export default function RepaymentTable({
             hidden: (row) => row.status === 'archived',
         },
         {
-            label: archivingId ? 'Archiving...' : '📦 Archive',
+            label: archivingId ? 'Archiving...' : 'Archive',
             icon: archivingId ? <MStreetLoader size={16} color="var(--danger)" /> : <Trash2 size={16} />,
             onClick: handleArchive,
             variant: 'danger',

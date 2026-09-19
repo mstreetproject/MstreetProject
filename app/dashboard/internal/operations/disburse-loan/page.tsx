@@ -52,8 +52,8 @@ export default function DisburseLoanPage() {
                         <h1 className={styles.pageTitle}>Operations</h1>
                         <p className={styles.pageSubtitle}>
                             {activeTab === 'disburse'
-                                ? 'Disburse funds to loans & advancements and manage new disbursements'
-                                : 'Track and record repayments across all loans & advancements'}
+                                ? 'Disburse funds to loans & advances and manage new disbursements'
+                                : 'Track and record repayments across all loans & advances'}
                         </p>
                     </div>
                     <div className={styles.headerRight}>

@@ -84,14 +84,24 @@ export default function StatsCard({
 
                 if (!isNaN(parsedNum)) {
                     return {
-                        display: isExpanded ? formatCurrency(parsedNum) : formatCompact(parsedNum),
+                        display: isExpanded
+                            ? formatCurrency(parsedNum, { bypassConversion: true })
+                            : formatCompact(parsedNum, { bypassConversion: true }),
                         isMonetary: true,
                     };
                 }
             }
         }
 
-        // 4. Fallback to raw value as string
+        // 4. Raw numeric value passed directly as rawValue
+        if (typeof rawValue === 'number') {
+            return {
+                display: isExpanded ? formatCurrency(rawValue) : formatCompact(rawValue),
+                isMonetary: true,
+            };
+        }
+
+        // 5. Fallback to raw value as string
         return { display: String(rawValue), isMonetary: false };
     };
 

@@ -30,10 +30,11 @@ export interface Credit {
     tenure_months: number;
     start_date: string;
     end_date: string;
-    status: 'active' | 'matured' | 'withdrawn';
+    status: 'active' | 'matured' | 'withdrawn' | 'archived';
     interest_type?: 'simple' | 'compound';
     remaining_principal?: number;  // Principal remaining after payouts
     total_paid_out?: number;       // Total amount paid out to creditor
+    archived_at?: string | null;
     created_at: string;
     updated_at: string;
     creditor?: {
@@ -53,6 +54,7 @@ export interface Loan {
     status: 'performing' | 'non_performing' | 'full_provision' | 'preliquidated' | 'archived';
     amount_repaid?: number;  // Track principal repaid so far
     interest_repaid?: number; // Track interest repaid so far
+    archived_at?: string | null;
 
     // New fields
     repayment_cycle?: string;

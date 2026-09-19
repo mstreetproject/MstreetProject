@@ -42,7 +42,7 @@ export default function RepaymentsPage() {
                 <div className={styles.pageHeader}>
                     <div className={styles.headerLeft}>
                         <h1 className={styles.pageTitle}>Repayments</h1>
-                        <p className={styles.pageSubtitle}>Record repayments from loans & advancements accounts</p>
+                        <p className={styles.pageSubtitle}>Record repayments from loans & advances accounts</p>
                     </div>
                 </div>
 

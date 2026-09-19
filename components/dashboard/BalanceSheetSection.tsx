@@ -50,6 +50,7 @@ export default function BalanceSheetSection({ onShare }: Props) {
             const { data: loans } = await supabase
                 .from('loans')
                 .select('principal, interest_rate, start_date, amount_repaid, interest_repaid')
+                .is('archived_at', null)
                 .in('status', ['performing', 'non_performing']);
 
             // Calculate loans receivable (principal - amount repaid)
@@ -71,6 +72,7 @@ export default function BalanceSheetSection({ onShare }: Props) {
             const { data: credits } = await supabase
                 .from('credits')
                 .select('principal, interest_rate, start_date, remaining_principal, total_paid_out')
+                .is('archived_at', null)
                 .in('status', ['active', 'matured']);
 
             // Calculate credits payable

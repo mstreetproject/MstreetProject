@@ -38,11 +38,13 @@ export function useDebtorLoans() {
             console.log('[useDebtorLoans] Auth user:', user?.id, user?.email);
             if (!user) throw new Error('Not authenticated');
 
-            // Fetch loans for current debtor
+            // Fetch loans for current debtor (excluding archived)
             const { data, error: fetchError } = await supabase
                 .from('loans')
                 .select('*')
                 .eq('debtor_id', user.id)
+                .is('archived_at', null)
+                .neq('status', 'archived')
                 .order('created_at', { ascending: false });
 
             console.log('[useDebtorLoans] Loans query result:', {
@@ -65,12 +67,13 @@ export function useDebtorLoans() {
         fetchLoans();
     }, [fetchLoans]);
 
-    // Calculate stats from loans
+    // Calculate stats from loans (strictly excluding archived)
     const stats = useMemo<DebtorLoanStats>(() => {
-        const performing = loans.filter(l => l.status === 'performing');
-        const preliquidated = loans.filter(l => l.status === 'preliquidated');
-        const nonPerforming = loans.filter(l => l.status === 'non_performing');
-        const fullProvision = loans.filter(l => l.status === 'full_provision');
+        const validLoans = loans.filter(l => l.status !== 'archived');
+        const performing = validLoans.filter(l => l.status === 'performing');
+        const preliquidated = validLoans.filter(l => l.status === 'preliquidated');
+        const nonPerforming = validLoans.filter(l => l.status === 'non_performing');
+        const fullProvision = validLoans.filter(l => l.status === 'full_provision');
 
         const performingValue = performing.reduce((sum, l) => sum + Number(l.principal), 0);
         const nonPerformingValue = nonPerforming.reduce((sum, l) => sum + Number(l.principal), 0);

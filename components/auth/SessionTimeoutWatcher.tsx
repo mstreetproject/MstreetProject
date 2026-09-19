@@ -1,70 +1,108 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
-const TIMEOUT_DURATION = 10 * 60 * 1000; // 1 minute for testing
+// 30 Minutes Inactivity Timeout
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000;
+// 60 Seconds Warning Modal prior to logout
+const WARNING_DURATION = 60 * 1000;
 
 export default function SessionTimeoutWatcher() {
     const router = useRouter();
-    const [isTimingOut, setIsTimingOut] = useState(false);
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const pathname = usePathname();
+
+    const [showWarning, setShowWarning] = useState(false);
+    const [remainingSeconds, setRemainingSeconds] = useState(60);
+
+    const lastActivityRef = useRef<number>(Date.now());
+    const lastThrottleRef = useRef<number>(0);
+    const isLoggingOutRef = useRef<boolean>(false);
+
+    const handleUserActivity = useCallback(() => {
+        const now = Date.now();
+        // Throttle updates to at most once per second
+        if (now - lastThrottleRef.current > 1000) {
+            lastThrottleRef.current = now;
+            lastActivityRef.current = now;
+
+            // User activity automatically dismisses warning
+            setShowWarning(false);
+        }
+    }, []);
 
     useEffect(() => {
-        const supabase = createClient();
-
-        const resetTimeout = () => {
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
-            timeoutRef.current = setTimeout(async () => {
-                const { data: { session } } = await supabase.auth.getSession();
-
-                if (session) {
-                    setIsTimingOut(true);
-
-                    // Show message on UI for 3 seconds before redirecting
-                    setTimeout(async () => {
-                        await supabase.auth.signOut();
-                        router.push('/login?message=session_expired');
-                        router.refresh();
-                        setIsTimingOut(false);
-                    }, 4000);
-                }
-            }, TIMEOUT_DURATION);
-        };
+        // Only monitor inactivity on protected dashboard routes
+        if (!pathname || !pathname.startsWith('/dashboard')) {
+            setShowWarning(false);
+            return;
+        }
 
         const activityEvents = [
-            'mousedown', 'mousemove', 'keypress',
-            'scroll', 'touchstart', 'click'
+            'mousedown', 'mousemove', 'keydown', 'keyup',
+            'touchstart', 'touchend', 'click', 'scroll',
+            'input', 'change', 'wheel', 'focus', 'pointermove'
         ];
 
-        // Initialize timeout
-        resetTimeout();
-
-        // Add event listeners
+        // Register event listeners with capture phase to intercept events inside modals, portals, forms
         activityEvents.forEach(event => {
-            window.addEventListener(event, resetTimeout);
+            window.addEventListener(event, handleUserActivity, { capture: true, passive: true });
         });
 
-        // Periodic check in case the tab is inactive but Supabase session expires
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                lastActivityRef.current = Date.now();
+                setShowWarning(false);
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        // Check inactivity every 2 seconds
         const interval = setInterval(async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session && window.location.pathname.startsWith('/dashboard')) {
+            if (isLoggingOutRef.current) return;
+
+            const now = Date.now();
+            const elapsedInactive = now - lastActivityRef.current;
+
+            if (elapsedInactive >= INACTIVITY_TIMEOUT) {
+                isLoggingOutRef.current = true;
+                setShowWarning(false);
+
+                try {
+                    const supabase = createClient();
+                    await supabase.auth.signOut();
+                } catch (e) {
+                    console.error('Error signing out during session timeout:', e);
+                }
+
                 router.push('/login?message=session_expired');
                 router.refresh();
+            } else if (elapsedInactive >= (INACTIVITY_TIMEOUT - WARNING_DURATION)) {
+                const secsLeft = Math.max(1, Math.ceil((INACTIVITY_TIMEOUT - elapsedInactive) / 1000));
+                setRemainingSeconds(secsLeft);
+                setShowWarning(true);
+            } else {
+                setShowWarning(false);
             }
-        }, 60000); // every minute
+        }, 2000);
 
         return () => {
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
             clearInterval(interval);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
             activityEvents.forEach(event => {
-                window.removeEventListener(event, resetTimeout);
+                window.removeEventListener(event, handleUserActivity, { capture: true });
             });
         };
-    }, [router]);
+    }, [pathname, router, handleUserActivity]);
 
-    if (!isTimingOut) return null;
+    const handleStayLoggedIn = () => {
+        lastActivityRef.current = Date.now();
+        lastThrottleRef.current = Date.now();
+        setShowWarning(false);
+    };
+
+    if (!showWarning || !pathname?.startsWith('/dashboard')) return null;
 
     return (
         <div style={{
@@ -73,12 +111,11 @@ export default function SessionTimeoutWatcher() {
             left: 0,
             width: '100%',
             height: '100%',
-            backgroundColor: 'rgba(7, 7, 87, 0.95)', // brand deep navy with slight transparency
+            backgroundColor: 'rgba(7, 7, 30, 0.85)',
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 9999,
+            zIndex: 99999,
             backdropFilter: 'blur(8px)',
             color: 'white',
             fontFamily: 'Inter, system-ui, sans-serif',
@@ -86,42 +123,45 @@ export default function SessionTimeoutWatcher() {
             padding: '20px'
         }}>
             <div style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                padding: '40px 60px',
-                borderRadius: '24px',
-                border: '1px solid rgba(2, 179, 255, 0.3)',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                background: 'var(--bg-secondary, #1e293b)',
+                padding: '36px 48px',
+                borderRadius: '20px',
+                border: '1px solid var(--border-secondary, rgba(2, 179, 255, 0.3))',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
+                maxWidth: '450px',
+                width: '100%'
             }}>
-                <div style={{ fontSize: '4rem', marginBottom: '20px' }}>⏳</div>
-                <h2 style={{
-                    fontSize: '2.5rem',
-                    fontWeight: 800,
-                    marginBottom: '16px',
-                    background: 'linear-gradient(135deg, #02B3FF, #B8DB0F)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent'
+                <div style={{ fontSize: '3rem', marginBottom: '16px' }}>⏳</div>
+                <h3 style={{
+                    fontSize: '1.5rem',
+                    fontWeight: 700,
+                    marginBottom: '12px',
+                    color: 'var(--text-primary, #ffffff)'
                 }}>
-                    Session Timed Out
-                </h2>
-                <p style={{ fontSize: '1.25rem', color: '#cbd5e1', maxWidth: '400px', margin: '0 auto' }}>
-                    You have been inactive for too long. Redirecting you to login...
+                    Session Expiry Warning
+                </h3>
+                <p style={{ fontSize: '1rem', color: 'var(--text-secondary, #94a3b8)', marginBottom: '24px', lineHeight: 1.5 }}>
+                    You have been inactive for 29 minutes. For your security, you will be logged out in <strong style={{ color: '#f59e0b', fontSize: '1.1rem' }}>{remainingSeconds} seconds</strong>.
                 </p>
-                <div style={{ marginTop: '32px' }}>
-                    <div style={{
-                        width: '40px',
-                        height: '40px',
-                        border: '4px solid #02B3FF',
-                        borderTopColor: 'transparent',
-                        borderRadius: '50%',
-                        animation: 'spin 1s linear infinite',
-                        margin: '0 auto'
-                    }} />
-                    <style>{`
-                        @keyframes spin {
-                            to { transform: rotate(360deg); }
-                        }
-                    `}</style>
-                </div>
+                <button
+                    type="button"
+                    onClick={handleStayLoggedIn}
+                    style={{
+                        width: '100%',
+                        padding: '14px',
+                        borderRadius: '10px',
+                        border: 'none',
+                        background: 'linear-gradient(135deg, var(--accent-primary, #02B3FF), var(--accent-secondary, #0077ff))',
+                        color: 'white',
+                        fontWeight: 700,
+                        fontSize: '1rem',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 14px rgba(2, 179, 255, 0.4)',
+                        transition: 'transform 0.15s ease'
+                    }}
+                >
+                    Keep Me Logged In
+                </button>
             </div>
         </div>
     );

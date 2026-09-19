@@ -452,12 +452,12 @@ export default function ArchivePage() {
 
     const requestActions: RowAction[] = [
         {
-            label: '↩️ Restore',
+            label: 'Restore',
             icon: <RefreshCw size={16} />,
             onClick: handleRestoreRequest,
         },
         {
-            label: '🗑️ Delete Forever',
+            label: 'Delete Forever',
             icon: <Trash2 size={16} />,
             onClick: handlePermanentDeleteRequest,
             variant: 'danger',
@@ -467,12 +467,12 @@ export default function ArchivePage() {
 
     const uploadActions: RowAction[] = [
         {
-            label: '↩️ Restore',
+            label: 'Restore',
             icon: <RefreshCw size={16} />,
             onClick: handleRestoreUpload,
         },
         {
-            label: '🗑️ Delete Forever',
+            label: 'Delete Forever',
             icon: <Trash2 size={16} />,
             onClick: handlePermanentDeleteUpload,
             variant: 'danger',
@@ -482,12 +482,12 @@ export default function ArchivePage() {
 
     const creditActions: RowAction[] = [
         {
-            label: '↩️ Restore',
+            label: 'Restore',
             icon: <RefreshCw size={16} />,
             onClick: handleRestoreCredit,
         },
         {
-            label: '🗑️ Delete Forever',
+            label: 'Delete Forever',
             icon: <Trash2 size={16} />,
             onClick: handlePermanentDeleteCredit,
             variant: 'danger',
@@ -497,12 +497,12 @@ export default function ArchivePage() {
 
     const loanActions: RowAction[] = [
         {
-            label: '↩️ Restore',
+            label: 'Restore',
             icon: <RefreshCw size={16} />,
             onClick: handleRestoreLoan,
         },
         {
-            label: '🗑️ Delete Forever',
+            label: 'Delete Forever',
             icon: <Trash2 size={16} />,
             onClick: handlePermanentDeleteLoan,
             variant: 'danger',
@@ -512,12 +512,12 @@ export default function ArchivePage() {
 
     const payoutActions: RowAction[] = [
         {
-            label: '↩️ Restore',
+            label: 'Restore',
             icon: <RefreshCw size={16} />,
             onClick: handleRestorePayout,
         },
         {
-            label: '🗑️ Delete Forever',
+            label: 'Delete Forever',
             icon: <Trash2 size={16} />,
             onClick: handlePermanentDeletePayout,
             variant: 'danger',

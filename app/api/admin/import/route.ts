@@ -1,6 +1,17 @@
-import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { createClient } from '@supabase/supabase-js';
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    }
+);
 
 interface ImportPlacementRow {
     creditor_name: string;
@@ -45,7 +56,6 @@ function normalizeLoanStatus(raw: string): string {
 
 export async function POST(request: Request) {
     try {
-        const supabaseAdmin = getSupabaseAdmin();
         // 1. Verify Admin access
         const cookieSupabase = await createServerClient();
         const { data: { user: currentUser }, error: authError } = await cookieSupabase.auth.getUser();
@@ -106,7 +116,7 @@ export async function POST(request: Request) {
                     const updatePayload: Record<string, any> = { is_creditor: true };
                     if (!existingUser.email && email) updatePayload.email = email;
                     if (!existingUser.phone && phone) updatePayload.phone = phone;
-                    
+
                     await supabaseAdmin.from('users').update(updatePayload).eq('id', creditorId);
                 } else {
                     const { data: newUser, error: createError } = await supabaseAdmin
