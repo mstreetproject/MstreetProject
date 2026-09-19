@@ -248,7 +248,7 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess, defaultTab
                             onClick={() => handleTabChange('loans')}
                         >
                             <CreditCard size={18} />
-                            <span>Loans & Advancements</span>
+                            <span>Loans & Advances</span>
                         </button>
                     </div>
 

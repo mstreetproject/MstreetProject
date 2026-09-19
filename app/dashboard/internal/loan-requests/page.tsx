@@ -227,7 +227,7 @@ export default function LoanRequestsPage() {
                 <div className={styles.pageHeader}>
                     <div className={styles.headerLeft}>
                         <h1 className={styles.pageTitle}>Loan Requests</h1>
-                        <p className={styles.pageSubtitle}>Review and process loan & advancement applications</p>
+                        <p className={styles.pageSubtitle}>Review and process loan & advance applications</p>
                     </div>
                 </div>
 

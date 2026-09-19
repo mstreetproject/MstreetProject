@@ -36,7 +36,7 @@ export function useFundPoolData(dateRange?: { startDate: Date | null; endDate: D
             setLoading(true);
             const supabase = createClient();
 
-            // 1. Fetch Liabilities (Credits)
+            // 1. Fetch Liabilities (Credits, excluding archived)
             let creditsQuery = supabase
                 .from('credits')
                 .select(`
@@ -46,7 +46,8 @@ export function useFundPoolData(dateRange?: { startDate: Date | null; endDate: D
                     start_date,
                     creditor:users!creditor_id(full_name)
                 `)
-                .eq('status', 'active');
+                .eq('status', 'active')
+                .is('archived_at', null);
 
             if (dateRange?.startDate) {
                 creditsQuery = creditsQuery.gte('start_date', dateRange.startDate.toISOString());
@@ -59,7 +60,7 @@ export function useFundPoolData(dateRange?: { startDate: Date | null; endDate: D
 
             if (creditsError) throw creditsError;
 
-            // 2. Fetch Assets (Loans)
+            // 2. Fetch Assets (Loans, excluding archived)
             let loansQuery = supabase
                 .from('loans')
                 .select(`
@@ -70,7 +71,9 @@ export function useFundPoolData(dateRange?: { startDate: Date | null; endDate: D
                     start_date,
                     debtor:users!debtor_id(full_name)
                 `)
-                .in('status', ['performing', 'non_performing']);
+                .in('status', ['performing', 'non_performing'])
+                .is('archived_at', null)
+                .neq('status', 'archived');
 
             if (dateRange?.startDate) {
                 loansQuery = loansQuery.gte('start_date', dateRange.startDate.toISOString());

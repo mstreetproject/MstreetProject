@@ -207,7 +207,7 @@ export default function InternalDashboard() {
     const loanColumns: Column[] = [
         {
             key: 'debtor',
-            label: 'Loans & Advancements',
+            label: 'Loans & Advances',
             render: (_, row) => (
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <span style={{ fontWeight: 500 }}>{row.debtor?.full_name || 'N/A'}</span>
@@ -258,7 +258,7 @@ export default function InternalDashboard() {
             render: (_, row) => {
                 const types = [];
                 if (row.is_creditor) types.push('Placement');
-                if (row.is_debtor) types.push('Loans & Advancements');
+                if (row.is_debtor) types.push('Loans & Advances');
                 if (row.is_internal) types.push('Internal');
                 return <span style={{ fontSize: '0.85rem' }}>{types.join(', ') || 'User'}</span>;
             }
@@ -328,7 +328,7 @@ export default function InternalDashboard() {
                         loading={statsLoading || creditorStatsLoading}
                     />
                     <StatsCard
-                        title="Active Loans & Advancements"
+                        title="Active Loans & Advances"
                         value={stats ? stats.totalActiveLoans.count : 0}
                         change={stats ? formatCurrency(stats.totalActiveLoans.sum) : '$0'}
                         changeType="neutral"
@@ -341,7 +341,7 @@ export default function InternalDashboard() {
                             <StatsCard
                                 title="Interest Income"
                                 value={stats ? formatCurrency(stats.interestIncome || 0) : '$0'}
-                                change="From Loans & Advancements"
+                                change="From Loans & Advances"
                                 changeType="positive"
                                 icon={Wallet}
                                 loading={statsLoading}
@@ -383,7 +383,7 @@ export default function InternalDashboard() {
                 {/* Recent Activity Grid - Optimized Layout */}
                 <div className={styles.activityGrid}>
                     <div className={styles.section}>
-                        <h2 className={styles.sectionTitle}>Recent Loans & Advancements</h2>
+                        <h2 className={styles.sectionTitle}>Recent Loans & Advances</h2>
                         <DataTable
                             columns={loanColumns}
                             data={loans}

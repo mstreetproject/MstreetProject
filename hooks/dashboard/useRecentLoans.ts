@@ -26,6 +26,8 @@ export function useRecentLoans(limit: number = 10) {
               email
             )
           `)
+                    .is('archived_at', null)
+                    .neq('status', 'archived')
                     .order('created_at', { ascending: false })
                     .limit(limit);
 

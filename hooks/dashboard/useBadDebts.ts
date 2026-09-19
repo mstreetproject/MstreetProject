@@ -66,11 +66,13 @@ export function useBadDebts(): UseBadDebtsResult {
                 throw fetchError;
             }
 
-            // 2. Fetch all full_provision loans (same source as debtors page & P&L)
+            // 2. Fetch all full_provision loans (exclude archived)
             const { data: fullProvisionLoans, error: fpError } = await supabase
                 .from('loans')
                 .select('id, principal, interest_rate, debtor_id, status, start_date, debtor:users!loans_debtor_id_fkey(full_name, email)')
-                .eq('status', 'full_provision');
+                .eq('status', 'full_provision')
+                .is('archived_at', null)
+                .neq('status', 'archived');
 
             if (fpError) {
                 console.error('Full provision loans fetch error:', fpError);

@@ -130,6 +130,7 @@ export default function ProfitLossSection() {
                 supabase
                     .from('loans')
                     .select('principal, interest_rate, tenure_months, start_date, disbursed_date, status, id')
+                    .is('archived_at', null)
                     .in('status', ['performing', 'non_performing', 'preliquidated']),
 
                 // 1b. Revenue: From investments (active investments)
@@ -142,6 +143,7 @@ export default function ProfitLossSection() {
                 supabase
                     .from('credits')
                     .select('principal, interest_rate, tenure_months, start_date')
+                    .is('archived_at', null)
                     .in('status', ['active', 'matured']),
 
                 // 3. Operating Expenses (date-filtered dynamically above)
@@ -154,6 +156,7 @@ export default function ProfitLossSection() {
                 supabase
                     .from('loans')
                     .select('principal, id, status')
+                    .is('archived_at', null)
                     .eq('status', 'full_provision')
             ]);
 

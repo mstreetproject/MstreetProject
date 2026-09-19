@@ -60,7 +60,7 @@ export function useDebtorStats(initialPeriod: TimePeriod = 'month'): UseDebtorSt
 
             const supabase = createClient();
 
-            // Fetch all loans with debtor info
+            // Fetch all loans with debtor info (exclude archived loans)
             const { data, error: fetchError } = await supabase
                 .from('loans')
                 .select(`
@@ -72,6 +72,8 @@ export function useDebtorStats(initialPeriod: TimePeriod = 'month'): UseDebtorSt
                     ),
                     loan_documents(id, is_signed)
                 `)
+                .is('archived_at', null)
+                .neq('status', 'archived')
                 .order('created_at', { ascending: false });
 
             if (fetchError) throw fetchError;
@@ -101,9 +103,9 @@ export function useDebtorStats(initialPeriod: TimePeriod = 'month'): UseDebtorSt
         fetchLoans();
     }, [fetchLoans]);
 
-    // Filter loans based on time period, date range, and debtor
+    // Filter loans based on time period, date range, and debtor (strictly excluding archived)
     const filteredLoans = useMemo(() => {
-        let filtered = [...allLoans];
+        let filtered = allLoans.filter(l => l.status !== 'archived' && !l.archived_at);
 
         // Filter by selected debtor
         if (selectedDebtor) {

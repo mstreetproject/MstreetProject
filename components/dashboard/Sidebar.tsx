@@ -47,7 +47,7 @@ const menuItems = [
         roles: ['super_admin', 'finance_manager', 'ops_officer']
     },
     {
-        label: 'Loans & Advancements',
+        label: 'Loans & Advances',
         href: '/dashboard/internal/debtors',
         icon: TrendingUp,
         roles: ['super_admin', 'finance_manager', 'ops_officer', 'risk_officer']

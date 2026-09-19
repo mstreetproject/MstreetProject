@@ -97,6 +97,7 @@ export function useCreditorStats(initialPeriod: TimePeriod = 'month'): UseCredit
                     )
                 `)
                 .is('archived_at', null)  // Only active credits
+                .neq('status', 'archived')
                 .order('created_at', { ascending: false });
 
             if (fetchError) throw fetchError;
@@ -122,11 +123,9 @@ export function useCreditorStats(initialPeriod: TimePeriod = 'month'): UseCredit
         fetchCredits();
     }, [fetchCredits]);
 
-    // Filter credits based on date range and creditor
-    // NOTE: Shows ALL active credits by default. Time period filter removed - 
-    // use custom date range for date-based filtering
+    // Filter credits based on date range and creditor (strictly excluding archived)
     const filteredCredits = useMemo(() => {
-        let filtered = [...allCredits];
+        let filtered = allCredits.filter(c => c.status !== 'archived' && !c.archived_at);
 
         // Filter by selected creditor
         if (selectedCreditor) {

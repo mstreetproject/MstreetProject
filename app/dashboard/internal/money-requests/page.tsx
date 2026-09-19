@@ -69,7 +69,7 @@ export default function MoneyRequestsPage() {
 
     // --- LOAN REQUESTS LOGIC ---
     const handleApproveLoan = async (row: any) => {
-        if (confirm(`Approve loan/advancement request for ${row.debtor.full_name}?`)) {
+        if (confirm(`Approve loan/advance request for ${row.debtor.full_name}?`)) {
             try {
                 await updateStatus(row.id, 'approved');
                 alert('Loan approved!');

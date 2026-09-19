@@ -65,19 +65,24 @@ export function useDashboardStats(startDate?: Date | null, endDate?: Date | null
                     .from('credits')
                     .select('principal, remaining_principal')
                     .in('status', ['active', 'matured'])
-                    .is('archived_at', null),
+                    .is('archived_at', null)
+                    .neq('status', 'archived'),
 
-                // Active/Performing loans (Snapshot - includes all outstanding statuses)
+                // Active/Performing loans (Snapshot - includes all outstanding statuses, excluding archived)
                 supabase
                     .from('loans')
                     .select('principal, amount_repaid')
-                    .in('status', ['performing', 'non_performing']),
+                    .in('status', ['performing', 'non_performing'])
+                    .is('archived_at', null)
+                    .neq('status', 'archived'),
 
-                // Bad Debt loans (Snapshot - full_provision)
+                // Bad Debt loans (Snapshot - full_provision, excluding archived)
                 supabase
                     .from('loans')
                     .select('principal')
-                    .eq('status', 'full_provision'),
+                    .eq('status', 'full_provision')
+                    .is('archived_at', null)
+                    .neq('status', 'archived'),
 
                 // Interest revenue (Filtered)
                 interestQuery,
@@ -94,12 +99,13 @@ export function useDashboardStats(startDate?: Date | null, endDate?: Date | null
                 // Interest Income from loan repayments (Filtered)
                 interestIncomeQuery,
 
-                // Credits for interest expense calculation (Snapshot)
+                // Credits for interest expense calculation (Snapshot, excluding archived)
                 supabase
                     .from('credits')
                     .select('principal, remaining_principal, interest_rate, start_date')
                     .in('status', ['active', 'matured'])
                     .is('archived_at', null)
+                    .neq('status', 'archived')
             ]);
 
             // Calculate totals
