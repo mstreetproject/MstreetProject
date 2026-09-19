@@ -29,6 +29,7 @@ interface Loan {
     start_date: string;
     end_date: string;
     status: string;
+    repayment_method?: 'interest_only' | 'capital_only' | 'both' | 'custom';
     repayment_cycle?: string;
     origination_date?: string;
     disbursed_date?: string;
@@ -321,6 +322,12 @@ export default function LoanDetailsModal({ isOpen, loan, onClose }: LoanDetailsM
                                     <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '4px' }}>Cycle</div>
                                     <div style={{ color: 'var(--text-primary)', fontWeight: 600, textTransform: 'capitalize' }}>
                                         {loan.repayment_cycle?.replace('_', ' ') || 'Monthly'}
+                                    </div>
+                                </div>
+                                <div style={{ textAlign: 'center' }}>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '4px' }}>Method</div>
+                                    <div style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
+                                        {loan.repayment_method === 'interest_only' ? 'Interest Only' : loan.repayment_method === 'capital_only' ? 'Capital Only' : loan.repayment_method === 'custom' ? 'Custom Structure' : 'Principal + Interest'}
                                     </div>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>

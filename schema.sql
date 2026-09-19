@@ -120,6 +120,7 @@ CREATE TABLE loans (
   status TEXT CHECK (status IN ('performing', 'non_performing', 'full_provision', 'preliquidated', 'archived')) DEFAULT 'performing',
   
   -- Enhanced financial tracking fields
+  repayment_method TEXT CHECK (repayment_method IN ('interest_only', 'capital_only', 'both', 'custom')) DEFAULT 'both',
   repayment_cycle TEXT CHECK (repayment_cycle IN ('fortnightly', 'monthly', 'bi_monthly', 'quarterly', 'quadrimester', 'semiannual', 'annually', 'bullet')),
   origination_date DATE,
   disbursed_date DATE,
