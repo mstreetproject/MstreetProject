@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useCurrency } from '@/hooks/useCurrency';
 import MStreetLoader from '@/components/ui/MStreetLoader';
 import { createClient } from '@/lib/supabase/client';
@@ -260,9 +260,11 @@ export default function RecordRepaymentForm() {
         };
     }, [loan]);
 
+    const initializedLoanId = useRef<string | null>(null);
+
     // Auto-select first pending schedule item when loan selection or schedule changes
     useEffect(() => {
-        if (loan) {
+        if (loan && initializedLoanId.current !== loan.id) {
             const defaultMode = loan.repayment_method || 'both';
 
             if (schedule.length > 0) {
@@ -272,17 +274,20 @@ export default function RecordRepaymentForm() {
                 if (item && item.status !== 'paid') {
                     setSelectedScheduleIndex(targetIdx);
                     applyPaymentPreset(defaultMode, item.principal_amount, item.interest_amount);
+                    initializedLoanId.current = loan.id;
                     return;
                 }
             }
             if (!isPartialPayment) {
                 const defaultPrincipal = schedule.length > 0 ? (loan.principal / loan.tenure_months) : calculations.principalDue;
                 applyPaymentPreset(defaultMode, defaultPrincipal, calculations.interestDue);
+                initializedLoanId.current = loan.id;
             }
-        } else {
+        } else if (!loan) {
             setPrincipalAmount('');
             setInterestAmount('');
             setSelectedScheduleIndex(null);
+            initializedLoanId.current = null;
         }
     }, [loan, isPartialPayment, calculations, schedule, applyPaymentPreset]);
 
@@ -295,7 +300,16 @@ export default function RecordRepaymentForm() {
     const actualTotal = actualPrincipal + actualInterest;
 
     const totalRemainingPayoff = calculations.principalDue + calculations.interestDue;
-    const isExceedingTotalLoan = actualPrincipal > calculations.principalDue + 0.01 || actualTotal > totalRemainingPayoff + 0.01;
+    
+    const allItemsPaid = schedule.length > 0 && schedule.every(s => s.status === 'paid');
+    const isPhysicalLastItem = activeScheduleItem && schedule.length > 0 && activeScheduleItem.id === schedule[schedule.length - 1].id;
+    const isFinalPhase = allItemsPaid || isPhysicalLastItem || schedule.length === 0;
+
+    const expectedPrincipal = isFinalPhase ? calculations.principalDue : (activeScheduleItem ? activeScheduleItem.principal_amount : (schedule.length > 0 && loan ? loan.principal / loan.tenure_months : calculations.principalDue));
+    const expectedInterest = isFinalPhase ? calculations.interestDue : (activeScheduleItem ? activeScheduleItem.interest_amount : calculations.interestDue);
+    const expectedTotal = expectedPrincipal + expectedInterest;
+
+    const isFinalPhaseShortfall = isFinalPhase && actualTotal < totalRemainingPayoff - 0.01;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -313,8 +327,8 @@ export default function RecordRepaymentForm() {
                 throw new Error('Please enter a valid payment amount');
             }
 
-            if (isExceedingTotalLoan) {
-                throw new Error(`Total payment of ${formatCurrency(actualTotal)} exceeds the remaining loan cycle payoff balance (${formatCurrency(totalRemainingPayoff)})`);
+            if (isFinalPhaseShortfall) {
+                throw new Error(`Final payment of ${formatCurrency(actualTotal)} is insufficient. You must pay the remaining balance of ${formatCurrency(totalRemainingPayoff)} to close this loan.`);
             }
 
             const supabase = createClient();
@@ -380,8 +394,8 @@ export default function RecordRepaymentForm() {
                         remainingPrincipal -= item.principal_amount;
                         remainingInterest -= item.interest_amount;
                     } else if (remainingPrincipal > 0 || remainingInterest > 0) {
-                        await updateInstallmentStatus(item.id, 'partial');
-                        break; // Stop after first partial for simplicity
+                        await updateInstallmentStatus(item.id, 'paid');
+                        break; // Stop after applying remaining to the current item
                     }
                 }
             }
@@ -634,7 +648,7 @@ export default function RecordRepaymentForm() {
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                                 <button
                                     type="button"
-                                    onClick={() => applyPaymentPreset('both', activeScheduleItem ? activeScheduleItem.principal_amount : (schedule.length > 0 ? loan.principal / loan.tenure_months : calculations.principalDue), activeScheduleItem ? activeScheduleItem.interest_amount : calculations.interestDue)}
+                                    onClick={() => applyPaymentPreset('both', expectedPrincipal, expectedInterest)}
                                     style={{
                                         padding: '10px 6px',
                                         borderRadius: '8px',
@@ -657,7 +671,7 @@ export default function RecordRepaymentForm() {
 
                                 <button
                                     type="button"
-                                    onClick={() => applyPaymentPreset('interest_only', activeScheduleItem ? activeScheduleItem.principal_amount : (schedule.length > 0 ? loan.principal / loan.tenure_months : calculations.principalDue), activeScheduleItem ? activeScheduleItem.interest_amount : calculations.interestDue)}
+                                    onClick={() => applyPaymentPreset('interest_only', expectedPrincipal, expectedInterest)}
                                     style={{
                                         padding: '10px 6px',
                                         borderRadius: '8px',
@@ -680,7 +694,7 @@ export default function RecordRepaymentForm() {
 
                                 <button
                                     type="button"
-                                    onClick={() => applyPaymentPreset('capital_only', activeScheduleItem ? activeScheduleItem.principal_amount : (schedule.length > 0 ? loan.principal / loan.tenure_months : calculations.principalDue), activeScheduleItem ? activeScheduleItem.interest_amount : calculations.interestDue)}
+                                    onClick={() => applyPaymentPreset('capital_only', expectedPrincipal, expectedInterest)}
                                     style={{
                                         padding: '10px 6px',
                                         borderRadius: '8px',
@@ -703,7 +717,7 @@ export default function RecordRepaymentForm() {
 
                                 <button
                                     type="button"
-                                    onClick={() => applyPaymentPreset('custom', activeScheduleItem ? activeScheduleItem.principal_amount : (schedule.length > 0 ? loan.principal / loan.tenure_months : calculations.principalDue), activeScheduleItem ? activeScheduleItem.interest_amount : calculations.interestDue)}
+                                    onClick={() => applyPaymentPreset('custom', expectedPrincipal, expectedInterest)}
                                     style={{
                                         padding: '10px 6px',
                                         borderRadius: '8px',
@@ -744,7 +758,7 @@ export default function RecordRepaymentForm() {
                                 }}
                                 placeholder="0.00"
                                 className={styles.input}
-                                disabled={paymentMode === 'interest_only' || submitting}
+                                disabled={submitting}
                                 required
                             />
                         </div>
@@ -766,19 +780,13 @@ export default function RecordRepaymentForm() {
                                 }}
                                 placeholder="0.00"
                                 className={styles.input}
-                                disabled={paymentMode === 'capital_only' || submitting}
+                                disabled={submitting}
                                 required
                             />
                         </div>
 
                         {/* Real-Time Variance Calculation Banner */}
                         {(() => {
-                            const expectedPrincipal = activeScheduleItem ? activeScheduleItem.principal_amount : (schedule.length > 0 ? loan.principal / loan.tenure_months : calculations.principalDue);
-                            const expectedInterest = activeScheduleItem ? activeScheduleItem.interest_amount : calculations.interestDue;
-                            const expectedTotal = expectedPrincipal + expectedInterest;
-                            const actualPrincipal = parseFloat(principalAmount) || 0;
-                            const actualInterest = parseFloat(interestAmount) || 0;
-                            const actualTotal = actualPrincipal + actualInterest;
                             const variance = actualTotal - expectedTotal;
 
                             return (
@@ -790,7 +798,7 @@ export default function RecordRepaymentForm() {
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '10px',
-                                    background: isExceedingTotalLoan
+                                    background: isFinalPhaseShortfall
                                         ? 'rgba(239, 68, 68, 0.15)'
                                         : actualPrincipal === 0 && actualInterest > 0
                                             ? 'rgba(245, 158, 11, 0.12)'
@@ -802,24 +810,24 @@ export default function RecordRepaymentForm() {
                                                         ? 'rgba(16, 185, 129, 0.12)'
                                                         : 'rgba(99, 102, 241, 0.1)',
                                     border: '1px solid ' + (
-                                        isExceedingTotalLoan ? 'rgba(239, 68, 68, 0.4)' :
-                                        actualPrincipal === 0 && actualInterest > 0 ? 'rgba(245, 158, 11, 0.3)' :
-                                        actualInterest === 0 && actualPrincipal > 0 ? 'rgba(59, 130, 246, 0.3)' :
-                                        variance < -0.01 ? 'rgba(239, 68, 68, 0.3)' :
-                                        variance > 0.01 ? 'rgba(16, 185, 129, 0.3)' :
-                                        'rgba(99, 102, 241, 0.3)'
+                                        isFinalPhaseShortfall ? 'rgba(239, 68, 68, 0.4)' :
+                                            actualPrincipal === 0 && actualInterest > 0 ? 'rgba(245, 158, 11, 0.3)' :
+                                                actualInterest === 0 && actualPrincipal > 0 ? 'rgba(59, 130, 246, 0.3)' :
+                                                    variance < -0.01 ? 'rgba(239, 68, 68, 0.3)' :
+                                                        variance > 0.01 ? 'rgba(16, 185, 129, 0.3)' :
+                                                            'rgba(99, 102, 241, 0.3)'
                                     ),
-                                    color: isExceedingTotalLoan ? '#ef4444' :
-                                           actualPrincipal === 0 && actualInterest > 0 ? '#d97706' :
-                                           actualInterest === 0 && actualPrincipal > 0 ? '#2563eb' :
-                                           variance < -0.01 ? '#ef4444' :
-                                           variance > 0.01 ? '#10b981' :
-                                           'var(--text-primary)'
+                                    color: isFinalPhaseShortfall ? '#ef4444' :
+                                        actualPrincipal === 0 && actualInterest > 0 ? '#d97706' :
+                                            actualInterest === 0 && actualPrincipal > 0 ? '#2563eb' :
+                                                variance < -0.01 ? '#ef4444' :
+                                                    variance > 0.01 ? '#10b981' :
+                                                        'var(--text-primary)'
                                 }}>
                                     <Info size={18} style={{ flexShrink: 0 }} />
                                     <div>
-                                        {isExceedingTotalLoan ? (
-                                            <span><strong>Amount Exceeds Total Loan Balance:</strong> Payment of {formatCurrency(actualTotal)} exceeds remaining loan cycle balance ({formatCurrency(totalRemainingPayoff)}). Reduce custom amount to proceed.</span>
+                                        {isFinalPhaseShortfall ? (
+                                            <span><strong>Final Payment Required:</strong> You must pay the full remaining balance of {formatCurrency(totalRemainingPayoff)} to close this loan.</span>
                                         ) : actualPrincipal === 0 && actualInterest > 0 ? (
                                             <span><strong>Interest-Only Payment:</strong> {formatCurrency(expectedPrincipal)} capital/principal deferred to remaining loan balance.</span>
                                         ) : actualInterest === 0 && actualPrincipal > 0 ? (
@@ -861,7 +869,7 @@ export default function RecordRepaymentForm() {
                             border: '1px solid var(--border-secondary)'
                         }}>
                             <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Final Payment Amount</p>
-                            <p style={{ margin: '4px 0 0', fontSize: '1.8rem', fontWeight: 800, color: isExceedingTotalLoan ? '#ef4444' : 'var(--accent-primary)' }}>
+                            <p style={{ margin: '4px 0 0', fontSize: '1.8rem', fontWeight: 800, color: isFinalPhaseShortfall ? '#ef4444' : 'var(--accent-primary)' }}>
                                 {formatCurrency(totalPayment)}
                             </p>
                         </div>
@@ -1034,37 +1042,37 @@ export default function RecordRepaymentForm() {
                         submitting ||
                         !loan ||
                         totalPayment <= 0 ||
-                        isExceedingTotalLoan ||
+                        isFinalPhaseShortfall ||
                         loan.status === 'preliquidated' ||
                         loan.status === 'repaid' ||
-                        (schedule.length > 0 && selectedScheduleIndex === null && !loadingSchedule)
+                        (schedule.length > 0 && selectedScheduleIndex === null && !allItemsPaid && !loadingSchedule)
                     }
                     style={{
                         height: '52px',
                         fontSize: '1.1rem',
-                        border: isExceedingTotalLoan ? '1px solid rgba(239, 68, 68, 0.4)' : 'none',
+                        border: isFinalPhaseShortfall ? '1px solid rgba(239, 68, 68, 0.4)' : 'none',
                         background: (loan?.status === 'preliquidated' || loan?.status === 'repaid')
                             ? 'var(--bg-tertiary)'
-                            : isExceedingTotalLoan
+                            : isFinalPhaseShortfall
                                 ? 'rgba(239, 68, 68, 0.15)'
-                                : (schedule.length > 0 && selectedScheduleIndex === null && !loadingSchedule)
+                                : (schedule.length > 0 && selectedScheduleIndex === null && !allItemsPaid && !loadingSchedule)
                                     ? 'var(--bg-tertiary)'
                                     : 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
-                        color: (loan?.status === 'preliquidated' || loan?.status === 'repaid' || (schedule.length > 0 && selectedScheduleIndex === null))
+                        color: (loan?.status === 'preliquidated' || loan?.status === 'repaid' || (schedule.length > 0 && selectedScheduleIndex === null && !allItemsPaid))
                             ? 'var(--text-muted)'
-                            : isExceedingTotalLoan
+                            : isFinalPhaseShortfall
                                 ? '#ef4444'
                                 : 'white'
                     }}
                 >
-                    {submitting ? <MStreetLoader size={20} color="#ffffff" /> : isExceedingTotalLoan ? <AlertCircle size={20} /> : <Banknote size={20} />}
+                    {submitting ? <MStreetLoader size={20} color="#ffffff" /> : isFinalPhaseShortfall ? <AlertCircle size={20} /> : <Banknote size={20} />}
                     {submitting
                         ? 'Recording...'
                         : (loan?.status === 'preliquidated' || loan?.status === 'repaid')
                             ? 'Loan Fully Repaid'
-                            : isExceedingTotalLoan
-                                ? `Exceeds Total Remaining Loan Balance (${formatCurrency(totalRemainingPayoff)})`
-                                : (schedule.length > 0 && selectedScheduleIndex === null && !loadingSchedule)
+                            : isFinalPhaseShortfall
+                                ? `Must Pay Remaining Balance (${formatCurrency(totalRemainingPayoff)})`
+                                : (schedule.length > 0 && selectedScheduleIndex === null && !allItemsPaid && !loadingSchedule)
                                     ? 'Select an Installment'
                                     : schedule.length === 0 && !loadingSchedule
                                         ? 'Confirm Full Repayment'
