@@ -73,6 +73,28 @@ export interface Loan {
     loan_documents?: { is_signed: boolean }[];
 }
 
+export interface RepaymentTransaction {
+    id: string;
+    loan_id: string;
+    principal_paid: number;
+    interest_paid: number;
+    total_paid: number;
+    payment_mode: 'interest_only' | 'capital_only' | 'both' | 'custom' | null;
+    status: 'successful' | 'reverted';
+    recorded_by: string | null;
+    reverted_by: string | null;
+    reverted_at: string | null;
+    notes: string | null;
+    created_at: string;
+    updated_at: string;
+    recorder?: {
+        full_name: string;
+    };
+    reverter?: {
+        full_name: string;
+    };
+}
+
 export interface DashboardStats {
     totalUsers: number;
     totalActiveCredits: {
